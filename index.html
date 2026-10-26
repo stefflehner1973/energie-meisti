@@ -1008,7 +1008,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 17:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 17:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1033,6 +1033,11 @@ h3{font-size:.92rem;margin:0;font-weight:600}
           <button type="button" id="saveEmbed">Kopie mit Zugang speichern</button>
           <span class="sub" id="saveMsg"></span>
         </div>
+        <form class="krow spinbox" id="savePinBox" hidden autocomplete="off">
+          <input type="password" id="savePin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN zum Speichern der Kopie" autocomplete="off">
+          <button type="submit" class="knopfklein">Datei erzeugen</button>
+          <button type="button" class="knopfklein ghost" id="savePinAbbr">Abbrechen</button>
+        </form>
       </div>
     </details>
   </section>
@@ -1904,9 +1909,26 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     msg("Zugangsdaten aus diesem Browser gelöscht.");
   });
   document.querySelectorAll(".refresh").forEach(b=>b.addEventListener("click",()=>auffrischen(true)));
+  // Kopie mit Zugang: erst nach dem Schalt-PIN (prüft Google, jedes Mal neu eingeben, Eintrag im Schaltprotokoll + E-Mail)
+  const saveZugang=()=>({url:(fest?EINGEBAUT.url:$("histurl").value).trim(), token:(fest?EINGEBAUT.token:$("histtok").value).trim()});
   $("saveEmbed").addEventListener("click",()=>{
-    const url=(fest?EINGEBAUT.url:$("histurl").value).trim(), token=(fest?EINGEBAUT.token:$("histtok").value).trim();
+    const {url,token}=saveZugang();
     if(!url||!token){$("saveMsg").textContent="Zuerst URL und Zugriffsschlüssel eintragen.";return}
+    $("savePin").value=""; $("savePinBox").hidden=false; $("saveMsg").textContent="Zum Speichern Schalt-PIN eingeben."; $("savePin").focus();
+  });
+  $("savePinAbbr").addEventListener("click",()=>{$("savePinBox").hidden=true;$("savePin").value="";$("saveMsg").textContent=""});
+  $("savePinBox").addEventListener("submit",async ev=>{
+    ev.preventDefault();
+    const {url,token}=saveZugang(), pin=$("savePin").value.trim(); if(!pin) return;
+    const knopf=$("savePinBox").querySelector("button[type=submit]"); knopf.disabled=true; $("saveMsg").textContent="prüft PIN …";
+    let j=null;
+    try{const r=await fetch(url,{method:"POST",body:JSON.stringify({art:"steuerung",token,pin,aktion:"kopie"})});j=JSON.parse(await r.text())}
+    catch(e){j={ok:false,error:"Keine Antwort von der Web-App."}}
+    knopf.disabled=false; $("savePin").value="";
+    // ok: neues Google-Skript; „Unbekannte Aktion“: älteres Skript, PIN war aber richtig (wird vorher geprüft)
+    const ok=j&&(j.kopie||(!j.ok&&j.error==="Unbekannte Aktion"));
+    if(!ok){$("saveMsg").textContent=(j&&j.pinFalsch)?"PIN falsch – keine Datei erzeugt.":"Keine Datei erzeugt: "+((j&&j.error)||"Fehler");if(j&&j.pinFalsch)$("savePin").focus();else $("savePinBox").hidden=true;return}
+    $("savePinBox").hidden=true;
     const zugang="/*ZUGANG*/"+JSON.stringify({url,token})+"/*ENDE*/";
     const html=QUELLE.replace(/\/\*ZUGANG\*\/[\s\S]*?\/\*ENDE\*\//,()=>zugang);
     const a=document.createElement("a");
