@@ -843,8 +843,8 @@ h3{font-size:.92rem;margin:0;font-weight:600}
           <div class="uerech" id="ueRech"></div></div>
         <div class="uezeile"><span class="ueok" id="ueOkTemp" role="img"></span>
           <label for="ueTemp">Boiler unter <span><input id="ueTemp" type="number" min="30" max="80" step="1" inputmode="numeric"> °C</span></label><b id="ueJTemp">–</b></div>
-        <div class="uezeile ohne"><span class="ueok uhr"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5.3"/><path d="M7 4v3.2l2 1.3"/></svg></span>
-          <label for="ueDauer">Dann Boiler ein für <span><input id="ueDauer" type="number" min="3" max="30" step="1" inputmode="numeric"> min</span></label></div>
+        <div class="uezeile" style="border-bottom:0"><span class="ueok uhr"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5.3"/><path d="M7 4v3.2l2 1.3"/></svg></span>
+          <label for="ueDauer">Dann Boiler ein für <span><input id="ueDauer" type="number" min="3" max="30" step="1" inputmode="numeric"> min</span></label><b id="ueRest" title="Restlaufzeit Boiler MANUELL">–</b></div>
         <p class="hint" id="ueDauerText" style="margin-top:0"></p>
       </div>
       <div class="uevor"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span><b>«Boiler SPERREN» hat Vorrang.</b> Ist die Sperre ein, schaltet diese Funktion den Boiler nicht ein und wartet, bis die Sperre wieder aus ist.</span></div>
@@ -1000,7 +1000,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 11:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 11:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3035,6 +3035,19 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     w.laden=w.batt!==null?Math.max(0,-w.batt):null; w.einsp=w.netz!==null?Math.max(0,-w.netz):null;
     return w;
   }
+  // Restlaufzeit Boiler MANUELL: Timer vom Shelly (aktuell), sonst Ende laut letzter Prüfung; zählt jede Sekunde herunter
+  function ueRestZeigen(){
+    const el=$("ueRest"); if(!el) return;
+    const st=STEU&&STEU.ueb&&STEU.ueb.status, k=aktLetzt&&aktLetzt.k14;
+    let ende=null;
+    if(k&&k.a&&k.a[1]===1&&k.ende&&k.ende[1]) ende=k.ende[1];
+    else if(st&&st.an&&st.ende) ende=st.ende;
+    const r=ende?Math.round((ende-Date.now())/1000):null;
+    if(r===null||r<=0){el.textContent=k&&k.a&&k.a[1]===0?"aus":"–";el.removeAttribute("aria-label");return}
+    const t=Math.floor(r/60)+":"+String(r%60).padStart(2,"0");
+    el.textContent="noch "+t; el.setAttribute("aria-label","Restlaufzeit "+t+" Minuten");
+  }
+  setInterval(()=>{if(reiter==="steuerung"&&!document.hidden) ueRestZeigen()},1000);
   function ueEingaben(){   // Werte in den Feldern (auch ungespeichert), sonst die gespeicherten
     const c=(STEU&&STEU.ueb&&STEU.ueb.cfg)||{}, o={};
     Object.entries(UE_FELD).forEach(([k,id])=>{const v=parseFloat(String($(id).value).replace(",","."));o[k]=isFinite(v)?v:c[k]});
@@ -3058,6 +3071,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       z("= Frei für den Boiler",ueKw(w.frei),"summe")+z("davon Batterie lädt",ueKw(w.laden),"davon")+z("davon Einspeisung ins Netz",ueKw(w.einsp),"davon")+
       (w.boilerW>50?z("davon Boiler (läuft)",ueKw(w.boilerW),"davon"):"")+
       `<span style="font-family:var(--f-body);font-size:.68rem;line-height:1.3;margin-top:3px">Der Boiler selbst zählt nicht als Verbraucher, sonst würde er sich beim Laufen selbst wieder abschalten.${w.frZeit?" Stand "+fTime(w.frZeit)+".":""}</span>`;
+    ueRestZeigen();
     $("ueDauerText").textContent=`Solange alles stimmt, wird die Zeit bei jeder Messung (etwa alle 2 Minuten) wieder auf ${g.dauer} Minuten verlängert. Stimmt etwas nicht mehr, läuft der Boiler die restliche Zeit fertig und geht dann von selbst aus. Eine kurze Wolke schaltet ihn also nicht sofort ab.`;
     // Zustand
     let zs=c.aktiv?(st?st.zustand:"neu"):"aus", titel, text;
