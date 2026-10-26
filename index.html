@@ -906,7 +906,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 07:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 08:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1421,8 +1421,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function zoomWeg(){zoom=null;zoomAnzeige();zuschneiden();drawAll();loadHist(true)}
   document.querySelectorAll(".zoomweg").forEach(b=>b.addEventListener("click",zoomWeg));
   function setzeZoom(a,b){
-    const von=Math.min(a,b), bis=Math.min(Date.now(),Math.max(a,b));
-    if(bis-von<5*6e4) return;                 // mindestens 5 Minuten
+    let von=Math.min(a,b), bis=Math.min(Date.now(),Math.max(a,b));
+    // kurze Auswahl (z. B. ganz am Ende des Diagramms): auf mindestens 3 Minuten erweitern statt nichts tun
+    const MIN_Z=3*6e4;
+    if(bis-von<MIN_Z){ if(bis>=Date.now()-6e4){bis=Date.now();von=bis-MIN_Z} else {const m=(von+bis)/2;von=m-MIN_Z/2;bis=Math.min(Date.now(),m+MIN_Z/2)} }
     zoom={von,bis}; zoomAnzeige(); zuschneiden(); drawAll();
     // feinere Werte holen, wenn der Ausschnitt viel kürzer ist als der geladene Zeitraum
     if(bis-von<geladenSpanne/1.5) loadHist();
