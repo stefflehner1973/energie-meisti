@@ -1000,7 +1000,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 11:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 11:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1312,6 +1312,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("bHint").textContent=soc==null?"Kein Ladestand in der Tabelle. Läuft auf dem Shelly U12 das Skript „Fronius nach Google“?":"";
     $("bHint").hidden=soc!=null;
     aktLetzt=a; battVollZeigen(soc,a.batt||null);
+    if(reiter==="steuerung"&&STEU) zeichneUeb();   // Boiler mit Überschuss: „jetzt“ mit den frischen Minutenwerten
     // Wärmepumpe
     const wpP=typeof wp.p==="number"?Math.max(0,wp.p):null;
     if(wpP==null){$("wPow").textContent="–"}
@@ -3020,6 +3021,20 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const u=STEU&&STEU.ueb, k=aktLetzt&&aktLetzt.k14&&aktLetzt.k14.a;
     return !!((k&&k[0]===1)||(STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[0].ist===1)||(u&&u.status&&u.status.gesperrt));
   }
+  // Frische Minutenwerte der Seite (art=aktuell) statt der letzten Prüfung im Google-Skript, wenn sie neuer sind
+  function ueLive(alt){
+    const a=aktLetzt, fr=a&&a.fronius, n=Date.now();
+    if(!fr||!fr.zeit||fr.zeit<=(alt.frZeit||0)||n-fr.zeit>5*6e4) return alt;
+    const z=v=>typeof v==="number"&&isFinite(v)?v:null, frisch=(o,min)=>o&&o.zeit&&n-o.zeit<min*6e4;
+    const w={soc:z(fr.soc),pv:z(fr.pv),haus:z(fr.last),netz:z(fr.netz),batt:z(fr.batt),wallbox:z(fr.wattpilot),frZeit:fr.zeit,
+      wp:frisch(a.wp,5)?z(a.wp.p):null, boilerW:frisch(a.boiler,5)?z(a.boiler.p):null,
+      temp:frisch(a.temp,60)&&z(a.temp.t)!==null?a.temp.t:alt.temp};
+    const bw=Math.max(0,w.boilerW||0);
+    w.frei=w.pv!==null&&w.haus!==null?Math.max(0,w.pv-w.haus+bw):null;
+    w.uebrig=w.haus!==null?Math.max(0,w.haus-(w.wp||0)-(w.wallbox||0)-bw):null;
+    w.laden=w.batt!==null?Math.max(0,-w.batt):null; w.einsp=w.netz!==null?Math.max(0,-w.netz):null;
+    return w;
+  }
   function ueEingaben(){   // Werte in den Feldern (auch ungespeichert), sonst die gespeicherten
     const c=(STEU&&STEU.ueb&&STEU.ueb.cfg)||{}, o={};
     Object.entries(UE_FELD).forEach(([k,id])=>{const v=parseFloat(String($(id).value).replace(",","."));o[k]=isFinite(v)?v:c[k]});
@@ -3029,7 +3044,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const u=STEU&&STEU.ueb, zust=$("ueZust");
     document.querySelectorAll(".bsel button,#ueSpeichern").forEach(b=>b.disabled=!u);
     if(!u){zust.dataset.z="fehler";$("ueTitel").textContent="Noch nicht bereit";$("ueText").textContent="Das Google-Skript kennt diese Funktion noch nicht: neues Skript einfügen und «Bereitstellen → Neue Version» wählen.";return}
-    const c=u.cfg, st=u.status, w=(st&&st.werte)||{}, panel=$("uePanel");
+    const c=u.cfg, st=u.status, w=ueLive((st&&st.werte)||{}), panel=$("uePanel");
     document.querySelectorAll(".bsel button").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.a==="1")===!!c.aktiv)));
     if(panel.dataset.dirty!=="1") Object.entries(UE_FELD).forEach(([k,id])=>{$(id).value=c[k]});
     const g=ueEingaben();
@@ -3202,12 +3217,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     try{
       const vorne=[update()];
       if(reiter==="sonne"&&istHeute()) zeichneSonne();
+      if(reiter==="steuerung") vorne.push(ladeSteuerung(true,leise));   // jede Minute, unabhängig vom Verlaufs-Zeitraum
       const wetterAlt=Date.now()-progZeit>=15*6e4;
       if(verlaufAuch){
         letzterVerlauf=Date.now();
         if(reiter==="prognose") vorne.push(wetterAlt||!prog?ladePrognose(true,leise):ladeProgIst());
         else if(reiter==="geld") vorne.push(ladeGeld(true,leise));
-        else if(reiter==="steuerung") vorne.push(ladeSteuerung(true,leise));
+        else if(reiter==="steuerung"){}   // Steuerung: unten, jede Minute
         else if(reiter!=="sonne") vorne.push(loadHist(false,{rest:false,still:leise}));
       }
       await Promise.allSettled(vorne);
