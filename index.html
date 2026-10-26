@@ -1000,7 +1000,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 12:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 16:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1068,6 +1068,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* ---------- Formatierung ---------- */
   const de=(n,d)=>n.toFixed(d==null?1:d).replace(".",",");
   const fTime=t=>new Date(t).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"});
+  // Energie: ab 1000 kWh in MWh mit 2 Stellen (1'130 kWh → 1,13 MWh); f = Format darunter
+  const eK=(v,f)=>typeof v==="number"&&Math.abs(v)>=999.995?de(v/1000,2)+" MWh":f(v);
   const fDay=t=>{const d=new Date(t);return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."};
   const fFull=t=>new Date(t).toLocaleDateString("de-CH",{weekday:"short"})+" "+fDay(t)+" "+fTime(t);
   const fW=v=>Math.abs(v)>=1000?de(v/1000,2)+" kW":Math.round(v)+" W";
@@ -1328,7 +1330,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     else if(wbP>=1000){$("aPow").textContent=de(wbP/1000,2);$("aUnit").textContent="kW"}
     else{$("aPow").textContent=String(Math.round(wbP));$("aUnit").textContent="W"}
     $("aStat").textContent=wbOk&&fr.wpStatus!=null?(WB_STATUS[fr.wpStatus]||String(fr.wpStatus)):"–";
-    $("aZaehler").textContent=typeof fr.wpZaehler==="number"?Math.round(fr.wpZaehler).toLocaleString("de-CH")+" kWh":"–";
+    $("aZaehler").textContent=typeof fr.wpZaehler==="number"?eK(fr.wpZaehler,v=>Math.round(v)+" kWh"):"–";
     $("aAge").textContent=wbOk?fStempel(fr.zeit):"";
     $("aHint").textContent=a.fronius&&!("wattpilot" in a.fronius)?"Die Web-App liefert noch keine Wattpilot-Werte. Im Apps-Script-Editor das neue Google-Skript einfügen und eine neue Version bereitstellen."
       :"Gerade keine Wattpilot-Werte. Im Apps-Script-Editor die Funktion „testWattpilot“ ausführen: sie zeigt die Antwort der Wattpilot-Cloud oder den Fehler.";
@@ -1416,7 +1418,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         if(s.length<2){ids.forEach(i=>$(i).textContent="–");if(ids[3])$(ids[3]).textContent="–";return}
         const gap=gapOf(s); let e=0,on=0;
         for(let i=0;i<s.length-1;i++){const dt=Math.min(s[i+1].t-s[i].t,gap);e+=Math.max(0,s[i].v)*dt/3.6e9;if(s[i].v>100)on+=dt}
-        $(ids[0]).textContent=(e<10?de(e,2):de(e,1))+" kWh";
+        $(ids[0]).textContent=eK(e,e=>(e<10?de(e,2):de(e,1))+" kWh");
         if(ids[3]) gross($(ids[3]),$(ids[0]).textContent);
         const hh=on/36e5; $(ids[1]).textContent=hh<1?Math.round(hh*60)+" min":de(hh,1)+" h";
         $(ids[2]).textContent=fW(Math.max(...s.map(p=>p.mx)));
@@ -1710,7 +1712,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       {name:"Gesamt",col:"var(--warm)",series:PVS.ges||[],breite:1.8,deckkraft:.7}]:[];
     drawMulti(PVS);
     const e=s=>{if(s.length<2)return 0;const gap=gapOf(s);let x=0;for(let i=0;i<s.length-1;i++)x+=Math.max(0,s[i].v)*Math.min(s[i+1].t-s[i].t,gap)/3.6e9;return x};
-    const eo=e(ost), ew=e(west), t0s=Math.min(ost.length?ost[0].t:Infinity,west.length?west[0].t:Infinity), eg=e((PVS.ges||[]).filter(p=>p.t>=t0s)), k=v=>v<10?de(v,2)+" kWh":de(v,1)+" kWh";
+    const eo=e(ost), ew=e(west), t0s=Math.min(ost.length?ost[0].t:Infinity,west.length?west[0].t:Infinity), eg=e((PVS.ges||[]).filter(p=>p.t>=t0s)), k=v=>eK(v,v=>v<10?de(v,2)+" kWh":de(v,1)+" kWh");
     const fs=(c,x)=>`<span style="color:${textFarbe(c)};font-weight:600">${escH(x)}</span>`;
     $("pvSumme").innerHTML=PVS.lines.length?`Im gewählten Zeitraum: ${fs(PVS.lines[0].col,PVS.lines[0].name+" "+k(eo))}, ${fs(PVS.lines[1].col,PVS.lines[1].name+" "+k(ew))}`+(eo+ew>0?` (${Math.round(eo/(eo+ew)*100)} % / ${Math.round(ew/(eo+ew)*100)} %), ${fs(PVS.lines[2]?PVS.lines[2].col:"var(--warm)","gesamt "+k(eg))}.`:"."):"";
   }
@@ -2053,7 +2055,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   function energieBilanz(){
     const b=bilanzAb(-Infinity), pv=b.pv, last=b.last, ein=b.ein, bez=b.bez, lad=b.lad, ent=b.ent;
-    const k=v=>v<10?de(v,2)+" kWh":de(v,1)+" kWh", leer=b.von==null;
+    const k=v=>eK(v,v=>v<10?de(v,2)+" kWh":de(v,1)+" kWh"), leer=b.von==null;
     {const fb=bereich(); giltSetzen("eBilanz",leer?"":spanneText(fb.von||b.von,fb.von?fensterEnde(fb.bis,b.bis):b.bis));}
     $("ePV").textContent=leer?"–":k(pv); $("eLast").textContent=leer?"–":k(last);
     $("eEin").textContent=leer?"–":k(ein); $("eBez").textContent=leer?"–":k(bez);
@@ -2086,7 +2088,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     return r;
   }
   function zeichneAuto(){
-    const r=wbAuswerten(), k=v=>(v<10?de(v,2):de(v,1))+" kWh", leer=WB.length<2;
+    const r=wbAuswerten(), k=v=>eK(v,v=>(v<10?de(v,2):de(v,1))+" kWh"), leer=WB.length<2;
     const hh=r.on/36e5, zeit=leer?"–":hh<1?Math.round(hh*60)+" min":de(hh,1)+" h";
     // Übersicht
     gross($("aE2"),leer?"–":k(r.e)); $("aOn").textContent=zeit; $("aMax").textContent=leer?"–":fW(r.max);
@@ -2149,7 +2151,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
     svg.innerHTML=g;
     const sum=tl.reduce((a,d)=>a+d[1],0);
-    $("readoutUT").textContent=`${n} ${n===1?"Tag":"Tage"} · zusammen ${de(sum,1)} kWh · Ø ${de(sum/n,1)} kWh pro Tag`+wbAnteile(tl);
+    $("readoutUT").textContent=`${n} ${n===1?"Tag":"Tage"} · zusammen ${eK(sum,v=>de(v,1)+" kWh")} · Ø ${de(sum/n,1)} kWh pro Tag`+wbAnteile(tl);
     wbLegende("uLegT",tl);
     zeichneAutoPerioden(rows,wVon,wBis);
   }
@@ -2157,7 +2159,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let uEinteilung=store.get("tb.ueinteilung","woche");
   function zeichneAutoPerioden(rows,wVon,wBis){
     const svg=$("chartUP"); if(!svg) return;
-    const k=v=>(v<10?de(v,1):Math.round(v).toLocaleString("de-CH"))+" kWh";
+    const k=v=>eK(v,v=>(v<10?de(v,1):Math.round(v))+" kWh");
     // Bezugspunkt: Ende des gewählten Zeitraums (live: jetzt)
     const jetzt=Date.now(); wBis=wBis||jetzt; wVon=wVon||wBis-864e5;
     const ref=Math.min(jetzt,wBis-1), live=!zoom, d=new Date(ref), wo=wochenStart(ref), mo=new Date(d.getFullYear(),d.getMonth(),1).getTime(), ja=new Date(d.getFullYear(),0,1).getTime();
@@ -2188,14 +2190,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     g+=`<text x="4" y="12" font-size="11" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">kWh</text>`;
     const jede=Math.max(1,Math.ceil(n/(W<520?6:12)));
     per.forEach(([t,s],i)=>{const cx=Lb+sp*i+sp/2, y=Y(s.e), ist=live?t===aktuell:imFenster(t);
-      g+=wbStapel(cx,bw,s.k,Y,ist,`${lab(t)}: ${de(s.e,1)} kWh (${s.n} ${s.n===1?"Tag":"Tage"} mit Daten)`);
+      g+=wbStapel(cx,bw,s.k,Y,ist,`${lab(t)}: ${eK(s.e,v=>de(v,1)+" kWh")} (${s.n} ${s.n===1?"Tag":"Tage"} mit Daten)`);
       if(s.e>=0.05&&(sp>=26||ist||s.e===pmax)) g+=`<text x="${cx.toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--fg)" font-family="IBM Plex Sans, sans-serif">${s.e<10?de(s.e,1):Math.round(s.e)}</text>`;
       if(i%jede===0||i===n-1) g+=`<text x="${cx.toFixed(1)}" y="${H-Bb+17}" text-anchor="middle" font-size="11" fill="${ist?"var(--fg)":"var(--muted)"}" font-weight="${ist?700:400}" font-family="IBM Plex Mono, monospace">${lab(t)}</text>`});
     g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
     svg.innerHTML=g;
     wbLegende("uLegP",rows);
     const sum=per.reduce((a,p)=>a+p[1].e,0), einh={woche:["Woche","Wochen"],monat:["Monat","Monate"],jahr:["Jahr","Jahre"]}[uEinteilung];
-    $("readoutUP").textContent=`${n} ${n===1?einh[0]:einh[1]} · zusammen ${de(sum,1)} kWh · Ø ${de(sum/n,1)} kWh pro ${einh[0]}`+wbAnteile(per.map(p=>[0,p[1].e].concat(p[1].k.slice(0,3))))+(GELD&&GELD.wbHist&&GELD.wbHist.length?" · bis 22.10.26 aus Solar.web":"")+(per[per.length-1][0]===aktuell?` · ${einh[0]==="Woche"?"die laufende Woche":einh[0]==="Monat"?"der laufende Monat":"das laufende Jahr"} ist noch nicht abgeschlossen`:"");
+    $("readoutUP").textContent=`${n} ${n===1?einh[0]:einh[1]} · zusammen ${eK(sum,v=>de(v,1)+" kWh")} · Ø ${eK(sum/n,v=>de(v,1)+" kWh")} pro ${einh[0]}`+wbAnteile(per.map(p=>[0,p[1].e].concat(p[1].k.slice(0,3))))+(GELD&&GELD.wbHist&&GELD.wbHist.length?" · bis 22.10.26 aus Solar.web":"")+(per[per.length-1][0]===aktuell?` · ${einh[0]==="Woche"?"die laufende Woche":einh[0]==="Monat"?"der laufende Monat":"das laufende Jahr"} ist noch nicht abgeschlossen`:"");
   }
   // Herkunft der Ladeenergie: PV, Batterie, Netz (Solar.web bzw. eigene Schätzung pro Minute); fehlt sie, „ohne Angabe“
   const WB_TEILE=[["PV","var(--warm)"],["Batterie","var(--ok)"],["Netz","var(--muted)"],["ohne Angabe","var(--s4)"]];
@@ -2419,7 +2421,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let prog=null, progIst=[], progSoc=[], progZeit=0, progNr=0;
   const WETTER=c=>c===0?"sonnig":c<=2?"heiter":c===3?"bedeckt":c===45||c===48?"Nebel":c>=95?"Gewitter":(c>=71&&c<=77)||c===85||c===86?"Schnee":(c>=51&&c<=67)||(c>=80&&c<=82)?"Regen":"bewölkt";
   const TAGE=["So","Mo","Di","Mi","Do","Fr","Sa"];
-  const kwh=v=>v<10?de(v,1)+" kWh":Math.round(v)+" kWh";
+  const kwh=v=>eK(v,v=>v<10?de(v,1)+" kWh":Math.round(v)+" kWh");
 
   function pvFormular(){["Neig","AzO","AzW","KwpO","KwpW","Verl"].forEach(k=>{$("pv"+k).value=pvCfg[k[0].toLowerCase()+k.slice(1)]})}
   $("pvForm").addEventListener("submit",e=>{
@@ -2597,7 +2599,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   function summe(liste){const s={pv:0,selbst:0,ein:0,bez:0,haus:0,fSelbst:0,fEin:0,fLok:0,fBez:0};liste.forEach(d=>Object.keys(s).forEach(k=>s[k]+=d[k]));s.tot=s.fSelbst+s.fEin+s.fLok;s.netto=s.tot-s.fBez;return s}
   const chf=v=>"CHF "+(Math.round(v*100)/100).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
-  const kwhK=v=>(v>=100?Math.round(v):de(v,1))+" kWh";
+  const kwhK=v=>eK(v,v=>(v>=100?Math.round(v):de(v,1))+" kWh");
   async function ladeGeld(neu,hintergrund){
     if(!cfg.histurl||!cfg.histtok) return;
     if(hintergrund&&!neu&&GELD&&Date.now()-geldZeit<FRISCH) return;
