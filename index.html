@@ -41,7 +41,15 @@ h1{font-family:var(--f-display);font-weight:600;font-size:2rem;letter-spacing:.0
 .sub{color:var(--muted);font-size:.85rem;font-family:var(--f-mono)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
 .main{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
-@media (max-width:480px){.main{grid-template-columns:1fr;justify-items:center;text-align:center}}
+/* Handy: Thermometer links (kleiner), Temperatur rechts daneben, Werte darunter über die ganze Breite */
+@media (max-width:480px){.main{grid-template-columns:auto minmax(0,1fr);column-gap:16px;row-gap:6px;align-items:center}
+  .main .gauge{width:64px;height:151px;grid-row:1/4;align-self:center}
+  .main .gauge svg{width:64px;height:151px}
+  .main .reading{display:contents}
+  .main .reading>.label,.main .reading>.big,.main .reading>.pill{grid-column:2}
+  .main .reading>.label{align-self:end}
+  .main .reading>.pill{margin:0;align-self:start}
+  .main .reading>.meta{grid-column:1/-1;margin-top:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px}}
 /* Skala */
 .gauge{position:relative;width:110px;height:260px}
 .gauge svg{width:110px;height:260px;display:block}
@@ -1000,7 +1008,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 16:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 17:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
