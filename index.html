@@ -400,7 +400,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <button type="button" data-tage="0.0417" aria-pressed="false" title="Letzte Stunde">1 h</button>
         <button type="button" data-tage="0" aria-pressed="false" title="Heute ab 00:00 bis jetzt">Tag</button>
         <button type="button" data-tage="1" aria-pressed="false" title="Letzte 24 Stunden">24 h</button>
-        <button type="button" data-tage="7" aria-pressed="false" title="Diese Woche ab Montag bis jetzt">Woche</button>
+        <button type="button" data-tage="7" aria-pressed="false" title="Letzte 7 Tage bis jetzt">Woche</button>
         <button type="button" data-tage="30" aria-pressed="false" title="Dieser Monat ab dem 1. bis jetzt">Monat</button>
         <button type="button" data-tage="365" aria-pressed="false" title="Dieses Jahr ab 1. Januar bis jetzt">Jahr</button>
       </div><button type="button" class="ghost navb" data-nav="1" aria-label="Späterer Zeitraum" title="Später" disabled>›</button><span class="zeitlabel" hidden></span><button type="button" class="zoomweg" hidden>Zoom aufheben</button></div>
@@ -567,7 +567,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <button type="button" data-tage="0.0417" aria-pressed="false" title="Letzte Stunde">1 h</button>
         <button type="button" data-tage="0" aria-pressed="false" title="Heute ab 00:00 bis jetzt">Tag</button>
         <button type="button" data-tage="1" aria-pressed="false" title="Letzte 24 Stunden">24 h</button>
-        <button type="button" data-tage="7" aria-pressed="false" title="Diese Woche ab Montag bis jetzt">Woche</button>
+        <button type="button" data-tage="7" aria-pressed="false" title="Letzte 7 Tage bis jetzt">Woche</button>
         <button type="button" data-tage="30" aria-pressed="false" title="Dieser Monat ab dem 1. bis jetzt">Monat</button>
         <button type="button" data-tage="365" aria-pressed="false" title="Dieses Jahr ab 1. Januar bis jetzt">Jahr</button>
       </div><button type="button" class="ghost navb" data-nav="1" aria-label="Späterer Zeitraum" title="Später" disabled>›</button><span class="zeitlabel" hidden></span><button type="button" class="zoomweg" hidden>Zoom aufheben</button></div>
@@ -600,7 +600,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <button type="button" data-tage="0.0417" aria-pressed="false" title="Letzte Stunde">1 h</button>
         <button type="button" data-tage="0" aria-pressed="false" title="Heute ab 00:00 bis jetzt">Tag</button>
         <button type="button" data-tage="1" aria-pressed="false" title="Letzte 24 Stunden">24 h</button>
-        <button type="button" data-tage="7" aria-pressed="false" title="Diese Woche ab Montag bis jetzt">Woche</button>
+        <button type="button" data-tage="7" aria-pressed="false" title="Letzte 7 Tage bis jetzt">Woche</button>
         <button type="button" data-tage="30" aria-pressed="false" title="Dieser Monat ab dem 1. bis jetzt">Monat</button>
         <button type="button" data-tage="365" aria-pressed="false" title="Dieses Jahr ab 1. Januar bis jetzt">Jahr</button>
       </div><button type="button" class="ghost navb" data-nav="1" aria-label="Späterer Zeitraum" title="Später" disabled>›</button><span class="zeitlabel" hidden></span><button type="button" class="zoomweg" hidden>Zoom aufheben</button></div>
@@ -675,7 +675,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <button type="button" data-tage="0.0417" aria-pressed="false" title="Letzte Stunde">1 h</button>
         <button type="button" data-tage="0" aria-pressed="false" title="Heute ab 00:00 bis jetzt">Tag</button>
         <button type="button" data-tage="1" aria-pressed="false" title="Letzte 24 Stunden">24 h</button>
-        <button type="button" data-tage="7" aria-pressed="false" title="Diese Woche ab Montag bis jetzt">Woche</button>
+        <button type="button" data-tage="7" aria-pressed="false" title="Letzte 7 Tage bis jetzt">Woche</button>
         <button type="button" data-tage="30" aria-pressed="false" title="Dieser Monat ab dem 1. bis jetzt">Monat</button>
         <button type="button" data-tage="365" aria-pressed="false" title="Dieses Jahr ab 1. Januar bis jetzt">Jahr</button>
       </div><button type="button" class="ghost navb" data-nav="1" aria-label="Späterer Zeitraum" title="Später" disabled>›</button><span class="zeitlabel" hidden></span><button type="button" class="zoomweg" hidden>Zoom aufheben</button></div>
@@ -1000,7 +1000,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 11:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 12:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1458,17 +1458,17 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let zoom=null, ROH={}, geladenSpanne=0;
   function bereich(){
     if(zoom) return {von:zoom.von,bis:zoom.bis};
-    if(NAV_EINHEIT[tage]){const j=Date.now(); return {von:einheitStart(j,NAV_EINHEIT[tage]),bis:j}}   // Tag, Woche, Monat, Jahr: Kalender bis jetzt
+    if(NAV_EINHEIT[tage]){const j=Date.now(); return {von:einheitStart(j,NAV_EINHEIT[tage]),bis:j}}   // Tag, Monat, Jahr: Kalender bis jetzt
     if(tage<1) return {von:Date.now()-tage*864e5,bis:Date.now()};
     return {von:null};
   }
   // Blättern: ‹ früher, › später. Tag, 7 Tage, 30 Tage, 1 Jahr springen in Kalendertagen, -wochen, -monaten, -jahren,
   // 1 h, 24 h und ein gezogener Zoom um ihre eigene Länge. Wer wieder bei „jetzt“ ankommt, ist zurück in der Live-Ansicht.
-  const NAV_EINHEIT={0:"tag",7:"woche",30:"monat",365:"jahr"};
+  const NAV_EINHEIT={0:"tag",30:"monat",365:"jahr"};   // Woche (7) = letzte 7 Tage bis jetzt, wie 24 h
   function einheitStart(t,e){const d=new Date(t);d.setHours(0,0,0,0);if(e==="woche")return wochenStart(t);if(e==="monat")d.setDate(1);if(e==="jahr")d.setMonth(0,1);return d.getTime()}
   function einheitPlus(t,e,n){const d=new Date(t);if(e==="tag")d.setDate(d.getDate()+n);else if(e==="woche")d.setDate(d.getDate()+7*n);else if(e==="monat")d.setMonth(d.getMonth()+n);else d.setFullYear(d.getFullYear()+n);return d.getTime()}
   function blaettern(r){
-    const jetzt=Date.now(), e=zoom?zoom.nav:(NAV_EINHEIT[tage]||(tage===1?"tag":null));   // 24 h blättert in Kalendertagen
+    const jetzt=Date.now(), e=zoom?zoom.nav:(NAV_EINHEIT[tage]||(tage===1?"tag":tage===7?"woche":null));   // 24 h blättert in Kalendertagen, Woche in Kalenderwochen
     let von,bis;
     if(e){
       if(!zoom&&r>0) return;
@@ -1492,7 +1492,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     else if(E==="woche") von=kleiner?mitternacht(z.von):wochenStart(z.von);   // kleiner: erste 7 Tage ab Beginn, grösser: Kalenderwoche
     else von=einheitStart(z.von,E);
     const ende=E==="stunde"?von+36e5:E==="24h"?von+864e5:einheitPlus(von,E,1);
-    if(ende>Date.now()-6e4&&E!=="stunde"&&E!=="24h") return null;   // enthält heute: Live-Ansicht (Tag/Woche/Monat/Jahr bis jetzt)
+    if(ende>Date.now()-6e4&&E!=="stunde"&&E!=="24h") return null;   // enthält heute: Live-Ansicht (Tag/Monat/Jahr bis jetzt, Woche = letzte 7 Tage)
     return {von,bis:Math.min(Date.now(),ende),nav:E==="stunde"||E==="24h"?null:E};
   }
   const WTAGE_K=["So","Mo","Di","Mi","Do","Fr","Sa"];
@@ -1681,7 +1681,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
 
   function drawAll(){
-    const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"diese Woche",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
+    const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"7 Tage",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
     document.querySelectorAll(".elab").forEach(e=>e.textContent=lab);
     document.querySelectorAll(".ebz").forEach(e=>e.textContent="· "+lab.replace("Energie ",""));   // Zeitraum der Kacheln
     Object.values(CH).forEach(drawChart);drawMulti(MA);zeichneK14();
