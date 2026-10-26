@@ -1008,7 +1008,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 17:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 17:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3267,6 +3267,29 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const zurueck=()=>{if(aktiv()&&Date.now()-letzteAbfrage>15e3) auffrischen(Date.now()-letzterVerlauf>=6e4)};
   document.addEventListener("visibilitychange",zurueck);
   window.addEventListener("focus",zurueck);
+
+  /* Neue Version von GitHub Pages holen: Das iPhone (vor allem als Home-Bildschirm-App) zeigt sonst bis zu
+     10 Minuten oder länger die zwischengespeicherte alte Seite. Nur auf …github.io, nicht in einer gespeicherten Kopie. */
+  const VERS_RE=/Version (\d\d)\.(\d\d)\.(\d\d) (\d\d):(\d\d)/;
+  const versZahl=t=>{const m=VERS_RE.exec(t||"");return m?+(m[3]+m[2]+m[1]+m[4]+m[5]):0};   // JJMMTTHHMM
+  const meineVers=versZahl(document.documentElement.innerHTML);
+  let versGeprueft=0;
+  async function neueVersionPruefen(){
+    if(!/github\.io$/.test(location.hostname)||!meineVers||document.hidden||Date.now()-versGeprueft<60e3) return;
+    versGeprueft=Date.now();
+    try{
+      const r=await fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}); if(!r.ok) return;
+      const neu=versZahl(await r.text());
+      if(neu>meineVers){
+        const ziel=location.pathname+"?v="+neu;
+        try{if(sessionStorage.getItem("tb.neuVers")===String(neu))return;sessionStorage.setItem("tb.neuVers",String(neu))}catch(e){}   // nicht im Kreis laden
+        location.replace(ziel);
+      }
+    }catch(e){}
+  }
+  neueVersionPruefen();
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden) neueVersionPruefen()});
+  window.addEventListener("pageshow",ev=>{if(ev.persisted){versGeprueft=0;neueVersionPruefen()}});
   let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{drawAll();zeichneSonne()},150)});
 
 })();
