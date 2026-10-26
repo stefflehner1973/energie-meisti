@@ -906,7 +906,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 08:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 08:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2682,7 +2682,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
      Boiler: Temperatur wird mitgerechnet (Abkühlung pro Stunde, Aufheizen mit Überschuss, wenn die Batterie voll ist
          und der Boiler nicht gesperrt ist); vor dem Heimkommen „Boiler MANUELL“, falls unter dem Minimum. */
   let LM=null, lmZeit=0, lmLaedt=false, aktLetzt=null;
-  const BOILER_KWH_PRO_K=0.29, BOILER_P_STD=6000, WP_K_STD=2.0, BATT_LADE_MAX=10000;   // Boiler 250 l (250 × 1,163 Wh/K), 6 kW; WP-Annahme bis genug Messtage
+  const BOILER_KWH_PRO_K=0.5, BOILER_P_STD=5100, WP_K_STD=2.0, BATT_LADE_MAX=10000;   // Boiler: gemessen 0,5 kWh pro Kelvin am Fühler (aussen oben am Boiler, nicht Wassertemperatur) und 5,1 kW Heizleistung (Auswertung 26.10.2026); WP-Annahme bis genug Messtage
   async function ladeLastmodell(neu){
     if(!cfg.histurl||!cfg.histtok) return;
     if(!LM){try{const c=JSON.parse(localStorage.getItem("tb.lastmodell")||"null");if(c&&c.lm){LM=c.lm;lmZeit=c.zeit}}catch(e){}}
@@ -2810,6 +2810,18 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     hit.addEventListener("mousemove",ev=>zeig(pos(ev)));hit.addEventListener("click",ev=>zeig(pos(ev)));
     if(sim){const v=sim.pts.find(p=>p[1]>=99.5);$("readoutBattP").textContent=v?`Voraussichtlich voll: ${fDay(v[0])} ${fTime(v[0])}`:`Höchststand bis morgen Abend ca. ${Math.round(Math.max(...sim.pts.map(p=>p[1])))} %`}
   }
+  // Prognose höchstens einmal pro Stunde an Google schicken (Blatt „Batterie-Prognose“, für die wöchentliche Auswertung der Treffsicherheit).
+  // Nur mit geladenem Lastmodell; schaltet nichts. Ältere Google-Skripte ohne art=prognose antworten mit einem Fehler – wird ignoriert.
+  let progMeldZeit=0;
+  function prognoseMelden(soc,p){
+    if(!p||!p.sim||!p.sim.mitLM||soc==null||!cfg.histurl||!cfg.histtok) return;
+    const jetzt=Date.now(); if(jetzt-progMeldZeit<55*6e4) return;
+    try{const t=+(localStorage.getItem("tb.progmeld")||0); if(jetzt-t<55*6e4){progMeldZeit=t;return}}catch(e){}
+    progMeldZeit=jetzt; try{localStorage.setItem("tb.progmeld",String(jetzt))}catch(e){}
+    const r=x=>x==null?null:Math.round(x*10)/10;
+    fetch(cfg.histurl.trim(),{method:"POST",body:JSON.stringify({art:"prognose",token:cfg.histtok,soc:r(soc),hVoll:p.heute.voll||null,hMax:r(p.heute.max),
+      mVoll:p.morgen?p.morgen.voll||null:null,mMax:p.morgen?r(p.morgen.max):null})}).then(x=>x.text()).then(t=>logD("Prognose an Google: "+redact(t).slice(0,120))).catch(()=>{});
+  }
   function battVollZeigen(soc,b){
     if(soc!==undefined) battLetzt={soc,b};
     if(!battLetzt) return;
@@ -2819,6 +2831,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!prog){ if(!battLaedt){battLaedt=true; ladePrognose(false,true)} html=soc==null?"":`<span>Prognose wird geladen …</span>`; }
     else{
       const p=battPrognose(soc), h=new Date().getHours(), teile=[];
+      prognoseMelden(soc,p);
       if(b&&b.vollUm) teile.push(`Heute um <b>${fTime(b.vollUm)}</b> voll geworden.`);
       else if(soc!=null&&soc>=99.5) teile.push(`<b>Voll.</b>`);
       else if(p&&p.heute.voll) teile.push(`Voraussichtlich voll um ca. <b>${fTime(p.heute.voll)}</b>.`);
