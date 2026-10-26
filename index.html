@@ -135,6 +135,56 @@ button.ghost{background:transparent;color:var(--accent)}
 .swerte{display:flex;flex-wrap:wrap;gap:4px 18px;font-family:var(--f-mono);font-size:.85rem;color:var(--muted);margin:4px 0 12px}
 .swerte b{color:var(--fg);font-weight:600}
 .stab td,.stab th{text-align:left}
+/* Boiler mit Überschuss */
+.uekopf{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.bsel{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.bsel button{border:0;border-radius:0;background:transparent;color:var(--muted);padding:8px 16px;font-size:.85rem;min-width:56px}
+.bsel button+button{border-left:1px solid var(--line)}
+.bsel button[aria-pressed="true"]{background:var(--accent);color:var(--panel)}
+.uezust{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:8px;margin:14px 0 4px;background:color-mix(in srgb,var(--muted) 10%,transparent)}
+.uezust .z1{display:flex;align-items:center;gap:10px}
+.uezust .z1 i{width:12px;height:12px;border-radius:50%;flex-shrink:0;background:var(--muted)}
+.uezust b{font-family:var(--f-display);font-weight:600;font-size:1.6rem;line-height:1.1}
+.uezust span{font-size:.85rem}
+.uezust[data-z="laeuft"]{background:color-mix(in srgb,var(--ok) 13%,transparent)} .uezust[data-z="laeuft"] i{background:var(--ok)}
+.uezust[data-z="wartet"],.uezust[data-z="auslauf"]{background:color-mix(in srgb,var(--warm) 13%,transparent)} .uezust[data-z="wartet"] i,.uezust[data-z="auslauf"] i{background:var(--warm-t)}
+.uezust[data-z="gesperrt"],.uezust[data-z="fehler"]{background:color-mix(in srgb,var(--hot) 12%,transparent)} .uezust[data-z="gesperrt"] i,.uezust[data-z="fehler"] i{background:var(--hot)}
+.uezust[data-z="fremd"],.uezust[data-z="pause"]{background:color-mix(in srgb,var(--accent) 11%,transparent)} .uezust[data-z="fremd"] i,.uezust[data-z="pause"] i{background:var(--accent)}
+.uebed{margin-top:14px}
+.uebed .ukopf{display:flex;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--line);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.uezeile{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.uezeile.ohne{grid-template-columns:28px minmax(0,1fr);border-bottom:0}
+.uezeile label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.uezeile label>span{display:inline-flex;align-items:center;gap:4px}
+.uezeile input{width:4.6em;font:inherit;font-family:var(--f-mono);text-align:right;padding:5px 6px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.uezeile>b{font-family:var(--f-mono);font-weight:600;font-size:.92rem;white-space:nowrap}
+.ueok{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted)}
+.ueok.ja{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.ueok.uhr{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.ueok svg{width:14px;height:14px}
+.uerech{grid-column:2/4;display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--muted) 8%,transparent);font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.uerech div{display:flex;justify-content:space-between;gap:10px}
+.uerech div span+span{white-space:nowrap}
+.uerech .summe{border-top:1px solid var(--line);margin-top:3px;padding-top:3px;color:var(--fg);font-weight:600}
+.uerech .davon{margin-top:4px}
+.uerech .davon+.davon{margin-top:0}
+.uevor{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin:12px 0;font-size:.82rem;color:var(--muted)}
+.uevor svg{color:var(--hot);flex-shrink:0;margin-top:2px}
+.uevor b{color:var(--fg)}
+.ueheute{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.ueheute .zahlen{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.85rem;color:var(--muted);margin:4px 0 6px}
+.ueheute .zahlen b{color:var(--fg);font-weight:600}
+.ueliste{list-style:none;margin:0;padding:0;font-size:.82rem}
+.ueliste li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:5px 0;border-bottom:1px solid var(--line)}
+.ueliste li:last-child{border-bottom:0}
+.ueliste li span:first-child{font-family:var(--f-mono);white-space:nowrap}
+.ueliste li span+span{color:var(--muted)}
+dialog.uewarn{border:0;border-radius:12px;padding:20px;max-width:min(420px,calc(100vw - 32px));background:var(--panel);color:var(--fg);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+dialog.uewarn::backdrop{background:rgba(15,22,28,.5)}
+dialog.uewarn h3{margin:0;display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:600;font-size:1.45rem}
+dialog.uewarn h3 span{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--hot) 14%,transparent);color:var(--hot)}
+dialog.uewarn p{margin:12px 0 16px;font-size:.9rem}
+dialog.uewarn form{display:flex;justify-content:flex-end}
 .stab td{font-family:inherit;white-space:normal}
 .stab td.w{white-space:nowrap;font-family:var(--f-mono)}
 .stab td.g{color:var(--muted);font-size:.8rem;min-width:14em}
@@ -773,6 +823,50 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <p class="hint" id="sPause" hidden></p>
       <p class="hint" id="sHint" hidden></p>
     </section>
+    <section class="panel" id="uePanel">
+      <div class="uekopf">
+        <h2 style="margin:0">Boiler mit Überschuss</h2>
+        <div class="bsel" role="group" aria-label="Boiler mit Überschuss ein- oder ausschalten">
+          <button type="button" data-a="0" aria-pressed="false">Aus</button>
+          <button type="button" data-a="1" aria-pressed="false">Ein</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:4px">Läuft für sich, unabhängig vom Modus oben. Schaltet nur «Boiler MANUELL» (O2).</p>
+      <div class="uezust" id="ueZust" data-z="aus"><div class="z1"><i aria-hidden="true"></i><b id="ueTitel">–</b></div><span id="ueText"></span></div>
+      <p class="hint" id="uePause" hidden></p>
+      <div class="uebed">
+        <div class="ukopf"><span>Bedingungen (alle müssen stimmen)</span><span>jetzt</span></div>
+        <div class="uezeile"><span class="ueok" id="ueOkSoc" role="img"></span>
+          <label for="ueSoc">Batterie über <span><input id="ueSoc" type="number" min="5" max="99" step="5" inputmode="numeric"> %</span></label><b id="ueJSoc">–</b></div>
+        <div class="uezeile"><span class="ueok" id="ueOkFrei" role="img"></span>
+          <label for="ueFrei">Freie Leistung über <span><input id="ueFrei" type="number" min="0.5" max="15" step="0.5" inputmode="decimal"> kW</span></label><b id="ueJFrei">–</b>
+          <div class="uerech" id="ueRech"></div></div>
+        <div class="uezeile"><span class="ueok" id="ueOkTemp" role="img"></span>
+          <label for="ueTemp">Boiler unter <span><input id="ueTemp" type="number" min="30" max="80" step="1" inputmode="numeric"> °C</span></label><b id="ueJTemp">–</b></div>
+        <div class="uezeile ohne"><span class="ueok uhr"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5.3"/><path d="M7 4v3.2l2 1.3"/></svg></span>
+          <label for="ueDauer">Dann Boiler ein für <span><input id="ueDauer" type="number" min="3" max="30" step="1" inputmode="numeric"> min</span></label></div>
+        <p class="hint" id="ueDauerText" style="margin-top:0"></p>
+      </div>
+      <div class="uevor"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span><b>«Boiler SPERREN» hat Vorrang.</b> Ist die Sperre ein, schaltet diese Funktion den Boiler nicht ein und wartet, bis die Sperre wieder aus ist.</span></div>
+      <div class="krow"><button type="button" class="knopfklein" id="ueSpeichern">Grenzwerte speichern</button><button type="button" class="knopfklein ghost" id="ueVerwerfen">Verwerfen</button></div>
+      <form class="krow spinbox" id="uePinBox" hidden autocomplete="off">
+        <input type="password" id="uePin" inputmode="numeric" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
+        <label class="kmerk"><input type="checkbox" id="ueMerk"> 30 Tage merken</label>
+        <button type="submit" class="knopfklein">Senden</button>
+        <button type="button" class="knopfklein ghost" id="uePinAbbr">Abbrechen</button>
+      </form>
+      <p class="hint" id="ueMeldung" aria-live="polite"></p>
+      <div class="ueheute">
+        <span class="sublabel" style="margin:0">Heute</span>
+        <div class="zahlen" id="ueZahlen"></div>
+        <ul class="ueliste" id="ueListe"></ul>
+      </div>
+      <dialog class="uewarn" id="ueWarn" aria-labelledby="ueWarnTitel" aria-describedby="ueWarnText">
+        <h3 id="ueWarnTitel"><span><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span>Boiler ist gesperrt</h3>
+        <p id="ueWarnText">«Boiler SPERREN» ist im Moment eingeschaltet. Die Sperre hat Vorrang: Diese Funktion ist jetzt zwar ein, schaltet den Boiler aber erst ein, wenn die Sperre wieder aus ist.</p>
+        <form method="dialog"><button type="submit" value="ok" autofocus>OK</button></form>
+      </dialog>
+    </section>
     <section class="panel">
       <h2>Szenario wählen</h2>
       <div class="sform">
@@ -906,7 +1000,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 09:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 11:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2911,7 +3005,80 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const pr=STEU.protokoll||[];
     $("sProt").innerHTML=pr.length?`<thead><tr><th>Zeit</th><th>Ausgang</th><th>Soll</th><th>Aktion</th><th>Grund</th></tr></thead><tbody>`+
       pr.map(r=>`<tr><td>${r[0]?fDay(r[0])+" "+fTime(r[0]):""}</td><td>${esc(r[2]||"")}</td><td>${esc(r[3]||"")}</td><td>${esc(r[5]||"")}</td><td>${esc(r[6]||(r[2]?"":r[1]||""))}</td></tr>`).join("")+"</tbody>":`<tbody><tr><td>Noch keine Einträge.</td></tr></tbody>`;
+    zeichneUeb();
   }
+
+  /* ---------- Boiler mit Überschuss (rechnet und schaltet im Google-Skript, Funktion ueberschuss_) ---------- */
+  const UE_FELD={soc:"ueSoc",frei:"ueFrei",maxT:"ueTemp",dauer:"ueDauer"};
+  const UE_OK='<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7"/></svg>';
+  const UE_NEIN='<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="width:12px;height:12px"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg>';
+  const ueKw=w=>typeof w==="number"?de(w/1000,1)+" kW":"–";
+  const ueDauer=ms=>{const m=Math.round((ms||0)/6e4);return m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min"};
+  let ueWarnGezeigt=false;
+  function ueWarnen(){ueWarnGezeigt=true;const d=$("ueWarn");try{d.showModal()}catch(e){alert("Boiler ist gesperrt: «Boiler SPERREN» ist eingeschaltet. Die Sperre hat Vorrang, der Boiler wird erst eingeschaltet, wenn die Sperre aus ist.")}}
+  function ueGesperrt(){
+    const u=STEU&&STEU.ueb, k=aktLetzt&&aktLetzt.k14&&aktLetzt.k14.a;
+    return !!((k&&k[0]===1)||(STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[0].ist===1)||(u&&u.status&&u.status.gesperrt));
+  }
+  function ueEingaben(){   // Werte in den Feldern (auch ungespeichert), sonst die gespeicherten
+    const c=(STEU&&STEU.ueb&&STEU.ueb.cfg)||{}, o={};
+    Object.entries(UE_FELD).forEach(([k,id])=>{const v=parseFloat(String($(id).value).replace(",","."));o[k]=isFinite(v)?v:c[k]});
+    return o;
+  }
+  function zeichneUeb(){
+    const u=STEU&&STEU.ueb, zust=$("ueZust");
+    document.querySelectorAll(".bsel button,#ueSpeichern").forEach(b=>b.disabled=!u);
+    if(!u){zust.dataset.z="fehler";$("ueTitel").textContent="Noch nicht bereit";$("ueText").textContent="Das Google-Skript kennt diese Funktion noch nicht: neues Skript einfügen und «Bereitstellen → Neue Version» wählen.";return}
+    const c=u.cfg, st=u.status, w=(st&&st.werte)||{}, panel=$("uePanel");
+    document.querySelectorAll(".bsel button").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.a==="1")===!!c.aktiv)));
+    if(panel.dataset.dirty!=="1") Object.entries(UE_FELD).forEach(([k,id])=>{$(id).value=c[k]});
+    const g=ueEingaben();
+    const ok=(id,v)=>{const el=$(id);el.className="ueok"+(v===true?" ja":"");el.innerHTML=v===true?UE_OK:v===false?UE_NEIN:"?";el.setAttribute("aria-label",v===true?"erfüllt":v===false?"nicht erfüllt":"unbekannt")};
+    ok("ueOkSoc",w.soc==null?null:w.soc>g.soc); ok("ueOkFrei",w.frei==null?null:w.frei>g.frei*1000); ok("ueOkTemp",w.temp==null?null:w.temp<g.maxT);
+    $("ueJSoc").textContent=w.soc!=null?Math.round(w.soc)+" %":"–";
+    $("ueJFrei").textContent=ueKw(w.frei);
+    $("ueJTemp").textContent=w.temp!=null?dez(w.temp)+" °C":"unbekannt";
+    const z=(a,b,k)=>`<div${k?` class="${k}"`:""}><span>${a}</span><span>${b}</span></div>`;
+    $("ueRech").innerHTML=z("PV-Produktion",ueKw(w.pv))+z("− Wärmepumpe",ueKw(w.wp))+z("− Wallbox",ueKw(w.wallbox))+z("− Übriges Haus",ueKw(w.uebrig))+
+      z("= Frei für den Boiler",ueKw(w.frei),"summe")+z("davon Batterie lädt",ueKw(w.laden),"davon")+z("davon Einspeisung ins Netz",ueKw(w.einsp),"davon")+
+      (w.boilerW>50?z("davon Boiler (läuft)",ueKw(w.boilerW),"davon"):"")+
+      `<span style="font-family:var(--f-body);font-size:.74rem;margin-top:4px">Der Boiler selbst zählt nicht als Verbraucher, sonst würde er sich beim Laufen selbst wieder abschalten.${w.frZeit?" Stand "+fTime(w.frZeit)+".":""}</span>`;
+    $("ueDauerText").textContent=`Solange alles stimmt, wird die Zeit bei jeder Messung (etwa alle 2 Minuten) wieder auf ${g.dauer} Minuten verlängert. Stimmt etwas nicht mehr, läuft der Boiler die restliche Zeit fertig und geht dann von selbst aus. Eine kurze Wolke schaltet ihn also nicht sofort ab.`;
+    // Zustand
+    let zs=c.aktiv?(st?st.zustand:"neu"):"aus", titel, text;
+    if(c.aktiv&&zs==="aus") zs="neu";
+    const fehlt=st&&st.fehlt&&st.fehlt.length?"Es fehlt: "+st.fehlt.join(" · "):"";
+    switch(zs){
+      case "aus": titel="Ausgeschaltet"; text="Diese Funktion schaltet nichts. Die übrige Steuerung läuft normal weiter."; break;
+      case "neu": titel="Eingeschaltet"; text="Wird bei der nächsten Messung (etwa alle 2 Minuten) geprüft."; break;
+      case "laeuft": titel="Boiler läuft"; text=`Boiler MANUELL ist ein bis ${fTime(st.ende)} und wird um ${c.dauer} Minuten verlängert, solange alles stimmt.`+(st.seit?` Läuft seit ${fTime(st.seit)}.`:""); break;
+      case "auslauf": titel="Läuft aus"; text=(fehlt||"Bedingungen nicht mehr erfüllt")+(st.ende?`. Boiler MANUELL geht um ${fTime(st.ende)} von selbst aus.`:""); break;
+      case "wartet": titel="Wartet"; text=fehlt||"Bedingungen werden geprüft."; break;
+      case "gesperrt": titel="Gesperrt"; text="«Boiler SPERREN» ist ein. Es wird nichts eingeschaltet, bis die Sperre aus ist."; break;
+      case "pause": titel="Pause"; text=`Boiler MANUELL wurde von Hand ausgeschaltet. Diese Funktion macht Pause bis ${fTime(st.pause)}.`; break;
+      case "fremd": titel="Boiler MANUELL läuft schon"; text=`Von Hand oder von der Steuerung eingeschaltet${st.fremdBis?" (bis "+fTime(st.fremdBis)+")":""}. Diese Funktion greift nicht ein.`; break;
+      default: titel="Fehler"; text=(st&&st.fehler)||"Unbekannter Zustand";
+    }
+    if(st&&st.fehler&&zs!=="fehler") text+=" · "+st.fehler;
+    if(c.aktiv&&st&&st.zeit&&Date.now()-st.zeit>10*6e4) text+=` · Letzte Prüfung ${fDay(st.zeit)} ${fTime(st.zeit)}.`;
+    zust.dataset.z=zs; $("ueTitel").textContent=titel; $("ueText").textContent=text;
+    const pz=$("uePause"); pz.hidden=zs!=="pause"; pz.innerHTML="";
+    if(zs==="pause"){const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Sofort fortsetzen";b.addEventListener("click",()=>steuerSenden({aktion:"ueberschuss",ueb:{pauseWeg:true}},"Fortgesetzt.",undefined,undefined,UI_U));pz.append(b)}
+    // Heute
+    const h=st&&st.heute&&st.zeit&&mitternacht(st.zeit)===mitternacht(Date.now())?st.heute:{n:0,ms:0,verlauf:[]};
+    $("ueZahlen").innerHTML=`<span><b>${h.n}×</b> eingeschaltet</span><span><b>${ueDauer(h.ms)}</b> gelaufen</span>`;
+    const li=[]; if(st&&st.an&&st.seit) li.push([fTime(st.seit)+" – jetzt","ein: "+(st.startGrund||"")]);
+    (h.verlauf||[]).slice().reverse().forEach(v=>li.push([fTime(v.von)+" – "+fTime(v.bis),"aus: "+v.grund]));
+    $("ueListe").innerHTML=li.length?li.map(([a,b])=>`<li><span>${a}</span><span>${esc(b)}</span></li>`).join(""):`<li><span>–</span><span>Heute noch nicht eingeschaltet.</span></li>`;
+  }
+  document.querySelectorAll(".bsel button").forEach(b=>b.addEventListener("click",()=>{
+    const an=b.dataset.a==="1", c=STEU&&STEU.ueb&&STEU.ueb.cfg; if(!c||c.aktiv===an) return;
+    ueWarnGezeigt=false;
+    if(an&&ueGesperrt()) ueWarnen();
+    steuerSenden({aktion:"ueberschuss",ueb:{aktiv:an}},"Boiler mit Überschuss ist "+(an?"ein.":"aus."),undefined,undefined,UI_U)}));
+  Object.values(UE_FELD).forEach(id=>$(id).addEventListener("input",()=>{$("uePanel").dataset.dirty="1";zeichneUeb()}));
+  $("ueSpeichern").addEventListener("click",()=>{const g=ueEingaben();steuerSenden({aktion:"ueberschuss",ueb:{soc:g.soc,frei:g.frei,maxT:g.maxT,dauer:g.dauer}},"Grenzwerte gespeichert.",undefined,undefined,UI_U)});
+  $("ueVerwerfen").addEventListener("click",()=>{$("uePanel").dataset.dirty="";$("ueMeldung").textContent="";zeichneUeb()});
   const esc=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   function zeichneWoche(){
     const c=STEU.cfg, box=$("sWoche"); box.innerHTML="";
@@ -2979,26 +3146,31 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     zeig(jetzt);
   }
   // Änderungen senden (Zugriffsschlüssel + PIN, wie beim Schalten)
-  async function steuerSenden(daten,ok,pin,merken){
-    pin=pin||pinGemerkt();
-    if(!pin){steuWartet={daten,ok};$("sPinBox").hidden=false;$("sMeldung").textContent="Bitte Schalt-PIN eingeben.";$("sPin").focus();return}
-    $("sMeldung").textContent="speichert …";
+  const UI_S={box:"sPinBox",pin:"sPin",merk:"sMerk",msg:"sMeldung"}, UI_U={box:"uePinBox",pin:"uePin",merk:"ueMerk",msg:"ueMeldung"};
+  async function steuerSenden(daten,ok,pin,merken,ui){
+    ui=ui||UI_S; pin=pin||pinGemerkt();
+    if(!pin){steuWartet={daten,ok,ui};$(ui.box).hidden=false;$(ui.msg).textContent="Bitte Schalt-PIN eingeben.";$(ui.pin).focus();return}
+    $(ui.msg).textContent="speichert …";
     let j=null;
     try{const r=await fetch(cfg.histurl.trim(),{method:"POST",body:JSON.stringify(Object.assign({art:"steuerung",token:cfg.histtok,pin},daten))});j=JSON.parse(await r.text())}
     catch(e){j={ok:false,error:"Keine Antwort von der Web-App."}}
     if(j&&j.ok&&j.cfg){
       if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
       STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
-      $("sPinBox").hidden=true; steuWartet=null; $("sMeldung").textContent=ok||"Gespeichert.";
+      $(ui.box).hidden=true; steuWartet=null; $(ui.msg).textContent=ok||"Gespeichert.";
       if(daten.aktion==="einstellungen") $("sWoche").dataset.dirty="";
+      if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.soc!==undefined) $("uePanel").dataset.dirty="";
       zeichneSteuerung();
+      if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.aktiv===true&&!ueWarnGezeigt&&j.ueb&&j.ueb.status&&j.ueb.status.zustand==="gesperrt") ueWarnen();
     }else{
-      if(j&&j.pinFalsch){try{localStorage.removeItem(PINK)}catch(e){} steuWartet={daten,ok}; $("sPin").value=""; $("sPinBox").hidden=false;}
-      $("sMeldung").textContent=(j&&j.error)||"Fehler";
+      if(j&&j.pinFalsch){try{localStorage.removeItem(PINK)}catch(e){} steuWartet={daten,ok,ui}; $(ui.pin).value=""; $(ui.box).hidden=false;}
+      $(ui.msg).textContent=(j&&j.error)||"Fehler";
     }
   }
-  $("sPinBox").addEventListener("submit",ev=>{ev.preventDefault();const pin=$("sPin").value.trim();if(!pin||!steuWartet)return;steuerSenden(steuWartet.daten,steuWartet.ok,pin,$("sMerk").checked)});
-  $("sPinAbbr").addEventListener("click",()=>{$("sPinBox").hidden=true;steuWartet=null;$("sMeldung").textContent=""});
+  [UI_S,UI_U].forEach(ui=>{
+    $(ui.box).addEventListener("submit",ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui)});
+    $(ui.box).querySelector(".ghost").addEventListener("click",()=>{$(ui.box).hidden=true;steuWartet=null;$(ui.msg).textContent=""});
+  });
   document.querySelectorAll(".ssel button").forEach(b=>b.addEventListener("click",()=>{
     if(STEU&&STEU.cfg.modus===b.dataset.m) return;
     steuerSenden({aktion:"modus",modus:b.dataset.m},"Modus: "+b.textContent)}));
