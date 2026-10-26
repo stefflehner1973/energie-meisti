@@ -162,11 +162,11 @@ button.ghost{background:transparent;color:var(--accent)}
 .ueok.ja{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
 .ueok.uhr{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
 .ueok svg{width:14px;height:14px}
-.uerech{grid-column:2/4;display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--muted) 8%,transparent);font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.uerech{grid-column:2/4;display:flex;flex-direction:column;gap:0;padding:5px 9px;border-radius:7px;background:color-mix(in srgb,var(--muted) 8%,transparent);font-family:var(--f-mono);font-size:.7rem;line-height:1.35;color:var(--muted)}
 .uerech div{display:flex;justify-content:space-between;gap:10px}
 .uerech div span+span{white-space:nowrap}
-.uerech .summe{border-top:1px solid var(--line);margin-top:3px;padding-top:3px;color:var(--fg);font-weight:600}
-.uerech .davon{margin-top:4px}
+.uerech .summe{border-top:1px solid var(--line);margin-top:2px;padding-top:2px;color:var(--fg);font-weight:600}
+.uerech .davon{margin-top:3px}
 .uerech .davon+.davon{margin-top:0}
 .uevor{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin:12px 0;font-size:.82rem;color:var(--muted)}
 .uevor svg{color:var(--hot);flex-shrink:0;margin-top:2px}
@@ -1000,7 +1000,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.10.26 11:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.10.26 11:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3057,7 +3057,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("ueRech").innerHTML=z("PV-Produktion",ueKw(w.pv))+z("− Wärmepumpe",ueKw(w.wp))+z("− Wallbox",ueKw(w.wallbox))+z("− Übriges Haus",ueKw(w.uebrig))+
       z("= Frei für den Boiler",ueKw(w.frei),"summe")+z("davon Batterie lädt",ueKw(w.laden),"davon")+z("davon Einspeisung ins Netz",ueKw(w.einsp),"davon")+
       (w.boilerW>50?z("davon Boiler (läuft)",ueKw(w.boilerW),"davon"):"")+
-      `<span style="font-family:var(--f-body);font-size:.74rem;margin-top:4px">Der Boiler selbst zählt nicht als Verbraucher, sonst würde er sich beim Laufen selbst wieder abschalten.${w.frZeit?" Stand "+fTime(w.frZeit)+".":""}</span>`;
+      `<span style="font-family:var(--f-body);font-size:.68rem;line-height:1.3;margin-top:3px">Der Boiler selbst zählt nicht als Verbraucher, sonst würde er sich beim Laufen selbst wieder abschalten.${w.frZeit?" Stand "+fTime(w.frZeit)+".":""}</span>`;
     $("ueDauerText").textContent=`Solange alles stimmt, wird die Zeit bei jeder Messung (etwa alle 2 Minuten) wieder auf ${g.dauer} Minuten verlängert. Stimmt etwas nicht mehr, läuft der Boiler die restliche Zeit fertig und geht dann von selbst aus. Eine kurze Wolke schaltet ihn also nicht sofort ab.`;
     // Zustand
     let zs=c.aktiv?(st?st.zustand:"neu"):"aus", titel, text;
