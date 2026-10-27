@@ -1019,7 +1019,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 11:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 11:40</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3174,9 +3174,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(zs==="pause"){const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Sofort fortsetzen";b.addEventListener("click",()=>steuerSenden({aktion:"ueberschuss",ueb:{pauseWeg:true}},"Fortgesetzt.",undefined,undefined,UI_U));pz.append(b)}
     // Heute
     const h=st&&st.heute&&st.zeit&&mitternacht(st.zeit)===mitternacht(Date.now())?st.heute:{n:0,ms:0,verlauf:[]};
-    $("ueZahlen").innerHTML=`<span><b>${h.n}×</b> eingeschaltet</span><span><b>${ueDauer(h.ms)}</b> gelaufen</span>`;
-    const li=[]; if(st&&st.an&&st.seit) li.push([fTime(st.seit)+" – jetzt","ein: "+(st.startGrund||"")]);
-    (h.verlauf||[]).slice().reverse().forEach(v=>li.push([fTime(v.von)+" – "+fTime(v.bis),"aus: "+v.grund]));
+    const kwhT=wh=>typeof wh==="number"?(wh<10000?de(wh/1000,wh<1000?2:1):de(wh/1000,0))+" kWh":null;
+    $("ueZahlen").innerHTML=`<span><b>${h.n}×</b> eingeschaltet</span><span><b>${ueDauer(h.ms)}</b> gelaufen</span>`+(typeof h.wh==="number"?`<span><b>${kwhT(h.wh)}</b> geladen</span>`:"");
+    const li=[]; if(st&&st.an&&st.seit) li.push([fTime(st.seit)+" – jetzt","ein: "+(st.startGrund||"")+(typeof h.whLauf==="number"?" · bisher "+kwhT(h.whLauf):"")]);
+    (h.verlauf||[]).slice().reverse().forEach(v=>li.push([fTime(v.von)+" – "+fTime(v.bis),(typeof v.wh==="number"?kwhT(v.wh)+" · ":"")+"aus: "+v.grund]));
     $("ueListe").innerHTML=li.length?li.map(([a,b])=>`<li><span>${a}</span><span>${esc(b)}</span></li>`).join(""):`<li><span>–</span><span>Heute noch nicht eingeschaltet.</span></li>`;
   }
   document.querySelectorAll(".bsel button").forEach(b=>b.addEventListener("click",()=>{
