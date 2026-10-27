@@ -21,7 +21,10 @@
   --warm-t:#a86400; --cold-t:#22679b; --accent:#0d6a87; --cold:#2f7fb8; --warm:#d98a10; --hot:#c8401a; --ok:#1f7a4d; --wp:#6b52b8;
   --s1:#2563a8; --s2:#c2410c; --s3:#15803d; --s4:#a21caf; --s5:#a16207; --s6:#0e7490;
   --tube:#e2e8ed;
-  --ueb:#c4a700; --wpb:#1d4ed8;   /* Leistungen im Verlauf: Übriges zitronengelb, Wärmepumpe kräftiges Blau */
+  --ueb:#c4a700; --wpb:#1d4ed8;
+  /* Eine Farbe pro Grösse, in allen Reitern gleich */
+  --c-pv:var(--warm); --c-haus:var(--fg); --c-netz:var(--muted); --c-batt:var(--ok);
+  --c-wb:var(--s4); --c-boiler:var(--hot); --c-wp:var(--wpb); --c-ueb:var(--ueb);
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -65,10 +68,10 @@ h1{font-family:var(--f-display);font-weight:600;font-size:2rem;letter-spacing:.0
 .reading .meta{grid-template-columns:repeat(3,minmax(0,1fr))}
 .meta.vier{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:480px){.meta.vier{grid-template-columns:repeat(2,minmax(0,1fr))}}
-#pE2{color:var(--warm)} #wE2{color:var(--wp)} .wpv.wbv,#aE2{color:var(--s4)}
+#pE2{color:var(--c-boiler)} #wE2{color:var(--c-wp)} .wpv.wbv,#aE2{color:var(--c-wb)}
 @media (max-width:480px){.reading .meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
-#pow{color:var(--warm)}
-.wpv{color:var(--wp);margin:6px 0 4px}
+#pow{color:var(--c-boiler)}
+.wpv{color:var(--c-wp);margin:6px 0 4px}
 .label b,.sublabel b{color:var(--fg);font-weight:800;font-size:1.08em}
 .sublabel{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px}
 .sublabel:first-of-type{margin-top:4px}
@@ -369,13 +372,13 @@ details summary{cursor:pointer;font-weight:600}
 @media (max-width:560px){.ekpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ekpi .k{display:flex;flex-direction:column;min-width:0}
 .ekpi b{font-family:var(--f-display);font-weight:600;font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
-.ekpi .pv b{color:var(--warm)}
-.ekpi .batt b{color:var(--ok)}
-.ekpi .ein b{color:var(--cold)}
-.ekpi .bez b{color:color-mix(in srgb,var(--hot) 70%,var(--muted))}
+.ekpi .pv b{color:var(--warm-t)}
+.ekpi .batt b{color:var(--c-batt)}
+.ekpi .ein b{color:var(--c-netz)}
+.ekpi .bez b{color:var(--c-netz)}
 .ekpi span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .ekpi .bar{display:block;height:6px;border-radius:3px;background:var(--tube);margin-top:6px;overflow:hidden}
-.ekpi .bar i{display:block;height:100%;width:0;background:var(--ok)}
+.ekpi .bar i{display:block;height:100%;width:0;background:var(--c-batt)}
 .savebox{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 h3{font-size:.92rem;margin:0;font-weight:600}
 .diag{white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:360px;overflow:auto;margin:0}
@@ -1010,7 +1013,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 08:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 08:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1140,7 +1143,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const anfGross=x=>x.charAt(0).toUpperCase()+x.slice(1);   // erster Buchstabe gross („heute“ → „Heute“)
   const escH=x=>String(x).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   // Schriftfarbe zu einer Linienfarbe: Orange und Hellblau für Text etwas dunkler (besser lesbar)
-  const textFarbe=c=>c==="var(--warm)"?"var(--warm-t)":c==="var(--cold)"?"var(--cold-t)":c;
+  const textFarbe=c=>c==="var(--warm)"||c==="var(--c-pv)"?"var(--warm-t)":c==="var(--cold)"?"var(--cold-t)":c;
   const farbe=(c,rund)=>`<i style="display:inline-block;width:9px;height:9px;border-radius:${rund?"50%":"2px"};background:${c};margin:0 4px 0 1px;vertical-align:0"></i>`;
   const SCHRAFF="repeating-linear-gradient(135deg,var(--muted) 0 1.5px,color-mix(in srgb,var(--muted) 25%,transparent) 1.5px 3.5px)";
   const aktiv=()=>!document.hidden&&(typeof document.hasFocus!=="function"||document.hasFocus());
@@ -1448,8 +1451,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         $("sMax").textContent=de(Math.max(...s.map(p=>p.mx)))+" °C";
         $("sAvg").textContent=de(s.reduce((a,p)=>a+p.v,0)/s.length)+" °C";
       }},
-    boiler:powChart("chartP","readoutP",["pE","pOn","pMax","pE2"],"var(--warm)"),
-    wp:powChart("chartW","readoutW",["wE","wOn","wMax","wE2"],"var(--wp)")
+    boiler:powChart("chartP","readoutP",["pE","pOn","pMax","pE2"],"var(--c-boiler)"),
+    wp:powChart("chartW","readoutW",["wE","wOn","wMax","wE2"],"var(--c-wp)")
   };
   const WB_STATUS={1:"kein Auto",2:"lädt",3:"Auto wartet",4:"fertig",5:"Fehler"};
   Object.values(CH).forEach(c=>c.gruppe="ueb");   // Mausstrich gemeinsam in allen Verläufen der Übersicht
@@ -1579,13 +1582,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const fr=(v.fronius&&v.fronius.rows)||[];
     const spalte=k=>fr.filter(r=>typeof r[k]==="number").map(r=>({t:r[0],v:r[k],mn:r[k],mx:r[k]}));
     // dünnere, leicht transparente Linien (PV als Fläche, Netz gestrichelt), damit übereinanderliegende Kurven sichtbar bleiben
-    FL.lines=[{name:"PV",col:"var(--warm)",series:spalte(1),flaeche:true,flaecheDeckkraft:.32,breite:2,deckkraft:1},{name:"Hausverbrauch",col:"var(--fg)",series:spalte(4),breite:1.8,deckkraft:.85},
-      {name:"Netz",col:"var(--muted)",series:spalte(2).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.5,deckkraft:.9,dash:"6 3"},{name:"Batterie",col:"var(--ok)",series:spalte(3).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.7,deckkraft:.9}];   // Anzeige: über null fliesst Strom hinein (Batterie laden, Netz einspeisen), unter null heraus (entladen, Netzbezug); Fronius liefert beides umgekehrt
+    FL.lines=[{name:"PV",col:"var(--c-pv)",series:spalte(1),flaeche:true,flaecheDeckkraft:.32,breite:2,deckkraft:1},{name:"Hausverbrauch",col:"var(--c-haus)",series:spalte(4),breite:1.8,deckkraft:.85},
+      {name:"Netz",col:"var(--c-netz)",series:spalte(2).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.5,deckkraft:.9,dash:"6 3"},{name:"Batterie",col:"var(--c-batt)",series:spalte(3).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.7,deckkraft:.9}];   // Anzeige: über null fliesst Strom hinein (Batterie laden, Netz einspeisen), unter null heraus (entladen, Netzbezug); Fronius liefert beides umgekehrt
     FS.series=spalte(5);
     PVS.roh=[spalte(6),spalte(7)]; PVS.ges=spalte(1);
     // Wattpilot (Spalte 8): mit PV und Hausverbrauch derselben Minute, für den Reiter Wattpilot
     WB=fr.filter(r=>typeof r[8]==="number").map(r=>({t:r[0],v:Math.max(0,r[8]),pv:Math.max(0,r[1]||0),haus:Math.max(0,r[4]||0)}));
-    if(WB.length) FL.lines.push({name:"Wallbox",col:"var(--s4)",series:WB.map(p=>({t:p.t,v:p.v,mn:p.v,mx:p.v})),breite:1.6,deckkraft:.9});
+    if(WB.length) FL.lines.push({name:"Wallbox",col:"var(--c-wb)",series:WB.map(p=>({t:p.t,v:p.v,mn:p.v,mx:p.v})),breite:1.6,deckkraft:.9});
     FL.lines.push(...verbraucherLinien(fr));   // Boiler, Wärmepumpe, Übriges
     if(fb.von){
       const ab=p=>p.t>=fb.von&&p.t<=fb.bis;
@@ -1725,14 +1728,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     PVS.lines=(s1.length||s2.length)?[
       {name:"Ost",titel:"Ostdach · Strang 1 (MPPT 1) · 10,5 kWp · 21 Module · Ausrichtung 62° (Nordost), Neigung 38°",col:"var(--accent)",series:ost,flaeche:true,breite:1.5,deckkraft:.8},
       {name:"West",titel:"Westdach · Strang 2 (MPPT 2) · 7,0 kWp · 14 Module · Ausrichtung 242° (Südwest), Neigung 38°",col:"var(--wp)",series:west,flaeche:true,breite:1.5,deckkraft:.8},
-      {name:"Gesamt",col:"var(--warm)",series:PVS.ges||[],breite:1.8,deckkraft:.7}]:[];
+      {name:"Gesamt",col:"var(--c-pv)",series:PVS.ges||[],breite:1.8,deckkraft:.7}]:[];
     drawMulti(PVS);
     const e=s=>{if(s.length<2)return 0;const gap=gapOf(s);let x=0;for(let i=0;i<s.length-1;i++)x+=Math.max(0,s[i].v)*Math.min(s[i+1].t-s[i].t,gap)/3.6e9;return x};
     const eo=e(ost), ew=e(west), t0s=Math.min(ost.length?ost[0].t:Infinity,west.length?west[0].t:Infinity), eg=e((PVS.ges||[]).filter(p=>p.t>=t0s)), k=v=>eK(v,v=>v<10?de(v,2)+" kWh":de(v,1)+" kWh");
     const fs=(c,x)=>`<span style="color:${textFarbe(c)};font-weight:600">${escH(x)}</span>`;
     $("pvSumme").innerHTML=PVS.lines.length?`Im gewählten Zeitraum: ${fs(PVS.lines[0].col,PVS.lines[0].name+" "+k(eo))}, ${fs(PVS.lines[1].col,PVS.lines[1].name+" "+k(ew))}`+(eo+ew>0?` (${Math.round(eo/(eo+ew)*100)} % / ${Math.round(ew/(eo+ew)*100)} %), ${fs(PVS.lines[2]?PVS.lines[2].col:"var(--warm)","gesamt "+k(eg))}.`:"."):"";
   }
-  const FS={teil:"fronius",svg:"chartS",ro:"readoutS",series:[],geo:null,col:"var(--ok)",fix:[0,100],step:20,
+  const FS={teil:"fronius",svg:"chartS",ro:"readoutS",series:[],geo:null,col:"var(--c-batt)",fix:[0,100],step:20,
     zonen:[[100,.22],[90,.13],[80,.05],[79.9,0],[20.1,0],[20,.05],[10,.13],[0,.22]],
     fmt:v=>Math.round(v)+" %", axis:v=>v+" %", zero:false, band:false, stats(){}};
   const FS2=Object.assign({},FS,{svg:"chartS2",ro:"readoutS2",geo:null,gruppe:"ueb"});   // gleicher Ladestand-Verlauf auf der Übersicht
@@ -1750,8 +1753,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(w!==null) L.wp.push(pkt(t,Math.max(0,w)));
       if(haus!==null&&b!==null&&w!==null) L.ueb.push(pkt(t,Math.max(0,Math.abs(haus)-Math.max(0,b)-Math.max(0,w)-Math.max(0,wb||0))));
     });
-    return [{name:"Boiler",col:"var(--hot)",series:L.boiler,breite:1.6,deckkraft:.9},{name:"Wärmepumpe",col:"var(--wpb)",series:L.wp,breite:1.7,deckkraft:.95},
-      {name:"Übriges",col:"var(--ueb)",series:L.ueb,breite:1.6,deckkraft:.9}];
+    return [{name:"Boiler",col:"var(--c-boiler)",series:L.boiler,breite:1.6,deckkraft:.9},{name:"Wärmepumpe",col:"var(--c-wp)",series:L.wp,breite:1.7,deckkraft:.95},
+      {name:"Übriges",col:"var(--c-ueb)",series:L.ueb,breite:1.6,deckkraft:.9}];
   }
   FS.gruppe=FL.gruppe=PVS.gruppe="energie";   // Mausstrich gemeinsam in den Verläufen des Energieflusses
   const K14C={svg:"chartK",ro:null,gruppe:"ueb",geo:null};   // Schaltzustände: nur der Strich
@@ -2047,15 +2050,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       g+=`<rect x="${(mx-bw/2).toFixed(1)}" y="${(my-12).toFixed(1)}" width="${bw}" height="24" rx="12" fill="var(--panel)" stroke="${aktiv?col:"var(--line)"}" stroke-opacity="${aktiv?.55:1}"/>`;
       g+=`<text x="${mx.toFixed(1)}" y="${(my+4.5).toFixed(1)}" text-anchor="middle" font-size="${fz}" fill="${aktiv?"var(--fg)":"var(--muted)"}" font-family="${SANS}" style="font-variant-numeric:tabular-nums">${wert(z,e,fz)}</text>`;
     };
-    kante("pv","haus",pv,"var(--warm)",true);
-    kante("batt","haus",Math.abs(batt),"var(--ok)",batt>0);      // + Entladen: Batterie → Haus
-    kante("netz","haus",Math.abs(netz),"var(--fg)",netz>0);      // + Bezug: Netz → Haus
+    kante("pv","haus",pv,"var(--c-pv)",true);
+    kante("batt","haus",Math.abs(batt),"var(--c-batt)",batt>0);      // + Entladen: Batterie → Haus
+    kante("netz","haus",Math.abs(netz),"var(--c-netz)",netz>0);      // + Bezug: Netz → Haus
     // untere Reihe: auf dem Handy Beschriftung näher bei den Verbrauchern und schmaler, damit sie sich nicht überlappen
     const lpU=schmal?.72:.5, bwU=schmal?50:null;
-    kante("haus","boiler",boiler,"var(--warm)",true,lpU,bwU);
-    kante("haus","wp",wp,"var(--wp)",true,lpU,bwU);
-    kante("haus","auto",auto,"var(--s4)",true,lpU,bwU);
-    kante("haus","rest",rest,"var(--muted)",true,lpU,bwU);
+    kante("haus","boiler",boiler,"var(--c-boiler)",true,lpU,bwU);
+    kante("haus","wp",wp,"var(--c-wp)",true,lpU,bwU);
+    kante("haus","auto",auto,"var(--c-wb)",true,lpU,bwU);
+    kante("haus","rest",rest,"var(--c-ueb)",true,lpU,bwU);
     const knoten=(k,titel,zahlEinheit,unter,col)=>{
       const [x,y]=N[k], gr=schmal?16:19;
       if(k in ANTEIL){
@@ -2076,14 +2079,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       g+=`<text x="${x}" y="${y+13}" text-anchor="middle" font-size="${gr}" fill="var(--fg)" font-family="${SANS}" style="font-variant-numeric:tabular-nums">${e?wert(z,e,gr):`<tspan font-weight="600">${z}</tspan>`}</text>`;
       if(unter) g+=`<text x="${x}" y="${y+rand(k)+(k in ANTEIL?12:14)}" text-anchor="middle" font-size="11.5" fill="var(--muted)" font-family="${SANS}">${unter}</text>`;
     };
-    knoten("pv","PV",teile(pv),"",  "var(--warm)");
-    knoten("batt","BATTERIE",typeof f.soc==="number"?[String(Math.round(f.soc)),"%"]:["–",""],batt>20?"entlädt":batt<-20?"lädt":"Ruhe","var(--ok)");
-    knoten("haus","HAUS",teile(last),"","var(--accent)");
-    knoten("netz","NETZ",teile(Math.abs(netz)),netz>20?"bezieht":netz<-20?"speist ein":"ausgeglichen","var(--fg)");
-    knoten("boiler","BOILER",teile(boiler),"","var(--warm)");
-    knoten("wp","WÄRMEPUMPE",teile(wp),"","var(--wp)");
-    knoten("auto","WALLBOX",mitWb?teile(auto):["–",""],mitWb?(WB_STATUS[f.wpStatus]||""):"keine Werte","var(--s4)");
-    knoten("rest","ÜBRIGES",teile(rest),"","var(--muted)");
+    knoten("pv","PV",teile(pv),"",  "var(--c-pv)");
+    knoten("batt","BATTERIE",typeof f.soc==="number"?[String(Math.round(f.soc)),"%"]:["–",""],batt>20?"entlädt":batt<-20?"lädt":"Ruhe","var(--c-batt)");
+    knoten("haus","HAUS",teile(last),"","var(--c-haus)");
+    knoten("netz","NETZ",teile(Math.abs(netz)),netz>20?"bezieht":netz<-20?"speist ein":"ausgeglichen","var(--c-netz)");
+    knoten("boiler","BOILER",teile(boiler),"","var(--c-boiler)");
+    knoten("wp","WÄRMEPUMPE",teile(wp),"","var(--c-wp)");
+    knoten("auto","WALLBOX",mitWb?teile(auto):["–",""],mitWb?(WB_STATUS[f.wpStatus]||""):"keine Werte","var(--c-wb)");
+    knoten("rest","ÜBRIGES",teile(rest),"","var(--c-ueb)");
     svg.innerHTML=g;
   }
 
@@ -2152,9 +2155,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Verlauf: Wattpilot (davon PV-Überschuss als grüne Fläche), PV, übriger Hausverbrauch
     const reihe=f=>WB.map(p=>{const v=f(p);return {t:p.t,v,mn:v,mx:v}});
     AU.lines=WB.length?[
-      {name:"Wattpilot",col:"var(--s4)",series:reihe(p=>p.v),flaeche:true,breite:1.8},
-      {name:"davon PV-Überschuss",col:"var(--ok)",series:reihe(p=>Math.min(p.v,Math.max(0,p.pv-Math.max(0,p.haus-p.v)))),flaeche:true,flaecheDeckkraft:.4,breite:1,deckkraft:.7},
-      {name:"PV",col:"var(--warm)",series:reihe(p=>p.pv),breite:1.4,deckkraft:.8},
+      {name:"Wattpilot",col:"var(--c-wb)",series:reihe(p=>p.v),flaeche:true,breite:1.8},
+      {name:"davon PV-Überschuss",col:"var(--c-pv)",series:reihe(p=>Math.min(p.v,Math.max(0,p.pv-Math.max(0,p.haus-p.v)))),flaeche:true,flaecheDeckkraft:.4,breite:1,deckkraft:.7},
+      {name:"PV",col:"var(--c-pv)",series:reihe(p=>p.pv),breite:1.4,deckkraft:.8,dash:"4 3"},
       {name:"übriges Haus",col:"var(--muted)",series:reihe(p=>Math.max(0,p.haus-p.v)),breite:1.2,deckkraft:.7,dash:"4 3"}]:[];
     drawMulti(AU);
     {const gu=document.querySelector('[data-gilt="chartU"]'); giltSetzen("uTab",gu&&!gu.hidden?gu.textContent:"");}
@@ -2250,7 +2253,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("readoutUP").textContent=`${n} ${n===1?einh[0]:einh[1]} · zusammen ${eK(sum,v=>de(v,1)+" kWh")} · Ø ${eK(sum/n,v=>de(v,1)+" kWh")} pro ${einh[0]}`+wbAnteile(per.map(p=>[0,p[1].e].concat(p[1].k.slice(0,3))))+(GELD&&GELD.wbHist&&GELD.wbHist.length?" · bis 22.10.26 aus Solar.web":"")+(per[per.length-1][0]===aktuell?` · ${einh[0]==="Woche"?"die laufende Woche":einh[0]==="Monat"?"der laufende Monat":"das laufende Jahr"} ist noch nicht abgeschlossen`:"");
   }
   // Herkunft der Ladeenergie: PV, Batterie, Netz (Solar.web bzw. eigene Schätzung pro Minute); fehlt sie, „ohne Angabe“
-  const WB_TEILE=[["PV","var(--warm)"],["Batterie","var(--ok)"],["Netz","var(--muted)"],["ohne Angabe","var(--s4)"]];
+  const WB_TEILE=[["PV","var(--c-pv)"],["Batterie","var(--c-batt)"],["Netz","var(--c-netz)"],["ohne Angabe","color-mix(in srgb,var(--c-wb) 35%,transparent)"]];
   function wbTeile(r){   // r = [t, kWh, PV, Batterie, Netz] → [PV, Batterie, Netz, ohne Angabe], auf die Summe skaliert
     const v=r[1]||0, k=[r[2],r[3],r[4]].map(x=>typeof x==="number"&&x>0?x:0), s=k[0]+k[1]+k[2];
     if(!(s>0)) return [0,0,0,v];
@@ -2767,8 +2770,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       return {t:r[0],pv,haus,bez,ein,lad,ent,direkt,vl,dauer:r[7],teil:r!==hz&&typeof r[7]==="number"&&r[7]<20}});
     const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=290, Lb=40, Rb=10, Tb=22, Bb=40;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-    const C={direkt:"var(--warm)",batt:"var(--ok)",ein:"var(--cold)",netz:"var(--hot)"};
-    const T={direkt:"var(--warm-t)",batt:"var(--ok)",ein:"var(--cold-t)",netz:"var(--hot)",vl:"var(--muted)"};   // Schriftfarben (Orange/Blau dunkler, besser lesbar)
+    const C={direkt:"var(--c-pv)",batt:"var(--c-batt)",ein:"var(--c-netz)",netz:"var(--c-netz)"};
+    const T={direkt:"var(--warm-t)",batt:"var(--c-batt)",ein:"var(--c-netz)",netz:"var(--c-netz)",vl:"var(--muted)"};   // Schriftfarben (Orange/Blau dunkler, besser lesbar)
     const f=(c,x,kl)=>`<span${kl?` class="${kl}"`:""} style="color:${c};font-weight:600">${x}</span>`;
     $("ebLegend").innerHTML=`<span><b style="color:var(--fg);font-family:inherit;font-weight:700">P</b>&nbsp;Produktion (PV)</span><span><b style="color:var(--fg);font-family:inherit;font-weight:700">V</b>&nbsp;Verbrauch (Haus)</span>`+[["PV direkt im Haus",T.direkt,"direkt"],["Batterie (laden / entladen)",T.batt,"batt"],["Einspeisung",T.ein,"ein"],["Netzbezug",T.netz,"netz"]].map(([n,c,k])=>`<span data-hl="${k}" style="color:${c};font-weight:600">${n}</span>`).join("")+`<span data-hl="vl" style="color:${T.vl};font-weight:600" title="Alles, was hineinkommt (PV, Batterie entladen, Netzbezug), minus alles, was herausgeht (Haus, Batterie laden, Einspeisung): Umwandlung im Wechselrichter und Eigenverbrauch von Wechselrichter und Batterie. Prozent bezogen auf PV + Batterie entladen.">Verluste (Wechselrichter, Batterie)</span>`;
     if(!tage.length){svg.innerHTML="";$("readoutEB").textContent="Noch keine Tageswerte.";giltSetzen("chartEB","");return}
