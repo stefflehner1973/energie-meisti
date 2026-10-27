@@ -139,6 +139,14 @@ button.ghost{background:transparent;color:var(--accent)}
 .gtab td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);font-family:var(--f-mono);white-space:nowrap}
 .gtab th:first-child,.gtab td:first-child{text-align:left;font-family:inherit}
 .gtab tr.summe td{font-weight:700;border-bottom:0}
+.gtab .einh{font-family:var(--f-body);font-size:.74em;color:var(--muted);font-weight:500;margin-left:2px}
+.gtab .einh.vor{margin:0 3px 0 0}
+.gtab tr.summe .einh{font-weight:600}
+/* Tabelle „Nach Monat“: Monat bleibt beim seitlichen Scrollen stehen, Zeilen abwechselnd hinterlegt */
+.gtab.monat td:first-child,.gtab.monat th:first-child{position:sticky;left:0;z-index:1;background:var(--panel);box-shadow:inset -1px 0 0 var(--line);padding-right:12px}
+.gtab.monat tbody tr:nth-child(even):not(.summe) td{background:color-mix(in srgb,var(--line) 28%,var(--panel))}
+.gtab.monat tr.summe td{border-top:2px solid var(--line)}
+.gtab.monat td b{font-weight:700}
 .gtab input{width:5.5em;font:inherit;font-family:var(--f-mono);text-align:right;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 :root{--g1:#1f7a4d;--g2:#d98a10;--g3:#6b52b8}
 .smodus{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
@@ -955,7 +963,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </section>
     <section class="panel">
       <h2><span class="gilt" data-gilt="gTab" hidden></span>Nach Monat</h2>
-      <div class="gtabwrap"><table class="gtab" id="gTab"></table></div>
+      <div class="gtabwrap"><table class="gtab monat" id="gTab"></table></div>
     </section>
     <section class="panel">
       <details id="gPreise">
@@ -1019,7 +1027,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 11:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 12:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2743,7 +2751,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Tabelle nach Monat
     const mm=new Map(); tage.forEach(d=>{const k=new Date(new Date(d.t).getFullYear(),new Date(d.t).getMonth(),1).getTime();if(!mm.has(k))mm.set(k,[]);mm.get(k).push(d)});
     const zeilen=[...mm.entries()].sort((a,b)=>b[0]-a[0]).map(([k,l])=>Object.assign({k},summe(l))), tot=summe(tage);
-    const zr=(n,s,cl)=>`<tr${cl?` class="${cl}"`:""}><td>${n}</td><td>${kwhK(s.pv)}</td><td>${kwhK(s.selbst)}</td><td>${kwhK(s.ein)}</td><td>${kwhK(s.bez)}</td><td>${chf(s.fSelbst)}</td><td>${chf(s.fEin+s.fLok)}</td><td>${chf(s.tot)}</td><td>${chf(-s.fBez)}</td><td><b>${chf(s.netto)}</b></td><td title="Vergütung − Kosten Netzbezug − feste Gebühren (Grundpreis, Messtarif) – geschätzt">${chf(s.aus)}</td></tr>`;
+    // Einheit klein und grau direkt an der Zahl (kWh/MWh hinten, CHF vorne)
+    const ke=t=>{const m=/^(.*\S) (kWh|MWh)$/.exec(t);return m?`${m[1]}<span class="einh">${m[2]}</span>`:t}, kc=t=>t.replace(/^CHF /,'<span class="einh vor">CHF</span>');
+    const kw=v=>ke(kwhK(v)), kf=v=>kc(chf(v));
+    const zr=(n,s,cl)=>`<tr${cl?` class="${cl}"`:""}><td>${n}</td><td>${kw(s.pv)}</td><td>${kw(s.selbst)}</td><td>${kw(s.ein)}</td><td>${kw(s.bez)}</td><td>${kf(s.fSelbst)}</td><td>${kf(s.fEin+s.fLok)}</td><td>${kf(s.tot)}</td><td>${kf(-s.fBez)}</td><td><b>${kf(s.netto)}</b></td><td title="Vergütung − Kosten Netzbezug − feste Gebühren (Grundpreis, Messtarif) – geschätzt">${kf(s.aus)}</td></tr>`;
     $("gTab").innerHTML=`<thead><tr><th>Monat</th><th>PV</th><th>Selbst genutzt</th><th>Eingespeist</th><th>Netzbezug</th><th>Gespart</th><th>Vergütung</th><th>Total</th><th>Kosten Bezug</th><th>Saldo</th><th title="Geschätzte Auszahlung der AEW: Vergütung − Kosten Netzbezug − feste Gebühren">Auszahlung</th></tr></thead><tbody>`+
       zeilen.map(z=>zr(MONATE[new Date(z.k).getMonth()]+" "+new Date(z.k).getFullYear(),z)).join("")+zr("Total",tot,"summe")+"</tbody>";
     zeichnePreise();
