@@ -175,6 +175,7 @@ button.ghost{background:transparent;color:var(--accent)}
 .uezeile label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .uezeile label>span{display:inline-flex;align-items:center;gap:4px}
 .uezeile input{width:4.6em;font:inherit;font-family:var(--f-mono);text-align:right;padding:5px 6px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.uehyst{flex-basis:100%;font-size:.76rem;color:var(--muted);margin-top:-2px}
 .uezeile>b{font-family:var(--f-mono);font-weight:600;font-size:.92rem;white-space:nowrap}
 .ueok{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted)}
 .ueok.ja{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
@@ -855,7 +856,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="uebed">
         <div class="ukopf"><span>Bedingungen (alle müssen stimmen)</span><span>jetzt</span></div>
         <div class="uezeile"><span class="ueok" id="ueOkSoc" role="img"></span>
-          <label for="ueSoc">Batterie über <span><input id="ueSoc" type="number" min="5" max="99" step="5" inputmode="numeric"> %</span></label><b id="ueJSoc">–</b></div>
+          <label for="ueSoc">Batterie über <span><input id="ueSoc" type="number" min="5" max="99" step="5" inputmode="numeric"> %</span><span class="uehyst" id="ueHyst"></span></label><b id="ueJSoc">–</b></div>
         <div class="uezeile"><span class="ueok" id="ueOkFrei" role="img"></span>
           <label for="ueFrei">Freie Leistung über <span><input id="ueFrei" type="number" min="0.5" max="15" step="0.5" inputmode="decimal"> kW</span></label><b id="ueJFrei">–</b>
           <div class="uerech" id="ueRech"></div></div>
@@ -1018,7 +1019,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 09:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 10:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3123,7 +3124,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(panel.dataset.dirty!=="1") Object.entries(UE_FELD).forEach(([k,id])=>{$(id).value=c[k]});
     const g=ueEingaben();
     const ok=(id,v)=>{const el=$(id);el.className="ueok"+(v===true?" ja":"");el.innerHTML=v===true?UE_OK:v===false?UE_NEIN:"?";el.setAttribute("aria-label",v===true?"erfüllt":v===false?"nicht erfüllt":"unbekannt")};
-    ok("ueOkSoc",w.soc==null?null:w.soc>g.soc); ok("ueOkFrei",w.frei==null?null:w.frei>g.frei*1000); ok("ueOkTemp",w.temp==null?null:w.temp<g.maxT);
+    const hy=typeof c.socHyst==="number"?c.socHyst:5, laeuft=!!(st&&st.an), sg=laeuft?Math.max(0,g.soc-hy):g.soc;
+    $("ueHyst").textContent=hy>0?(laeuft?`läuft: weiter bis unter ${sg} %`:`einmal ein, läuft weiter bis unter ${Math.max(0,g.soc-hy)} %`):"";
+    ok("ueOkSoc",w.soc==null?null:w.soc>sg); ok("ueOkFrei",w.frei==null?null:w.frei>g.frei*1000); ok("ueOkTemp",w.temp==null?null:w.temp<g.maxT);
     $("ueJSoc").textContent=w.soc!=null?Math.round(w.soc)+" %":"–";
     $("ueJFrei").textContent=ueKw(w.frei);
     $("ueJTemp").textContent=w.temp!=null?dez(w.temp)+" °C":"unbekannt";
