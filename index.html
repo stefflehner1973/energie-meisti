@@ -1019,7 +1019,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 10:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 11:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2647,7 +2647,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let GELD=null, geldZeit=0, geldNr=0, geldEinteilung=store.get("tb.geldein","tag");
   // alte gespeicherte Einspeisevergütung 8,54 Rp → neuer Standard 8,2 Rp (einmalig)
   (()=>{const p=store.get("tb.preise",null);if(p&&typeof p==="object"){let ge=false;Object.keys(p).forEach(j=>{if(p[j]&&+p[j].ein===8.54){p[j].ein=8.2;ge=true}});if(ge)store.set("tb.preise",p)}})();
-  function preise(){const p=store.get("tb.preise",null);return p&&typeof p==="object"?p:JSON.parse(JSON.stringify(PREIS_STD))}
+  // Preise: Standard (PREIS_STD, wird von Claude bei neuen Rechnungen nachgeführt) plus nur die Werte, die Stephan selbst geändert hat (tb.preise2)
+  (()=>{if(store.get("tb.preise2",null))return;const alt=store.get("tb.preise",null),eig={};   // einmalig übernehmen: nur Abweichungen vom Standard
+    if(alt&&typeof alt==="object")Object.keys(alt).forEach(j=>{const st=PREIS_STD[j]||{};Object.keys(alt[j]||{}).forEach(k=>{const v=+alt[j][k];if(isFinite(v)&&v!==st[k]){(eig[j]=eig[j]||{})[k]=v}})});
+    store.set("tb.preise2",eig)})();
+  function preiseEigen(){const e=store.get("tb.preise2",{});return e&&typeof e==="object"?e:{}}
+  function preise(){const p=JSON.parse(JSON.stringify(PREIS_STD)),e=preiseEigen();Object.keys(e).forEach(j=>{p[j]=Object.assign({},p[j]||PREIS_STD[2026],e[j])});return p}
   const LOK_STD=20;   // Standard: 20 % der Einspeisung als Lokalstrom
   if(!store.get("tb.lok20",false)){if(+store.get("tb.lokanteil",0)===0)store.set("tb.lokanteil",LOK_STD);store.set("tb.lok20",true)}
   function lokAnteil(){const a=+store.get("tb.lokanteil",LOK_STD);return isFinite(a)?Math.min(100,Math.max(0,a)):0}
@@ -2819,11 +2824,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const p=preise(), t=$("gPreisTab"); if(t.dataset.offen==="1") return;
     t.innerHTML=`<thead><tr><th>Jahr</th><th>Bezug</th><th>Einspeisung</th><th>Lokalstrom</th><th>Gebühren CHF/Mt.</th></tr></thead><tbody>`+
       Object.keys(p).sort().map(j=>`<tr><td>${j}</td>`+["bez","ein","lok","grund"].map(k=>`<td><input type="number" step="0.01" data-j="${j}" data-k="${k}" value="${p[j][k]!=null?p[j][k]:(PREIS_STD[j]||PREIS_STD[2026])[k]}"></td>`).join("")+"</tr>").join("")+"</tbody>";
-    t.querySelectorAll("input").forEach(i=>i.addEventListener("change",()=>{const q=preise();q[i.dataset.j][i.dataset.k]=+i.value||0;store.set("tb.preise",q);zeichneGeld()}));
+    const eig=preiseEigen();
+    t.querySelectorAll("input").forEach(i=>{if(eig[i.dataset.j]&&eig[i.dataset.j][i.dataset.k]!==undefined){i.title="selbst geändert (Standard: "+String((PREIS_STD[i.dataset.j]||{})[i.dataset.k]).replace(".",",")+")";i.style.fontWeight="700"}
+      i.addEventListener("change",()=>{const e=preiseEigen(),j=i.dataset.j,k=i.dataset.k,v=+i.value||0,st=(PREIS_STD[j]||{})[k];
+        e[j]=e[j]||{}; if(v===st)delete e[j][k]; else e[j][k]=v; if(!Object.keys(e[j]).length)delete e[j]; store.set("tb.preise2",e);zeichneGeld()})});
     $("gLokAnteil").value=lokAnteil();
   }
   $("gLokAnteil").addEventListener("change",()=>{store.set("tb.lokanteil",Math.min(100,Math.max(0,+$("gLokAnteil").value||0)));zeichneGeld()});
-  $("gReset").addEventListener("click",()=>{store.set("tb.preise",JSON.parse(JSON.stringify(PREIS_STD)));store.set("tb.lokanteil",LOK_STD);$("gLokAnteil").value=LOK_STD;zeichneGeld()});
+  $("gReset").addEventListener("click",()=>{store.set("tb.preise2",{});store.set("tb.lokanteil",LOK_STD);$("gLokAnteil").value=LOK_STD;zeichneGeld()});
   document.querySelectorAll(".gsel button").forEach(b=>b.addEventListener("click",()=>{geldEinteilung=b.dataset.g;store.set("tb.geldein",geldEinteilung);
     document.querySelectorAll(".gsel button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));zeichneGeld()}));
   document.querySelectorAll(".gsel button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.g===geldEinteilung)));
