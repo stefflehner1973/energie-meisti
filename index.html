@@ -1019,7 +1019,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 10:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 10:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3124,7 +3124,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(panel.dataset.dirty!=="1") Object.entries(UE_FELD).forEach(([k,id])=>{$(id).value=c[k]});
     const g=ueEingaben();
     const ok=(id,v)=>{const el=$(id);el.className="ueok"+(v===true?" ja":"");el.innerHTML=v===true?UE_OK:v===false?UE_NEIN:"?";el.setAttribute("aria-label",v===true?"erfüllt":v===false?"nicht erfüllt":"unbekannt")};
-    const hy=typeof c.socHyst==="number"?c.socHyst:5, laeuft=!!(st&&st.an), sg=laeuft?Math.max(0,g.soc-hy):g.soc;
+    const hy=typeof c.socHyst==="number"?c.socHyst:2, laeuft=!!(st&&st.an), sg=laeuft?Math.max(0,g.soc-hy):g.soc;
     $("ueHyst").textContent=hy>0?(laeuft?`läuft: weiter bis unter ${sg} %`:`einmal ein, läuft weiter bis unter ${Math.max(0,g.soc-hy)} %`):"";
     ok("ueOkSoc",w.soc==null?null:w.soc>sg); ok("ueOkFrei",w.frei==null?null:w.frei>g.frei*1000); ok("ueOkTemp",w.temp==null?null:w.temp<g.maxT);
     $("ueJSoc").textContent=w.soc!=null?Math.round(w.soc)+" %":"–";
