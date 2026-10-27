@@ -960,7 +960,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel">
       <details id="gPreise">
         <summary>Preise und Annahmen</summary>
-        <p class="sub" style="margin:8px 0 10px">Rp./kWh (Gebühren in CHF pro Monat: Grundpreis + Messtarif inkl. MWST minus Online-Rabatt; nur für die Spalte „Auszahlung“). Einspeisung bis 30.09.2026 nach Quartals-Referenzmarktpreis (Q2 Mindestvergütung 6,00, Q3 8,54 Rp.), ab 01.10.2026 Fixpreis aus der Tabelle. Bezug inkl. 8,1 % MWST; Einspeisung und Lokalstrom ohne MWST (nicht MWST-pflichtig). Bezugspreis = Energie + Netznutzung + Abgaben + Konzessionsabgabe (AEW Comfort, ohne Grundpreis und Messtarif, die bleiben gleich). Einspeisung laut AEW-Rechnung. Lokalstrom ab 01.11.2026: 80 % des All-In-Preises minus 2 Rp.; welcher Anteil der Einspeisung lokal verbraucht wird, rechnet nur die AEW aus – hier als Schätzung einstellbar.</p>
+        <p class="sub" style="margin:8px 0 10px">Rp./kWh (Gebühren in CHF pro Monat: Grundpreis + Messtarif inkl. 6 % Konzessionsabgabe und MWST, minus Online-Rabatt; nur für die Spalte „Auszahlung“). Einspeisung bis 30.09.2026 nach Quartals-Referenzmarktpreis (Q2 Mindestvergütung 6,00, Q3 8,54 Rp.), ab 01.10.2026 Fixpreis aus der Tabelle. Bezug inkl. 8,1 % MWST; Einspeisung und Lokalstrom ohne MWST (nicht MWST-pflichtig). Bezugspreis = Energie + Netznutzung + Abgaben + Konzessionsabgabe (AEW Comfort, ohne Grundpreis und Messtarif, die bleiben gleich). Einspeisung laut AEW-Rechnung. Lokalstrom ab 01.11.2026: 80 % des All-In-Preises minus 2 Rp.; welcher Anteil der Einspeisung lokal verbraucht wird, rechnet nur die AEW aus – hier als Schätzung einstellbar.</p>
         <div class="gtabwrap"><table class="gtab" id="gPreisTab"></table></div>
         <div class="krow" style="margin-top:10px">
           <label class="kmerk">Lokalstrom-Anteil der Einspeisung (Schätzung) <input type="number" id="gLokAnteil" min="0" max="100" step="5" style="width:4.5em;font:inherit;padding:4px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"> %</label>
@@ -1019,7 +1019,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 11:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 11:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2641,11 +2641,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   window.addEventListener("resize",()=>{if(reiter==="prognose"&&prog) zeichnePrognose()});
 
   /* ---------- $$$: Ersparnis aus den Tageswerten ---------- */
-  // grund: feste Gebühren CHF/Monat inkl. MWST (Grundpreis + Messtarif − Online-Rabatt CHF 1): 2026 (6.00+4.50)×1,081−1, 2027 (6.00+4.85)×1,081−1
-  // 2027: «AEW Comfort Online» endet 31.12.2026, automatisch «AEW Comfort» (ohne Online-Rabatt) → (6.00+4.85)×1,081 = 11.73 (AEW-Portal 27.10.2026)
-  const PREIS_STD={2026:{bez:26.03,ein:8.2,lok:19.7,grund:10.35},2027:{bez:27.81,ein:8.2,lok:21.2,grund:11.73}};
+  // grund: feste Gebühren CHF/Monat inkl. MWST = ((Grundpreis + Messtarif) × 1,06 Konzessionsabgabe − Online-Rabatt 0.92507) × 1,081
+  //   2026 laut Rechnung 1090073430: ((6.00+4.50)×1,06−0.92507)×1,081 = 11.03; 2027 AEW Comfort ohne Online-Rabatt: (6.00+4.85)×1,06×1,081 = 12.43
+  // 2027: «AEW Comfort Online» endet 31.12.2026, automatisch «AEW Comfort» (ohne Online-Rabatt, AEW-Portal 27.10.2026)
+  const PREIS_STD={2026:{bez:26.03,ein:8.2,lok:19.7,grund:11.03},2027:{bez:27.81,ein:8.2,lok:21.2,grund:12.43}};
   // Einspeisung nach Produkt (AEW-Portal, Meine Produktwechsel): 18.05.–30.09.2026 Quartals-Referenzmarktpreis ohne HKN
-  // (BFE: Q2 3,90 → Mindestvergütung 6,00; Q3 8,54 = AEW-Rechnung 1060204327), ab 01.10.2026 Fixpreis inkl. HKN (PREIS_STD.ein)
+  // (BFE: Q2 3,90 → Mindestvergütung 6,00 = AEW-Rechnung 1090073430; Q3 8,54 = AEW-Rechnung 1060204327), ab 01.10.2026 Fixpreis inkl. HKN (PREIS_STD.ein)
   const EIN_PERIODEN=[[new Date(2026,4,18).getTime(),new Date(2026,6,1).getTime(),6.00],[new Date(2026,6,1).getTime(),new Date(2026,9,1).getTime(),8.54]];
   function einFuer(t,p){const j=new Date(t).getFullYear(), e=preiseEigen();if(e[j]&&e[j].ein!==undefined)return p.ein;const x=EIN_PERIODEN.find(([a,b])=>t>=a&&t<b);return x?x[2]:p.ein}
   const LOK_AB=new Date(2026,10,1).getTime();
