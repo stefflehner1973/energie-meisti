@@ -21,7 +21,7 @@
   --warm-t:#a86400; --cold-t:#22679b; --accent:#0d6a87; --cold:#2f7fb8; --warm:#d98a10; --hot:#c8401a; --ok:#1f7a4d; --wp:#6b52b8;
   --s1:#2563a8; --s2:#c2410c; --s3:#15803d; --s4:#a21caf; --s5:#a16207; --s6:#0e7490;
   --tube:#e2e8ed;
-  --ueb:#4f6d85; --wpb:#1d4ed8;   /* Leistungen im Verlauf: Übriges grau-blau, Wärmepumpe kräftiges Blau */
+  --ueb:#c4a700; --wpb:#1d4ed8;   /* Leistungen im Verlauf: Übriges zitronengelb, Wärmepumpe kräftiges Blau */
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -29,11 +29,11 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f161c; --panel:#17212a; --fg:#e6edf2; --muted:#93a4b1; --line:#2a3946;
   --warm-t:#f0a83a; --cold-t:#5aa6dc; --accent:#4fb3d3; --cold:#5aa6dc; --warm:#f0a83a; --hot:#ff6b3d; --ok:#4cc38a; --wp:#a993f0; --tube:#22303b;
-  --s1:#6aa9ec; --s2:#f08a5d; --s3:#5fd18b; --s4:#e07ae8; --s5:#e2b84a; --s6:#4fc6dc; --ueb:#9fb7cc; --wpb:#5b8cff; color-scheme:dark}}
+  --s1:#6aa9ec; --s2:#f08a5d; --s3:#5fd18b; --s4:#e07ae8; --s5:#e2b84a; --s6:#4fc6dc; --ueb:#f5dc3c; --wpb:#5b8cff; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f161c; --panel:#17212a; --fg:#e6edf2; --muted:#93a4b1; --line:#2a3946;
   --warm-t:#f0a83a; --cold-t:#5aa6dc; --accent:#4fb3d3; --cold:#5aa6dc; --warm:#f0a83a; --hot:#ff6b3d; --ok:#4cc38a; --wp:#a993f0; --tube:#22303b;
-  --s1:#6aa9ec; --s2:#f08a5d; --s3:#5fd18b; --s4:#e07ae8; --s5:#e2b84a; --s6:#4fc6dc; --ueb:#9fb7cc; --wpb:#5b8cff; color-scheme:dark}
+  --s1:#6aa9ec; --s2:#f08a5d; --s3:#5fd18b; --s4:#e07ae8; --s5:#e2b84a; --s6:#4fc6dc; --ueb:#f5dc3c; --wpb:#5b8cff; color-scheme:dark}
 *{box-sizing:border-box} body{margin:0} [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:720px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
@@ -1010,7 +1010,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 08:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 08:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1579,7 +1579,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const fr=(v.fronius&&v.fronius.rows)||[];
     const spalte=k=>fr.filter(r=>typeof r[k]==="number").map(r=>({t:r[0],v:r[k],mn:r[k],mx:r[k]}));
     // dünnere, leicht transparente Linien (PV als Fläche, Netz gestrichelt), damit übereinanderliegende Kurven sichtbar bleiben
-    FL.lines=[{name:"PV",col:"var(--warm)",series:spalte(1),flaeche:true,breite:1.6,deckkraft:.9},{name:"Hausverbrauch",col:"var(--fg)",series:spalte(4),breite:1.8,deckkraft:.85},
+    FL.lines=[{name:"PV",col:"var(--warm)",series:spalte(1),flaeche:true,flaecheDeckkraft:.32,breite:2,deckkraft:1},{name:"Hausverbrauch",col:"var(--fg)",series:spalte(4),breite:1.8,deckkraft:.85},
       {name:"Netz",col:"var(--muted)",series:spalte(2).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.5,deckkraft:.9,dash:"6 3"},{name:"Batterie",col:"var(--ok)",series:spalte(3).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.7,deckkraft:.9}];   // Anzeige: über null fliesst Strom hinein (Batterie laden, Netz einspeisen), unter null heraus (entladen, Netzbezug); Fronius liefert beides umgekehrt
     FS.series=spalte(5);
     PVS.roh=[spalte(6),spalte(7)]; PVS.ges=spalte(1);
