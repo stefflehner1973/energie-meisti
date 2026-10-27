@@ -734,18 +734,11 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel ladebereich">
       <h2><span class="gilt" data-gilt="chartF" hidden></span>Leistungen im Verlauf</h2>
       <div class="legend" id="fLegend"></div>
-      <div class="chartbox"><svg id="chartF" viewBox="0 0 720 280" role="img" aria-label="Verlauf von PV, Hausverbrauch, Netz, Batterie und Wattpilot"></svg></div>
+      <div class="chartbox"><svg id="chartF" viewBox="0 0 720 280" role="img" aria-label="Verlauf von PV, Hausverbrauch, Netz, Batterie, Boiler, Wärmepumpe, Wallbox und übrigem Verbrauch"></svg></div>
       <div class="readout" id="readoutF"></div>
-      <p class="hint" style="font-size:.74rem;line-height:1.4">Über null fliesst Strom hinein (Batterie laden, ins Netz einspeisen), unter null heraus (Batterie entladen, Netzbezug).</p>
+      <p class="hint" style="font-size:.74rem;line-height:1.4">Über null fliesst Strom hinein (Batterie laden, ins Netz einspeisen), unter null heraus (Batterie entladen, Netzbezug). Übriges = Hausverbrauch minus Wärmepumpe, Boiler und Wallbox. Namen in der Legende antippen hebt eine Linie hervor.</p>
     </section>
 
-    <section class="panel ladebereich">
-      <h2><span class="gilt" data-gilt="chartV" hidden></span>Verbraucher im Verlauf</h2>
-      <div class="legend" id="vLegend"></div>
-      <div class="chartbox"><svg id="chartV" viewBox="0 0 720 280" role="img" aria-label="Verlauf von PV, Batterie, Boiler, Wärmepumpe, Wallbox und übrigem Hausverbrauch"></svg></div>
-      <div class="readout" id="readoutV"></div>
-      <p class="hint" style="font-size:.74rem;line-height:1.4">Übriges = Hausverbrauch minus Wärmepumpe, Boiler und Wallbox. Batterie über null = laden, unter null = entladen.</p>
-    </section>
 
     <section class="panel ladebereich">
       <h2><span class="gilt" data-gilt="chartPV" hidden></span>PV-Produktion nach Strang</h2>
@@ -1016,7 +1009,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 08:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 08:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1585,20 +1578,19 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const fr=(v.fronius&&v.fronius.rows)||[];
     const spalte=k=>fr.filter(r=>typeof r[k]==="number").map(r=>({t:r[0],v:r[k],mn:r[k],mx:r[k]}));
     // dünnere, leicht transparente Linien (PV als Fläche, Netz gestrichelt), damit übereinanderliegende Kurven sichtbar bleiben
-    FL.lines=[{name:"PV",col:"var(--warm)",series:spalte(1),flaeche:true,breite:1.6,deckkraft:.9},{name:"Hausverbrauch",col:"var(--accent)",series:spalte(4),breite:1.6,deckkraft:.8},
-      {name:"Netz",col:"var(--fg)",series:spalte(2).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.5,deckkraft:.7,dash:"5 3"},{name:"Batterie",col:"var(--ok)",series:spalte(3).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.6,deckkraft:.8}];   // Anzeige: über null fliesst Strom hinein (Batterie laden, Netz einspeisen), unter null heraus (entladen, Netzbezug); Fronius liefert beides umgekehrt
+    FL.lines=[{name:"PV",col:"var(--warm)",series:spalte(1),flaeche:true,breite:1.6,deckkraft:.9},{name:"Hausverbrauch",col:"var(--fg)",series:spalte(4),breite:1.8,deckkraft:.85},
+      {name:"Netz",col:"var(--muted)",series:spalte(2).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.5,deckkraft:.9,dash:"6 3"},{name:"Batterie",col:"var(--ok)",series:spalte(3).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.7,deckkraft:.9}];   // Anzeige: über null fliesst Strom hinein (Batterie laden, Netz einspeisen), unter null heraus (entladen, Netzbezug); Fronius liefert beides umgekehrt
     FS.series=spalte(5);
     PVS.roh=[spalte(6),spalte(7)]; PVS.ges=spalte(1);
     // Wattpilot (Spalte 8): mit PV und Hausverbrauch derselben Minute, für den Reiter Wattpilot
     WB=fr.filter(r=>typeof r[8]==="number").map(r=>({t:r[0],v:Math.max(0,r[8]),pv:Math.max(0,r[1]||0),haus:Math.max(0,r[4]||0)}));
-    VB.lines=verbraucherLinien(fr);   // bei gewähltem Bereich unten nochmals, nur dieser Bereich
-    if(WB.length) FL.lines.push({name:"Wattpilot",col:"var(--s4)",series:WB.map(p=>({t:p.t,v:p.v,mn:p.v,mx:p.v})),breite:1.6,deckkraft:.85});
+    if(WB.length) FL.lines.push({name:"Wallbox",col:"var(--s4)",series:WB.map(p=>({t:p.t,v:p.v,mn:p.v,mx:p.v})),breite:1.6,deckkraft:.9});
+    FL.lines.push(...verbraucherLinien(fr));   // Boiler, Wärmepumpe, Übriges
     if(fb.von){
       const ab=p=>p.t>=fb.von&&p.t<=fb.bis;
       Object.values(CH).forEach(c=>c.series=c.series.filter(ab));
       MA.lines.forEach(l=>l.series=l.series.filter(ab));
       FL.lines.forEach(l=>l.series=l.series.filter(ab)); FS.series=FS.series.filter(ab); WB=WB.filter(ab);
-      VB.lines=verbraucherLinien(fr.filter(r=>r[0]>=fb.von&&r[0]<=fb.bis));
       PVS.roh=PVS.roh.map(s=>s.filter(ab)); PVS.ges=PVS.ges.filter(ab);
     }
   }
@@ -1710,7 +1702,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     document.querySelectorAll(".elab").forEach(e=>e.textContent=lab);
     document.querySelectorAll(".ebz").forEach(e=>e.textContent="· "+lab.replace("Energie ",""));   // Zeitraum der Kacheln
     Object.values(CH).forEach(drawChart);drawMulti(MA);zeichneK14();
-    if(!$("tabEnergie").hidden){drawMulti(FL);drawMulti(VB);zeichneStraenge();drawChart(FS);energieBilanz();renderFlow();if(GELD)zeichneEB()}
+    if(!$("tabEnergie").hidden){drawMulti(FL);zeichneStraenge();drawChart(FS);energieBilanz();renderFlow();if(GELD)zeichneEB()}
     if(!$("tabUeb").hidden){FS2.series=FS.series;drawChart(FS2)}
     zeichneAuto();   // Kennzahlen Wattpilot (Übersicht und Reiter), Diagramme nur im Reiter
   }
@@ -1743,9 +1735,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     zonen:[[100,.22],[90,.13],[80,.05],[79.9,0],[20.1,0],[20,.05],[10,.13],[0,.22]],
     fmt:v=>Math.round(v)+" %", axis:v=>v+" %", zero:false, band:false, stats(){}};
   const FS2=Object.assign({},FS,{svg:"chartS2",ro:"readoutS2",geo:null,gruppe:"ueb"});   // gleicher Ladestand-Verlauf auf der Übersicht
-  // Verbraucher im Verlauf: PV, Batterie, Boiler (U12), WP (U13), Wallbox, Übriges (= Haus − WP − Boiler − Wallbox)
-  const VB={teil:"fronius",svg:"chartV",ro:"readoutV",legend:"vLegend",lines:[],geo:null,null0:true,farbig:true,fett:true,
-    fmt:FL.fmt, axis:FL.axis, spanne:false, leer:FL.leer};
+  // Zusätzliche Linien für „Leistungen im Verlauf“: Boiler (U12), WP (U13), Übriges (= Haus − WP − Boiler − Wallbox)
   // Wert einer Reihe zum Zeitpunkt t (nächster Punkt, höchstens tol entfernt); Reihen sind nach Zeit sortiert
   function wertBei(serie,tol){let i=0;return t=>{while(i+1<serie.length&&Math.abs(serie[i+1].t-t)<=Math.abs(serie[i].t-t))i++;const p=serie[i];return p&&Math.abs(p.t-t)<=tol?p.v:null}}
   function verbraucherLinien(fr){
@@ -1753,20 +1743,16 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const rows=fr.filter(r=>typeof r[1]==="number"||typeof r[4]==="number"); if(!rows.length) return [];
     const dt=rows.length>1?(rows[rows.length-1][0]-rows[0][0])/(rows.length-1):6e4, tol=Math.max(3*6e4,dt*0.75);
     const bo=wertBei(CH.boiler.series,tol), wp=wertBei(CH.wp.series,tol);
-    const L={pv:[],batt:[],boiler:[],wp:[],wb:[],ueb:[]};
+    const L={boiler:[],wp:[],ueb:[]};
     rows.forEach(r=>{const t=r[0], b=bo(t), w=wp(t), wb=z(r[8]), haus=z(r[4]);
-      if(z(r[1])!==null) L.pv.push(pkt(t,Math.max(0,r[1])));
-      if(z(r[3])!==null) L.batt.push(pkt(t,-r[3]));
       if(b!==null) L.boiler.push(pkt(t,Math.max(0,b)));
       if(w!==null) L.wp.push(pkt(t,Math.max(0,w)));
-      if(wb!==null) L.wb.push(pkt(t,Math.max(0,wb)));
       if(haus!==null&&b!==null&&w!==null) L.ueb.push(pkt(t,Math.max(0,Math.abs(haus)-Math.max(0,b)-Math.max(0,w)-Math.max(0,wb||0))));
     });
-    return [{name:"PV",col:"var(--warm)",series:L.pv,flaeche:true,breite:1.6,deckkraft:.9},{name:"Batterie",col:"var(--ok)",series:L.batt,breite:1.6,deckkraft:.8},
-      {name:"Boiler",col:"var(--hot)",series:L.boiler,breite:1.6,deckkraft:.85},{name:"Wärmepumpe",col:"var(--wp)",series:L.wp,breite:1.6,deckkraft:.85},
-      {name:"Wallbox",col:"var(--s4)",series:L.wb,breite:1.6,deckkraft:.85},{name:"Übriges",col:"var(--accent)",series:L.ueb,breite:1.5,deckkraft:.8,dash:"4 3"}];
+    return [{name:"Boiler",col:"var(--hot)",series:L.boiler,breite:1.6,deckkraft:.9},{name:"Wärmepumpe",col:"var(--s1)",series:L.wp,breite:1.6,deckkraft:.9},
+      {name:"Übriges",col:"var(--s6)",series:L.ueb,breite:1.5,deckkraft:.85,dash:"2 3"}];
   }
-  FS.gruppe=FL.gruppe=PVS.gruppe=VB.gruppe="energie";   // Mausstrich gemeinsam in den Verläufen des Energieflusses
+  FS.gruppe=FL.gruppe=PVS.gruppe="energie";   // Mausstrich gemeinsam in den Verläufen des Energieflusses
   const K14C={svg:"chartK",ro:null,gruppe:"ueb",geo:null};   // Schaltzustände: nur der Strich
   function drawMulti(c){
     const svg=$(c.svg), lines=c.lines.filter(l=>l.series.length);
@@ -1903,8 +1889,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
 
   // Diagramme mit gleicher „gruppe“ (Übersicht: Boiler-Temperatur, Boiler-Leistung, WP, Ladestand) zeigen den Mausstrich gemeinsam
-  // gleiche Zeitbasis = gleiche „gruppe“: Übersicht (Boiler, WP, Ladestand, Schaltzustände), Energiefluss (Leistungen, Verbraucher, PV je Strang, Ladestand)
-  const einzelGruppe=c=>c.gruppe?Object.values(CH).concat([FS,FS2,FL,VB,PVS,K14C]).filter(x=>x.gruppe===c.gruppe):[c];
+  // gleiche Zeitbasis = gleiche „gruppe“: Übersicht (Boiler, WP, Ladestand, Schaltzustände), Energiefluss (Leistungen, PV je Strang, Ladestand)
+  const einzelGruppe=c=>c.gruppe?Object.values(CH).concat([FS,FS2,FL,PVS,K14C]).filter(x=>x.gruppe===c.gruppe):[c];
   function hover(c,e){
     if(!c.geo) return;
     const svg=$(c.svg),r=svg.getBoundingClientRect(),g=c.geo;
