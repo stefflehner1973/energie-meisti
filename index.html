@@ -1019,7 +1019,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 11:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 11:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1618,7 +1618,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* Verlauf in drei Teilen gleichzeitig laden, nur was der offene Reiter braucht.
      Jeder Teil wird gezeichnet, sobald er da ist. Die letzte Antwort je Teil bleibt im Browser
      gespeichert und erscheint beim nächsten Öffnen sofort. */
-  const TEILE={uebersicht:["mess","fronius"],temperatur:["ma"],energie:["fronius","mess"],auto:["fronius"],sonne:[],prognose:[],steuerung:[],geld:[]};
+  const TEILE={uebersicht:["mess","fronius"],temperatur:["ma"],energie:["fronius","mess"],auto:["fronius"],sonne:[],prognose:[],steuerung:["mess"],geld:[]};   // Steuerung: Boiler-Leistung für „geladen“ bei Boiler mit Überschuss
   const FELDER={mess:["temp","boiler","wp","k14"],ma:["ma"],fronius:["fronius"]};
   const laedtTeil=new Set(), geladen={}, teilNr={}, laedtMit={}, teilZeit={};
   const FRISCH=3*6e4;   // so lange gelten geladene Daten als aktuell (Reiterwechsel lädt dann nicht neu)
@@ -1709,6 +1709,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
 
   function drawAll(){
+    try{if(reiter==="steuerung"&&STEU)zeichneUeb()}catch(e){}   // STEU wird weiter unten angelegt (beim ersten Aufruf evtl. noch nicht)
     const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"7 Tage",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
     document.querySelectorAll(".elab").forEach(e=>e.textContent=lab);
     document.querySelectorAll(".ebz").forEach(e=>e.textContent="· "+lab.replace("Energie ",""));   // Zeitraum der Kacheln
@@ -3174,10 +3175,20 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(zs==="pause"){const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Sofort fortsetzen";b.addEventListener("click",()=>steuerSenden({aktion:"ueberschuss",ueb:{pauseWeg:true}},"Fortgesetzt.",undefined,undefined,UI_U));pz.append(b)}
     // Heute
     const h=st&&st.heute&&st.zeit&&mitternacht(st.zeit)===mitternacht(Date.now())?st.heute:{n:0,ms:0,verlauf:[]};
+    // Energie in den Boiler im Zeitraum [von, bis] aus der gemessenen Leistung U12 (Seite), falls das Skript (noch) nichts liefert
+    const boS=toSeries(ROH&&ROH.boiler&&ROH.boiler.rows), whAus=(von,bis)=>{if(boS.length<2||!von||!bis||bis<=von)return null;
+      if(boS[0].t>von+5*6e4||boS[boS.length-1].t<bis-5*6e4)return null;   // Zeitraum nicht ganz geladen
+      const gap=gapOf(boS);let e=0;for(let i=0;i<boS.length-1;i++){const a=Math.max(von,boS[i].t),b=Math.min(bis,boS[i+1].t,boS[i].t+gap);if(b>a)e+=Math.max(0,boS[i].v)*(b-a)/3.6e6}return Math.round(e)};
     const kwhT=wh=>typeof wh==="number"?(wh<10000?de(wh/1000,wh<1000?2:1):de(wh/1000,0))+" kWh":null;
-    $("ueZahlen").innerHTML=`<span><b>${h.n}×</b> eingeschaltet</span><span><b>${ueDauer(h.ms)}</b> gelaufen</span>`+(typeof h.wh==="number"?`<span><b>${kwhT(h.wh)}</b> geladen</span>`:"");
-    const li=[]; if(st&&st.an&&st.seit) li.push([fTime(st.seit)+" – jetzt","ein: "+(st.startGrund||"")+(typeof h.whLauf==="number"?" · bisher "+kwhT(h.whLauf):"")]);
-    (h.verlauf||[]).slice().reverse().forEach(v=>li.push([fTime(v.von)+" – "+fTime(v.bis),(typeof v.wh==="number"?kwhT(v.wh)+" · ":"")+"aus: "+v.grund]));
+    // je Lauf: Wert vom Skript, sonst aus den Messwerten der Seite
+    const laufWh=(v,bis)=>typeof v.wh==="number"&&v.wh>0?v.wh:whAus(v.von,bis);
+    const jetztWh=st&&st.an&&st.seit?(typeof h.whLauf==="number"&&h.whLauf>0?h.whLauf:whAus(st.seit,Date.now())):null;
+    const lw=(h.verlauf||[]).map(v=>laufWh(v,v.bis));
+    let summe=typeof h.wh==="number"&&h.wh>0?h.wh:null;
+    if(summe===null){const t=lw.concat(jetztWh===null&&st&&st.an?[]:[jetztWh]).filter(x=>x!==null&&x!==undefined);summe=t.length?t.reduce((a,b)=>a+b,0):null}
+    $("ueZahlen").innerHTML=`<span><b>${h.n}×</b> eingeschaltet</span><span><b>${ueDauer(h.ms)}</b> gelaufen</span>`+(summe!==null?`<span><b>${kwhT(summe)}</b> geladen</span>`:"");
+    const li=[]; if(st&&st.an&&st.seit) li.push([fTime(st.seit)+" – jetzt","ein: "+(st.startGrund||"")+(jetztWh!==null?" · bisher "+kwhT(jetztWh):"")]);
+    (h.verlauf||[]).map((v,i)=>[v,lw[i]]).reverse().forEach(([v,wh])=>li.push([fTime(v.von)+" – "+fTime(v.bis),(wh!==null&&wh!==undefined?kwhT(wh)+" · ":"")+"aus: "+v.grund]));
     $("ueListe").innerHTML=li.length?li.map(([a,b])=>`<li><span>${a}</span><span>${esc(b)}</span></li>`).join(""):`<li><span>–</span><span>Heute noch nicht eingeschaltet.</span></li>`;
   }
   document.querySelectorAll(".bsel button").forEach(b=>b.addEventListener("click",()=>{
@@ -3317,7 +3328,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         letzterVerlauf=Date.now();
         if(reiter==="prognose") vorne.push(wetterAlt||!prog?ladePrognose(true,leise):ladeProgIst());
         else if(reiter==="geld") vorne.push(ladeGeld(true,leise));
-        else if(reiter==="steuerung"){}   // Steuerung: unten, jede Minute
+        else if(reiter==="steuerung") vorne.push(loadHist(false,{rest:false,still:leise}));   // Steuerung selbst: unten, jede Minute; hier Boiler-Leistung (mess)
         else if(reiter!=="sonne") vorne.push(loadHist(false,{rest:false,still:leise}));
       }
       await Promise.allSettled(vorne);
