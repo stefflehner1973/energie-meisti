@@ -42,7 +42,8 @@
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:720px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
 header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-h1{font-family:var(--f-display);font-weight:600;font-size:2rem;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1{font-family:var(--f-display);font-weight:600;font-size:1.5rem;letter-spacing:.01em;margin:0;display:flex;align-items:center;gap:10px;line-height:1.1}
+h1 .logo{width:30px;height:30px;flex-shrink:0;display:block}
 .sub{color:var(--muted);font-size:.85rem;font-family:var(--f-mono)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
 .main{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
@@ -394,8 +395,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
 <div class="wrap">
   <header>
-    <h1>Energie Meisti</h1>
-    <div class="sub">Boiler · Batterie · Wärmepumpe · Wattpilot · Raumtemperaturen</div>
+    <h1><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0d6a87"/><circle cx="32" cy="30" r="11" fill="#f0a83a"/><g stroke="#f0a83a" stroke-width="4" stroke-linecap="round"><path d="M32 9v5M15 16l3.5 3.5M49 16l-3.5 3.5M9 31h5M50 31h5"/></g><path d="M8 50l24-15 24 15" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/></svg>Energie Meisti</h1>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Seiten">
@@ -1018,7 +1018,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 09:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 09:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
