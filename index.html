@@ -960,7 +960,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel">
       <details id="gPreise">
         <summary>Preise und Annahmen</summary>
-        <p class="sub" style="margin:8px 0 10px">Rp./kWh. Bezug inkl. 8,1 % MWST; Einspeisung und Lokalstrom ohne MWST (nicht MWST-pflichtig). Bezugspreis = Energie + Netznutzung + Abgaben + Konzessionsabgabe (AEW Comfort, ohne Grundpreis und Messtarif, die bleiben gleich). Einspeisung laut AEW-Rechnung. Lokalstrom ab 01.11.2026: 80 % des All-In-Preises minus 2 Rp.; welcher Anteil der Einspeisung lokal verbraucht wird, rechnet nur die AEW aus – hier als Schätzung einstellbar.</p>
+        <p class="sub" style="margin:8px 0 10px">Rp./kWh (Gebühren in CHF pro Monat: Grundpreis + Messtarif inkl. MWST minus Online-Rabatt; nur für die Spalte „Auszahlung“). Bezug inkl. 8,1 % MWST; Einspeisung und Lokalstrom ohne MWST (nicht MWST-pflichtig). Bezugspreis = Energie + Netznutzung + Abgaben + Konzessionsabgabe (AEW Comfort, ohne Grundpreis und Messtarif, die bleiben gleich). Einspeisung laut AEW-Rechnung. Lokalstrom ab 01.11.2026: 80 % des All-In-Preises minus 2 Rp.; welcher Anteil der Einspeisung lokal verbraucht wird, rechnet nur die AEW aus – hier als Schätzung einstellbar.</p>
         <div class="gtabwrap"><table class="gtab" id="gPreisTab"></table></div>
         <div class="krow" style="margin-top:10px">
           <label class="kmerk">Lokalstrom-Anteil der Einspeisung (Schätzung) <input type="number" id="gLokAnteil" min="0" max="100" step="5" style="width:4.5em;font:inherit;padding:4px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"> %</label>
@@ -1019,7 +1019,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 10:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 10:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2641,7 +2641,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   window.addEventListener("resize",()=>{if(reiter==="prognose"&&prog) zeichnePrognose()});
 
   /* ---------- $$$: Ersparnis aus den Tageswerten ---------- */
-  const PREIS_STD={2026:{bez:26.03,ein:8.2,lok:19.7},2027:{bez:27.81,ein:8.2,lok:21.2}};
+  // grund: feste Gebühren CHF/Monat inkl. MWST (Grundpreis + Messtarif − Online-Rabatt CHF 1): 2026 (6.00+4.50)×1,081−1, 2027 (6.00+4.85)×1,081−1
+  const PREIS_STD={2026:{bez:26.03,ein:8.2,lok:19.7,grund:10.35},2027:{bez:27.81,ein:8.2,lok:21.2,grund:10.73}};
   const LOK_AB=new Date(2026,10,1).getTime();
   let GELD=null, geldZeit=0, geldNr=0, geldEinteilung=store.get("tb.geldein","tag");
   // alte gespeicherte Einspeisevergütung 8,54 Rp → neuer Standard 8,2 Rp (einmalig)
@@ -2650,14 +2651,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const LOK_STD=20;   // Standard: 20 % der Einspeisung als Lokalstrom
   if(!store.get("tb.lok20",false)){if(+store.get("tb.lokanteil",0)===0)store.set("tb.lokanteil",LOK_STD);store.set("tb.lok20",true)}
   function lokAnteil(){const a=+store.get("tb.lokanteil",LOK_STD);return isFinite(a)?Math.min(100,Math.max(0,a)):0}
-  function preisFuer(t){const p=preise(), j=new Date(t).getFullYear(), jahre=Object.keys(p).map(Number).sort();let w=jahre[0];jahre.forEach(x=>{if(x<=j)w=x});return p[w]||PREIS_STD[2026]}
+  function preisFuer(t){const p=preise(), j=new Date(t).getFullYear(), jahre=Object.keys(p).map(Number).sort();let w=jahre[0];jahre.forEach(x=>{if(x<=j)w=x});const r=Object.assign({},(PREIS_STD[w]||PREIS_STD[2026]),p[w]||{});if(typeof r.grund!=="number"||!isFinite(r.grund))r.grund=(PREIS_STD[w]||PREIS_STD[2026]).grund;return r}
   // Tag [t, pv, haus, bezug, einsp, laden, entladen, dauer] → Franken
   function geldTag(r){
     const p=preisFuer(r[0]), selbst=Math.max(0,r[2]-r[3]), ein=r[4], lokA=r[0]>=LOK_AB?lokAnteil()/100:0;
     return {t:r[0],pv:r[1],selbst,ein,bez:r[3],haus:r[2],
-      fSelbst:selbst*p.bez/100, fEin:ein*(1-lokA)*p.ein/100, fLok:ein*lokA*p.lok/100, fBez:r[3]*p.bez/100};
+      fSelbst:selbst*p.bez/100, fEin:ein*(1-lokA)*p.ein/100, fLok:ein*lokA*p.lok/100, fBez:r[3]*p.bez/100, fGrund:p.grund*12/365};
   }
-  function summe(liste){const s={pv:0,selbst:0,ein:0,bez:0,haus:0,fSelbst:0,fEin:0,fLok:0,fBez:0};liste.forEach(d=>Object.keys(s).forEach(k=>s[k]+=d[k]));s.tot=s.fSelbst+s.fEin+s.fLok;s.netto=s.tot-s.fBez;return s}
+  function summe(liste){const s={pv:0,selbst:0,ein:0,bez:0,haus:0,fSelbst:0,fEin:0,fLok:0,fBez:0,fGrund:0};liste.forEach(d=>Object.keys(s).forEach(k=>s[k]+=(d[k]||0)));s.tot=s.fSelbst+s.fEin+s.fLok;s.netto=s.tot-s.fBez;s.aus=s.fEin+s.fLok-s.fBez-s.fGrund;return s}
   const chf=v=>"CHF "+(Math.round(v*100)/100).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
   const kwhK=v=>eK(v,v=>(v>=100?Math.round(v):de(v,1))+" kWh");
   async function ladeGeld(neu,hintergrund){
@@ -2730,8 +2731,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Tabelle nach Monat
     const mm=new Map(); tage.forEach(d=>{const k=new Date(new Date(d.t).getFullYear(),new Date(d.t).getMonth(),1).getTime();if(!mm.has(k))mm.set(k,[]);mm.get(k).push(d)});
     const zeilen=[...mm.entries()].sort((a,b)=>b[0]-a[0]).map(([k,l])=>Object.assign({k},summe(l))), tot=summe(tage);
-    const zr=(n,s,cl)=>`<tr${cl?` class="${cl}"`:""}><td>${n}</td><td>${kwhK(s.pv)}</td><td>${kwhK(s.selbst)}</td><td>${kwhK(s.ein)}</td><td>${kwhK(s.bez)}</td><td>${chf(s.fSelbst)}</td><td>${chf(s.fEin+s.fLok)}</td><td>${chf(s.tot)}</td><td>${chf(-s.fBez)}</td><td><b>${chf(s.netto)}</b></td></tr>`;
-    $("gTab").innerHTML=`<thead><tr><th>Monat</th><th>PV</th><th>Selbst genutzt</th><th>Eingespeist</th><th>Netzbezug</th><th>Gespart</th><th>Vergütung</th><th>Total</th><th>Kosten Bezug</th><th>Saldo</th></tr></thead><tbody>`+
+    const zr=(n,s,cl)=>`<tr${cl?` class="${cl}"`:""}><td>${n}</td><td>${kwhK(s.pv)}</td><td>${kwhK(s.selbst)}</td><td>${kwhK(s.ein)}</td><td>${kwhK(s.bez)}</td><td>${chf(s.fSelbst)}</td><td>${chf(s.fEin+s.fLok)}</td><td>${chf(s.tot)}</td><td>${chf(-s.fBez)}</td><td><b>${chf(s.netto)}</b></td><td title="Vergütung − Kosten Netzbezug − feste Gebühren (Grundpreis, Messtarif) – geschätzt">${chf(s.aus)}</td></tr>`;
+    $("gTab").innerHTML=`<thead><tr><th>Monat</th><th>PV</th><th>Selbst genutzt</th><th>Eingespeist</th><th>Netzbezug</th><th>Gespart</th><th>Vergütung</th><th>Total</th><th>Kosten Bezug</th><th>Saldo</th><th title="Geschätzte Auszahlung der AEW: Vergütung − Kosten Netzbezug − feste Gebühren">Auszahlung</th></tr></thead><tbody>`+
       zeilen.map(z=>zr(MONATE[new Date(z.k).getMonth()]+" "+new Date(z.k).getFullYear(),z)).join("")+zr("Total",tot,"summe")+"</tbody>";
     zeichnePreise();
   }
@@ -2816,8 +2817,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   function zeichnePreise(){
     const p=preise(), t=$("gPreisTab"); if(t.dataset.offen==="1") return;
-    t.innerHTML=`<thead><tr><th>Jahr</th><th>Bezug</th><th>Einspeisung</th><th>Lokalstrom</th></tr></thead><tbody>`+
-      Object.keys(p).sort().map(j=>`<tr><td>${j}</td>`+["bez","ein","lok"].map(k=>`<td><input type="number" step="0.01" data-j="${j}" data-k="${k}" value="${p[j][k]}"></td>`).join("")+"</tr>").join("")+"</tbody>";
+    t.innerHTML=`<thead><tr><th>Jahr</th><th>Bezug</th><th>Einspeisung</th><th>Lokalstrom</th><th>Gebühren CHF/Mt.</th></tr></thead><tbody>`+
+      Object.keys(p).sort().map(j=>`<tr><td>${j}</td>`+["bez","ein","lok","grund"].map(k=>`<td><input type="number" step="0.01" data-j="${j}" data-k="${k}" value="${p[j][k]!=null?p[j][k]:(PREIS_STD[j]||PREIS_STD[2026])[k]}"></td>`).join("")+"</tr>").join("")+"</tbody>";
     t.querySelectorAll("input").forEach(i=>i.addEventListener("change",()=>{const q=preise();q[i.dataset.j][i.dataset.k]=+i.value||0;store.set("tb.preise",q);zeichneGeld()}));
     $("gLokAnteil").value=lokAnteil();
   }
