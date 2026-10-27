@@ -61,7 +61,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:2rem;letter-spacing:.0
 .reading{display:flex;flex-direction:column;gap:6px;min-width:0}
 .label{text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;color:var(--muted);font-weight:600}
 .big{font-family:var(--f-display);font-weight:600;font-size:3.6rem;line-height:1;font-variant-numeric:tabular-nums}
-.big small{font-size:1.5rem;color:var(--muted);margin-left:3px}
+.big small{font-size:1.5rem;color:inherit;margin-left:3px}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid currentColor;width:fit-content}
 @media (max-width:480px){.pill{margin:0 auto}}
 .pill.cold{color:var(--cold)} .pill.warm{color:var(--warm)} .pill.hot{color:var(--hot)} .pill.none{color:var(--muted)}
@@ -74,6 +74,10 @@ h1{font-family:var(--f-display);font-weight:600;font-size:2rem;letter-spacing:.0
 #pow{color:var(--c-boiler)}
 .wpv{color:var(--c-wp);margin:6px 0 4px}
 .label b,.sublabel b{color:var(--fg);font-weight:800;font-size:1.08em}
+/* Überschrift in der Farbe der Grösse (nur bei Diagrammen/Kacheln mit einer einzigen Grösse) */
+.label b.tc-pv,.sublabel b.tc-pv,h2.tc-pv{color:var(--warm-t)} .label b.tc-batt,.sublabel b.tc-batt,h2.tc-batt{color:var(--c-batt)}
+.label b.tc-boiler,.sublabel b.tc-boiler,h2.tc-boiler{color:var(--c-boiler)} .label b.tc-wp,.sublabel b.tc-wp,h2.tc-wp{color:var(--c-wp)}
+.label b.tc-wb,.sublabel b.tc-wb,h2.tc-wb{color:var(--c-wb)}
 .sublabel{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px}
 .sublabel:first-of-type{margin-top:4px}
 .hist .sublabel~.sublabel{border-top:1px solid var(--line);padding-top:18px;margin-top:20px}   /* feiner Strich zwischen den Diagrammen */
@@ -247,7 +251,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .batthead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
 .battrow{display:flex;align-items:center;gap:20px;margin:6px 0 4px}
 .big2{font-family:var(--f-display);font-weight:600;font-size:3.6rem;line-height:1;font-variant-numeric:tabular-nums;min-width:3.2ch}
-.big2 small{font-size:1.5rem;color:var(--muted);margin-left:3px}
+.big2 small{font-size:1.5rem;color:inherit;margin-left:3px}
 .bvoll{margin:10px 0 0;font-size:.88rem;color:var(--muted)}
 .bvoll b{color:var(--fg);font-weight:600}
 .bvoll span{font-size:.8rem}
@@ -314,7 +318,7 @@ details summary{cursor:pointer;font-weight:600}
 .matile .nm{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;overflow-wrap:anywhere}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
 .matile .tv{font-family:var(--f-display);font-weight:600;font-size:2.2rem;line-height:1.05;font-variant-numeric:tabular-nums}
-.matile .tv small{font-size:1rem;color:var(--muted);margin-left:2px}
+.matile .tv small{font-size:1rem;color:inherit;margin-left:2px}
 .matile .mi{font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
 .matile .lb{color:var(--hot)}
 .matile{position:relative}
@@ -437,7 +441,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       </svg>
     </div>
     <div class="reading">
-      <div class="label"><span class="gilt" data-gilt="boiler" hidden></span><b>Boiler</b> · Temperatur</div>
+      <div class="label"><span class="gilt" data-gilt="boiler" hidden></span><b class="tc-boiler">Boiler</b> · Temperatur</div>
       <div class="big"><span id="temp">–</span><small>°C</small></div>
       <div id="state" class="pill none">Noch keine Daten</div>
       <div class="meta">
@@ -452,7 +456,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel batt" aria-live="polite">
     <div class="batthead">
-      <div class="label"><b>Batterie</b> · BYD HVM 19,3 kWh</div>
+      <div class="label"><b class="tc-batt">Batterie</b> · BYD HVM 19,3 kWh</div>
       <div class="sub" id="bAge"></div>
     </div>
     <div class="battrow">
@@ -469,14 +473,14 @@ h3{font-size:.92rem;margin:0;font-weight:600}
   </section>
 
   <section class="panel ladebereich">
-    <div class="label" style="margin-bottom:8px"><span class="gilt" data-gilt="chartS2" hidden></span><b>Batterie</b> · Ladestand im Verlauf</div>
+    <div class="label" style="margin-bottom:8px"><span class="gilt" data-gilt="chartS2" hidden></span><b class="tc-batt">Batterie</b> · Ladestand im Verlauf</div>
     <div class="chartbox"><svg id="chartS2" viewBox="0 0 720 280" role="img" aria-label="Verlauf des Batterie-Ladestands"></svg></div>
     <div class="readout" id="readoutS2"></div>
   </section>
 
   <section class="panel" aria-live="polite">
     <div class="batthead">
-      <div class="label"><b>Wärmepumpe</b> · Shelly U13</div>
+      <div class="label"><b class="tc-wp">Wärmepumpe</b> · Shelly U13</div>
       <div class="sub" id="wAge"></div>
     </div>
     <div class="zwei">
@@ -495,7 +499,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
 
   <section class="panel hist" id="histPanel">
-    <div class="sublabel" style="margin-top:0"><span class="gilt" data-gilt="chart" hidden></span><b>Boiler</b> · Temperatur <span class="busy" hidden><i class="spin" aria-hidden="true"></i>lädt …</span></div>
+    <div class="sublabel" style="margin-top:0"><span class="gilt" data-gilt="chart" hidden></span><b class="tc-boiler">Boiler</b> · Temperatur <span class="busy" hidden><i class="spin" aria-hidden="true"></i>lädt …</span></div>
     <div class="stats">
       <div><b id="sMin">–</b><span>Minimum</span></div>
       <div><b id="sMax">–</b><span>Maximum</span></div>
@@ -506,7 +510,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </div>
     <div class="readout" id="readout"></div>
 
-    <div class="sublabel"><span class="gilt" data-gilt="chartP" hidden></span><b>Boiler</b> · Leistung (U12)</div>
+    <div class="sublabel"><span class="gilt" data-gilt="chartP" hidden></span><b class="tc-boiler">Boiler</b> · Leistung (U12)</div>
     <div class="stats">
       <div><b id="pE">–</b><span>Energie</span></div>
       <div><b id="pOn">–</b><span>Laufzeit</span></div>
@@ -517,7 +521,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </div>
     <div class="readout" id="readoutP"></div>
 
-    <div class="sublabel"><span class="gilt" data-gilt="chartW" hidden></span><b>Wärmepumpe</b> · Leistung (U13)</div>
+    <div class="sublabel"><span class="gilt" data-gilt="chartW" hidden></span><b class="tc-wp">Wärmepumpe</b> · Leistung (U13)</div>
     <div class="stats">
       <div><b id="wE">–</b><span>Energie</span></div>
       <div><b id="wOn">–</b><span>Laufzeit</span></div>
@@ -549,7 +553,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel" aria-live="polite">
     <div class="batthead">
-      <div class="label"><b>Wattpilot</b> · Wallbox Garage</div>
+      <div class="label"><b class="tc-wb">Wattpilot</b> · Wallbox Garage</div>
       <div class="sub" id="aAge"></div>
     </div>
     <div class="zwei">
@@ -620,7 +624,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </div>
     <section class="panel" aria-live="polite">
       <div class="batthead">
-        <div class="label"><b>Wattpilot</b> · Flex Home 11 C6 · Garage</div>
+        <div class="label"><b class="tc-wb">Wattpilot</b> · Flex Home 11 C6 · Garage</div>
         <div class="sub" id="uAge"></div>
       </div>
       <div class="zwei">
@@ -657,7 +661,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </section>
 
     <section class="panel">
-      <div class="histhead"><h2 style="margin:0"><span class="gilt" data-gilt="chartUT" hidden></span>Geladen pro Tag</h2></div>
+      <div class="histhead"><h2 class="tc-wb" style="margin:0"><span class="gilt" data-gilt="chartUT" hidden></span>Geladen pro Tag</h2></div>
       <p class="sub" style="font-size:.74rem;line-height:1.4;margin:6px 0 10px">Aus den Tageswerten der Google-Tabelle · letzte 14 Tage mit Wattpilot-Daten (ab 23.10.2026)</p>
       <div class="legend" id="uLegT"></div>
       <div class="chartbox"><svg id="chartUT" viewBox="0 0 720 240" role="img" aria-label="Geladene Energie pro Tag"></svg></div>
@@ -666,7 +670,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
     <section class="panel">
       <div class="histhead">
-        <h2 style="margin:0">Geladen pro <span id="uEinheit">Woche</span><span class="gilt" data-gilt="chartUP" hidden></span></h2>
+        <h2 class="tc-wb" style="margin:0">Geladen pro <span id="uEinheit">Woche</span><span class="gilt" data-gilt="chartUP" hidden></span></h2>
         <div class="usel" role="group" aria-label="Einteilung">
           <button type="button" data-u="woche" aria-pressed="true">Wochen</button>
           <button type="button" data-u="monat" aria-pressed="false">Monate</button>
@@ -746,7 +750,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
 
     <section class="panel ladebereich">
-      <h2><span class="gilt" data-gilt="chartPV" hidden></span>PV-Produktion nach Strang</h2>
+      <h2 class="tc-pv"><span class="gilt" data-gilt="chartPV" hidden></span>PV-Produktion nach Strang</h2>
       <div class="legend" id="pvLegend"></div>
       <div class="chartbox"><svg id="chartPV" viewBox="0 0 720 280" role="img" aria-label="PV-Leistung von Ost- und Westdach im Verlauf"></svg></div>
       <div class="readout" id="readoutPV"></div>
@@ -754,7 +758,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </section>
 
     <section class="panel ladebereich">
-      <h2><span class="gilt" data-gilt="chartS" hidden></span>Ladestand Batterie</h2>
+      <h2 class="tc-batt"><span class="gilt" data-gilt="chartS" hidden></span>Ladestand Batterie</h2>
       <div class="chartbox"><svg id="chartS" viewBox="0 0 720 280" role="img" aria-label="Verlauf des Batterie-Ladestands"></svg></div>
       <div class="readout" id="readoutS"></div>
     </section>
@@ -764,7 +768,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
   <div id="tabProg" role="tabpanel" aria-labelledby="tabBtnProg" class="tabpanel" hidden>
     <section class="panel">
       <div class="batthead">
-        <div class="label"><b>PV-Prognose</b> · Meisterschwanden</div>
+        <div class="label"><b class="tc-pv">PV-Prognose</b> · Meisterschwanden</div>
         <div class="sub" id="pStand"></div>
       </div>
       <div class="ekpi">
@@ -778,7 +782,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </section>
 
     <section class="panel">
-      <div class="histhead"><h2 style="margin:0"><span class="gilt" data-gilt="chartProg" hidden></span>PV-Leistung heute bis übermorgen</h2><button type="button" class="pzoom" id="pZoomWeg" hidden>Zoom aufheben</button></div>
+      <div class="histhead"><h2 class="tc-pv" style="margin:0"><span class="gilt" data-gilt="chartProg" hidden></span>PV-Leistung heute bis übermorgen</h2><button type="button" class="pzoom" id="pZoomWeg" hidden>Zoom aufheben</button></div>
       <div class="legend" id="pLegend"></div>
       <div class="chartbox"><svg id="chartProg" viewBox="0 0 720 280" role="img" aria-label="Erwartete PV-Leistung nach Dachseite und gemessene Leistung"></svg></div>
       <div class="readout" id="readoutProg"></div>
@@ -787,12 +791,12 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
 
     <section class="panel">
-      <h2><span class="gilt" data-gilt="progTage" hidden></span>Ertrag nächste 7 Tage</h2>
+      <h2 class="tc-pv"><span class="gilt" data-gilt="progTage" hidden></span>Ertrag nächste 7 Tage</h2>
       <div class="chartbox"><svg id="progTage" viewBox="0 0 720 240" role="img" aria-label="Erwarteter PV-Ertrag pro Tag mit Wetter"></svg></div>
     </section>
 
     <section class="panel">
-      <div class="histhead"><h2 style="margin:0"><span class="gilt" data-gilt="chartBattP" hidden></span>Batterie-Ladezustand heute und morgen</h2></div>
+      <div class="histhead"><h2 class="tc-batt" style="margin:0"><span class="gilt" data-gilt="chartBattP" hidden></span>Batterie-Ladezustand heute und morgen</h2></div>
       <p class="sub" style="font-size:.74rem;line-height:1.4;margin:6px 0 10px" id="pBattInfo">Abschätzung aus PV-Prognose minus üblichem Hausverbrauch</p>
       <div class="legend" id="pBattLegend"></div>
       <div class="chartbox"><svg id="chartBattP" viewBox="0 0 720 260" role="img" aria-label="Gemessener und erwarteter Batterie-Ladezustand"></svg></div>
@@ -1014,7 +1018,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 08:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 09:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1444,7 +1448,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       }};
   }
   const CH={
-    temp:{svg:"chart",ro:"readout",series:[],geo:null,col:"var(--accent)",
+    temp:{svg:"chart",ro:"readout",series:[],geo:null,col:"var(--c-boiler)",
       fmt:v=>de(v)+" °C", axis:v=>(Number.isInteger(v)?v:v.toFixed(1))+"°", zero:false, band:true,
       stats(s){
         if(!s.length){["sMin","sMax","sAvg"].forEach(i=>$(i).textContent="–");return}
@@ -2036,7 +2040,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Verbindung: von a nach b, Leistung w (≥0); fließt nur, wenn w>20 W
     // Zahl fett, Einheit normal und direkt dahinter
     const teile=v=>Math.abs(v)>=1000?[de(v/1000,2),"kW"]:[String(Math.round(v)),"W"];
-    const wert=(z,e,gr)=>`<tspan font-weight="600">${z}</tspan><tspan font-weight="400" font-size="${Math.round(gr*0.72)}" dx="2" fill="var(--muted)">${e}</tspan>`;
+    const wert=(z,e,gr)=>`<tspan font-weight="600">${z}</tspan><tspan font-weight="400" font-size="${Math.round(gr*0.72)}" dx="2">${e}</tspan>`;
     const SANS="IBM Plex Sans, system-ui, sans-serif";
     const kante=(a,b,w,col,ab,pos,breite)=>{   // pos: Lage der Beschriftung auf der Linie (0,5 = Mitte)
       const [x1,y1]=N[a],[x2,y2]=N[b], aktiv=w>20;
