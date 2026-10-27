@@ -1018,7 +1018,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 09:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.10.26 09:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1587,7 +1587,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const fr=(v.fronius&&v.fronius.rows)||[];
     const spalte=k=>fr.filter(r=>typeof r[k]==="number").map(r=>({t:r[0],v:r[k],mn:r[k],mx:r[k]}));
     // dünnere, leicht transparente Linien (PV als Fläche, Netz gestrichelt), damit übereinanderliegende Kurven sichtbar bleiben
-    FL.lines=[{name:"PV",col:"var(--c-pv)",series:spalte(1),flaeche:true,flaecheDeckkraft:.32,breite:2,deckkraft:1},{name:"Hausverbrauch",col:"var(--c-haus)",series:spalte(4),breite:1.8,deckkraft:.85},
+    FL.lines=[{name:"PV",col:"var(--c-pv)",series:spalte(1),flaeche:true,flaecheDeckkraft:.18,breite:2,deckkraft:1},{name:"Hausverbrauch",col:"var(--c-haus)",series:spalte(4),breite:1.8,deckkraft:.85},
       {name:"Einspeisung",col:"var(--c-einsp)",series:spalte(2).map(p=>{const v=Math.max(0,-p.v);return {t:p.t,v,mn:Math.max(0,-p.mx),mx:Math.max(0,-p.mn)}}),breite:1.6,deckkraft:.95,dash:"6 3"},
       {name:"Netzbezug",col:"var(--c-bezug)",series:spalte(2).map(p=>{const v=Math.min(0,-p.v);return {t:p.t,v,mn:Math.min(0,-p.mx),mx:Math.min(0,-p.mn)}}),breite:1.6,deckkraft:.95,dash:"6 3"},{name:"Batterie",col:"var(--c-batt)",series:spalte(3).map(p=>({t:p.t,v:-p.v,mn:-p.mx,mx:-p.mn})),breite:1.7,deckkraft:.9}];   // Anzeige: über null fliesst Strom hinein (Batterie laden, Netz einspeisen), unter null heraus (entladen, Netzbezug); Fronius liefert beides umgekehrt
     FS.series=spalte(5);
