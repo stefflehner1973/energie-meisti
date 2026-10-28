@@ -802,6 +802,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel">
       <h2 class="tc-pv"><span class="gilt" data-gilt="progTage" hidden></span>Ertrag nächste 7 Tage</h2>
       <div class="chartbox"><svg id="progTage" viewBox="0 0 720 240" role="img" aria-label="Erwarteter PV-Ertrag pro Tag mit Wetter"></svg></div>
+      <p class="sub" id="pGuete" style="font-size:.74rem;line-height:1.45;margin:8px 0 0" hidden></p>
     </section>
 
     <section class="panel">
@@ -1027,7 +1028,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 27.10.26 12:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 28.10.26 15:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2502,11 +2503,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("pvReset").addEventListener("click",()=>{pvCfg=Object.assign({},PV_STD);store.del("tb.pvcfg2");pvFormular();ladePrognose(true)});
   pvFormular();
 
-  async function wetterHolen(azKompass,mitTagen){
+  // Wettermodelle: std = Open-Meteo Standard, ch = MeteoSchweiz ICON-CH (1–2 km, ca. 5 Tage; danach fehlt es → Standard)
+  const PV_MODELLE={std:"",ch:"meteoswiss_icon_seamless"}, MODELL_NAME={std:"Standardmodell",ch:"MeteoSchweiz"};
+  async function wetterHolen(azKompass,mitTagen,modell){
     const u="https://api.open-meteo.com/v1/forecast?"+new URLSearchParams({
       latitude:"47.295",longitude:"8.229",timezone:"Europe/Zurich",timeformat:"unixtime",forecast_days:"7",
       hourly:"global_tilted_irradiance,temperature_2m,cloud_cover",tilt:String(pvCfg.neig),azimuth:String(Math.round(azKompass-180)),
-      ...(mitTagen?{daily:"weather_code,temperature_2m_max,temperature_2m_min,sunshine_duration"}:{})});
+      ...(mitTagen?{daily:"weather_code,temperature_2m_max,temperature_2m_min,sunshine_duration"}:{}),
+      ...(modell&&PV_MODELLE[modell]?{models:PV_MODELLE[modell]}:{})});
     const r=await fetch(u); if(!r.ok) throw new Error("Wetterdienst antwortet nicht (HTTP "+r.status+")");
     return r.json();
   }
@@ -2518,6 +2522,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     return Math.max(0,kwp*1000*g/1000*(1-pvCfg.verl/100)*(1-0.0026*(tz-25)));
   }
 
+  const istPunkt=r=>({t:r[0],v:r[1],mn:r[1],mx:r[1],o:typeof r[6]==="number"?r[6]:null,w:typeof r[7]==="number"?r[7]:null});
   // nur den gemessenen PV-Verlauf und Ladestand von heute (für Prognose-Diagramme und PV-Korrektur), ohne Wetter
   let progIstLaedt=false;
   async function ladeProgIst(){
@@ -2525,7 +2530,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     progIstLaedt=true;
     try{const ist=await api({art:"verlauf",teil:"fronius",von:String(mitternacht(Date.now())),bis:String(Date.now()),punkte:"1500"});
       const rows=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows:null;
-      if(rows){progIst=rows.filter(r=>typeof r[1]==="number").map(r=>({t:r[0],v:r[1],mn:r[1],mx:r[1]}));progSoc=rows.filter(r=>typeof r[5]==="number").map(r=>[r[0],r[5]]);
+      if(rows){progIst=rows.filter(r=>typeof r[1]==="number").map(istPunkt);progSoc=rows.filter(r=>typeof r[5]==="number").map(r=>[r[0],r[5]]);
         battVollZeigen(); if(reiter==="prognose"&&prog) zeichnePrognose()}}
     catch(e){logD("Prognose gemessen: "+e.message)}
     finally{progIstLaedt=false}
@@ -2534,27 +2539,22 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(reiter!=="prognose"&&!hintergrund) return;
     if(!neu&&prog&&Date.now()-progZeit<30*6e4){if(reiter==="prognose")zeichnePrognose();return}
     const nr=++progNr;
-    if(!prog){try{const c=JSON.parse(localStorage.getItem("tb.prog")||"null");if(c&&c.cfg===JSON.stringify(pvCfg)){prog=c.prog;progZeit=c.zeit;zeichnePrognose()}}catch(e){}}
+    if(!prog){try{const c=JSON.parse(localStorage.getItem("tb.prog")||"null");if(c&&c.cfg===JSON.stringify(pvCfg)&&c.prog&&c.prog.roh){prog=c.prog;progAufbereiten();progZeit=c.zeit;zeichnePrognose()}}catch(e){}}
     if(!hintergrund) $("pStand").textContent="lädt …";
     try{
       const heute=mitternacht(Date.now());
       ladeLastmodell();
-      const [o,w,ist]=await Promise.all([wetterHolen(pvCfg.azO,true),wetterHolen(pvCfg.azW,false),
-        cfg.histurl&&cfg.histtok?api({art:"verlauf",teil:"fronius",von:String(heute),bis:String(Date.now()),punkte:"1500"}).catch(()=>null):Promise.resolve(null)]);
+      const [o,w,oc,wc,ist]=await Promise.all([wetterHolen(pvCfg.azO,true),wetterHolen(pvCfg.azW,false),
+        wetterHolen(pvCfg.azO,false,"ch").catch(()=>null),wetterHolen(pvCfg.azW,false,"ch").catch(()=>null),
+        cfg.histurl&&cfg.histtok?api({art:"verlauf",teil:"fronius",von:String(heute),bis:String(Date.now()),punkte:"1500"}).catch(()=>null):Promise.resolve(null),
+        ladeGuete()]);
       if(nr!==progNr) return;
-      const st=[];
-      o.hourly.time.forEach((t,i)=>{
-        const ms=t*1000-18e5;                              // Stundenmittel: Mitte der vergangenen Stunde
-        const ta=o.hourly.temperature_2m[i];
-        const po=pvLeistung(pvCfg.kwpO,o.hourly.global_tilted_irradiance[i],ta), pw=pvLeistung(pvCfg.kwpW,w.hourly.global_tilted_irradiance[i],ta);
-        st.push({t:ms,ost:po,west:pw,sum:po+pw,ta,wolken:o.hourly.cloud_cover[i]});
-      });
+      const roh={std:stundenAus(o,w),ch:oc&&wc?stundenAus(oc,wc):null};
       const tage=o.daily.time.map((t,i)=>({t:t*1000,code:o.daily.weather_code[i],tmax:o.daily.temperature_2m_max[i],tmin:o.daily.temperature_2m_min[i],sonne:o.daily.sunshine_duration[i]/3600}));
-      tage.forEach(d=>{const ende=d.t+864e5;d.kwh=st.filter(h=>h.t>=d.t&&h.t<ende).reduce((a,h)=>a+h.sum/1000,0)});
-      prog={stunden:st,tage}; progZeit=Date.now();
-      progIst=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows.filter(r=>typeof r[1]==="number").map(r=>({t:r[0],v:r[1],mn:r[1],mx:r[1]})):[];
+      prog={roh,tage}; progAufbereiten(); progZeit=Date.now();
+      progIst=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows.filter(r=>typeof r[1]==="number").map(istPunkt):[];
       progSoc=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows.filter(r=>typeof r[5]==="number").map(r=>[r[0],r[5]]):[];
-      try{localStorage.setItem("tb.prog",JSON.stringify({cfg:JSON.stringify(pvCfg),zeit:progZeit,prog}))}catch(e){}
+      try{localStorage.setItem("tb.prog",JSON.stringify({cfg:JSON.stringify(pvCfg),zeit:progZeit,prog:{roh:prog.roh,tage:prog.tage}}))}catch(e){}
       battVollZeigen();
       $("pHint").hidden=true;
     }catch(e){
@@ -2564,20 +2564,148 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(reiter==="prognose") zeichnePrognose();
   }
 
+  // Stundenwerte eines Modells aus den Antworten für Ost- und Westdach
+  function stundenAus(o,w){
+    const st=[];
+    o.hourly.time.forEach((t,i)=>{
+      const ms=t*1000-18e5;                              // Stundenmittel: Mitte der vergangenen Stunde
+      const ta=o.hourly.temperature_2m[i], go=o.hourly.global_tilted_irradiance[i], gw=w.hourly.global_tilted_irradiance[i];
+      st.push({t:ms,ost:go==null?null:pvLeistung(pvCfg.kwpO,go,ta),west:gw==null?null:pvLeistung(pvCfg.kwpW,gw,ta),ta,wolken:o.hourly.cloud_cover[i]});
+    });
+    return st;
+  }
+
+  /* Prognose-Güte aus Google (Blatt „PV-Prognose“ gegen Messung je Dach): Modellvergleich und Stundenfaktoren */
+  let PG=store.get("tb.pvguete",null), pgZeit=PG&&PG.z||0; PG=PG&&PG.g||null;
+  async function ladeGuete(){
+    if(!cfg.histurl||!cfg.histtok||(PG&&Date.now()-pgZeit<36e5)) return;
+    try{const g=await api({art:"prognoseguete"}); if(g&&g.ok){PG=g;pgZeit=Date.now();store.set("tb.pvguete",{z:pgZeit,g})}}
+    catch(e){logD("Prognose-Güte: "+e.message)}
+  }
+  const MODELL_MIN_TAGE=7, KALIB_MIN_TAGE=14;
+  // Modell: MeteoSchweiz nur, wenn es über mindestens 7 Tage klar besser trifft (≥ 10 % kleinere Abweichung)
+  function modellWahl(){
+    const m=PG&&PG.modelle||{}, a=m["früh|std"], b=m["früh|ch"], na=a?a.n:0, nb=b?b.n:0;
+    if(a&&b&&na>=MODELL_MIN_TAGE&&nb>=MODELL_MIN_TAGE){
+      if(b.fehler<a.fehler*0.9) return {m:"ch",text:`MeteoSchweiz trifft besser (Abweichung ${de(b.fehler,0)} % statt ${de(a.fehler,0)} %, ${nb} Tage)`};
+      return {m:"std",text:`Standardmodell trifft gleich gut oder besser (${de(a.fehler,0)} % gegenüber MeteoSchweiz ${de(b.fehler,0)} %, ${na} Tage)`};
+    }
+    return {m:"std",text:`Vergleich mit MeteoSchweiz läuft (${Math.min(na,nb)} von ${MODELL_MIN_TAGE} Tagen)`};
+  }
+  // Stundenfaktor je Dach (gemessen/Prognose), erst ab 14 Tagen, gegen 1 gedämpft und auf 0,6–1,4 begrenzt
+  function kalibTage(m){const S=PG&&PG.stunden&&PG.stunden[m];if(!S)return 0;let n=0;S.o.forEach(x=>{n=Math.max(n,x[2])});return n}
+  function stundenFaktor(m,dach,h){
+    const S=PG&&PG.stunden&&PG.stunden[m]&&PG.stunden[m][dach], x=S&&S[h]; if(!x) return 1;
+    const [soll,ist,n]=x; if(n<KALIB_MIN_TAGE||soll<500) return 1;
+    const r=Math.max(0.6,Math.min(1.4,ist/soll)); return 1+(r-1)*n/(n+10);
+  }
+  // gewähltes Modell (Lücken aus dem Standardmodell), kalibriert; Tagessummen neu
+  function progAufbereiten(){
+    if(!prog||!prog.roh) return;
+    const wahl=modellWahl(), basis=prog.roh[wahl.m]||prog.roh.std, std=prog.roh.std, kal=kalibTage(wahl.m)>=KALIB_MIN_TAGE;
+    prog.modell=prog.roh[wahl.m]?wahl.m:"std"; prog.wahlText=wahl.text; prog.kalibriert=kal;
+    prog.stunden=std.map((s,i)=>{
+      const b=basis.find(x=>x.t===s.t)||s, h=new Date(s.t).getHours();
+      let ost=b.ost!=null?b.ost:s.ost||0, west=b.west!=null?b.west:s.west||0;
+      if(kal){ost*=stundenFaktor(prog.modell,"o",h);west*=stundenFaktor(prog.modell,"w",h)}
+      return {t:s.t,ost,west,sum:ost+west,ta:s.ta,wolken:s.wolken};
+    });
+    prog.tage.forEach(d=>{const ende=d.t+864e5;d.kwh=prog.stunden.filter(h=>h.t>=d.t&&h.t<ende).reduce((a,h)=>a+h.sum/1000,0)});
+  }
+  const stundeBei=t=>prog&&prog.stunden?prog.stunden.find(x=>t>=x.t-18e5&&t<x.t+18e5):null;
+
+  /* Anpassung heute: Faktor je Dach aus den letzten 2,5 h (gemessen/Prognose, ohne Zeiten mit Batterie ≥ 98 %).
+     Er klingt ab: langsam (6 h), wenn die Prognose weiter das gleiche Wetter zeigt, schnell (1,5 h) bei angekündigtem Wetterwechsel.
+     Ab Mitternacht gilt wieder die Prognose (ausser bei Schnee-Verdacht). */
+  function korrekturHeute(jetzt){
+    if(!prog||!prog.stunden||!progIst||progIst.length<5) return null;
+    const von=jetzt-2.5*36e5, socBei=t=>{let s=null;for(const p of progSoc){if(p[0]>t)break;s=p[1]}return s};
+    let it=0,st=0,io=0,iw=0,so=0,sw=0;
+    for(let i=0;i<progIst.length-1;i++){const a=progIst[i]; if(a.t<von||a.t>jetzt) continue;
+      const dt=Math.min(progIst[i+1].t-a.t,10*6e4)/36e5, sc=socBei(a.t); if(sc!=null&&sc>=98) continue;
+      const h=stundeBei(a.t); if(!h) continue;
+      it+=Math.max(0,a.v)*dt; st+=h.sum*dt;
+      if(a.o!=null&&a.w!=null){io+=Math.max(0,a.o)*dt; iw+=Math.max(0,a.w)*dt; so+=h.ost*dt; sw+=h.west*dt}}
+    if(st<1000) return null;   // weniger als 1 kWh erwartet (Morgen, Abend, trüb): keine Anpassung
+    const b=v=>Math.max(0.2,Math.min(1.5,v)), fg=b(it/st), fo=so>=400?b(io/so):fg, fw=sw>=400?b(iw/sw):fg;
+    const wol=(a,z)=>{const hh=prog.stunden.filter(x=>x.t>=a&&x.t<z&&x.wolken!=null);return hh.length?hh.reduce((s,x)=>s+x.wolken,0)/hh.length:null};
+    const c0=wol(von,jetzt), m0=mitternacht(jetzt), ende=m0+864e5;
+    // Abklingen Stunde für Stunde: je grösser der Unterschied der Bewölkung zum Korrekturfenster, desto schneller
+    const tau=t=>{const c=wol(t-18e5,t+18e5); if(c0==null||c==null) return 3; const d=Math.abs(c-c0); return d<15?6:d<30?3:1.5};
+    const abkling=t=>{if(t<=jetzt) return 1; if(t>=ende) return 0; let k=1,x=jetzt; while(x<t){const s=Math.min(36e5,t-x); k*=Math.exp(-(s/36e5)/tau(x+s/2)); x+=s} return k};
+    return {fo,fw,fg,ist:it,soll:st,c0,abkling,jetzt,ende};
+  }
+
+  /* Schnee-Verdacht: heute ≥ 2 kWh erwartet, aber < 25 % gemessen, und kalt (Tiefst ≤ 2 °C).
+     Dann wird auch morgen weniger erwartet (Faktor wie heute gemessen), bis die Module wieder ≥ 60 % liefern. Höchstens 4 Tage. */
+  function schneePruefen(jetzt){
+    let s=null; try{s=JSON.parse(localStorage.getItem("tb.pvschnee")||"null")}catch(e){}
+    const m0=mitternacht(jetzt);
+    if(s&&jetzt-s.seit>4*864e5) s=null;
+    if(prog&&prog.stunden&&progIst.length>5){
+      const socBei=t=>{let x=null;for(const p of progSoc){if(p[0]>t)break;x=p[1]}return x};
+      let i0=0,s0=0;
+      for(let i=0;i<progIst.length-1;i++){const a=progIst[i]; if(a.t<m0||a.t>jetzt) continue; const sc=socBei(a.t); if(sc!=null&&sc>=98) continue;
+        const h=stundeBei(a.t), dt=Math.min(progIst[i+1].t-a.t,10*6e4)/36e5; if(!h) continue; i0+=Math.max(0,a.v)*dt; s0+=h.sum*dt}
+      const tH=prog.tage.find(d=>mitternacht(d.t)===m0), kalt=tH&&tH.tmin<=2;
+      if(s0>=2000&&i0/s0<0.25&&kalt) s={seit:s&&s.seit<m0?s.seit:m0,f:Math.max(0.05,i0/s0),tag:m0};
+      else if(s&&s0>=1000&&i0/s0>=0.6) s=null;
+    }
+    try{s?localStorage.setItem("tb.pvschnee",JSON.stringify(s)):localStorage.removeItem("tb.pvschnee")}catch(e){}
+    return s;
+  }
+
+  // Erwartete Leistung (W) zur Zeit t mit allen Anpassungen: Faktor heute je Dach, Schnee-Verdacht
+  function pvAngepasst(t,kor,schnee){
+    const h=stundeBei(t); if(!h) return 0;
+    const m0=mitternacht(Date.now());
+    let fo=1,fw=1;
+    if(kor&&t<kor.ende){const k=kor.abkling(t); fo=1+(kor.fo-1)*k; fw=1+(kor.fw-1)*k}
+    else if(schnee){
+      const tag=mitternacht(t), heuteOhneKor=tag===m0&&!kor;
+      if(heuteOhneKor||tag===m0+864e5){const td=prog.tage.find(d=>mitternacht(d.t)===tag), f=td&&td.tmax>=5?(schnee.f+1)/2:schnee.f; fo=fw=f}
+    }
+    return h.ost*fo+h.west*fw;
+  }
+  // Tagessumme kWh mit Anpassung (heute: gemessen bis jetzt + angepasster Rest)
+  function tagAngepasst(tag,kor,schnee,istBisher){
+    const jetzt=Date.now(), ende=mitternacht(tag+30*36e5); let e=0;
+    for(let t=Math.max(tag,tag===mitternacht(jetzt)?jetzt:tag);t<ende;t+=15*6e4) e+=pvAngepasst(t+7.5*6e4,kor,schnee)*0.25/1000;
+    return (tag===mitternacht(jetzt)?(istBisher||0):0)+e;
+  }
+
+  // Treffsicherheit: gestern und Mittel, gewähltes Modell, Kalibrierung
+  function gueteText(){
+    if(!PG||!PG.tage) return cfg.histurl?"Treffsicherheit: Google schreibt die Prognose ab sofort mit (zweimal täglich), erste Auswertung ab morgen.":"";
+    const m=prog&&prog.modell||"std", gestern=mitternacht(mitternacht(Date.now())-12*36e5), d=PG.tage.find(x=>mitternacht(x.t)===gestern);
+    const p=d&&(d.p["Vorabend|"+m]||d.p["früh|"+m]||d.p["Vorabend|std"]||d.p["früh|std"]), teile=[];
+    if(p&&p.h>=12&&(p.so+p.sw)>0){const soll=(p.so+p.sw)/1000, ist=(p.io+p.iw)/1000; teile.push(`Gestern: Prognose ${kwh(soll)}, gemessen ${kwh(ist)} (${Math.round(ist/soll*100)} %)`)}
+    const e=PG.modelle&&PG.modelle["früh|"+m]; if(e&&e.n>=3) teile.push(`im Mittel ${de(e.fehler,0)} % daneben (${e.n} Tage)`);
+    teile.push(`Modell: ${MODELL_NAME[m]} – ${prog?prog.wahlText:""}`);
+    const nk=kalibTage(m); teile.push(prog&&prog.kalibriert?`Stundenfaktoren je Dach aus ${nk} Tagen eingerechnet`:`Stundenfaktoren je Dach ab ${KALIB_MIN_TAGE} Tagen (jetzt ${nk})`);
+    return teile.join(" · ")+".";
+  }
+
   function zeichnePrognose(){
     if(!prog){return}
     try{zeichneBattProg()}catch(e){logD("Batterie-Prognose: "+e.message)}
     const jetzt=Date.now(), heute=mitternacht(jetzt), morgen=heute+864e5, ueber=morgen+864e5;
     const tH=prog.tage.find(d=>mitternacht(d.t)===heute), tM=prog.tage.find(d=>mitternacht(d.t)===morgen), tU=prog.tage.find(d=>mitternacht(d.t)===ueber);
     $("pStand").textContent="Prognose "+fStempel(progZeit);
-    $("pHeute").textContent=tH?kwh(tH.kwh):"–";
-    $("pMorgen").textContent=tM?kwh(tM.kwh):"–"; $("pUeber").textContent=tU?kwh(tU.kwh):"–";
     const wtxt=d=>d?WETTER(d.code)+" · "+Math.round(d.tmin)+"–"+Math.round(d.tmax)+"°C":"";
-    $("pMorgenWetter").textContent=wtxt(tM); $("pUeberWetter").textContent=wtxt(tU);
     // heute bisher: gemessen gegenüber Prognose
-    let ist=0; for(let i=0;i<progIst.length-1;i++){const dt=Math.min(progIst[i+1].t-progIst[i].t,10*6e4);ist+=Math.max(0,progIst[i].v)*dt/3.6e9}
+    let ist=0; for(let i=0;i<progIst.length-1;i++){if(progIst[i].t<heute)continue;const dt=Math.min(progIst[i+1].t-progIst[i].t,10*6e4);ist+=Math.max(0,progIst[i].v)*dt/3.6e9}
     const sollBisher=prog.stunden.filter(h=>h.t>=heute&&h.t+18e5<=jetzt).reduce((a,h)=>a+h.sum/1000,0);
-    $("pHeuteIst").textContent=progIst.length>1?`bisher ${kwh(ist)} gemessen, Prognose ${kwh(sollBisher)}`:(tH?wtxt(tH):"");
+    const kor=korrekturHeute(jetzt), schnee=schneePruefen(jetzt);
+    const hAng=tH?tagAngepasst(heute,kor,schnee,progIst.length>1?ist:0):null, mAng=tM?tagAngepasst(morgen,kor,schnee):null;
+    prog.angepasst={heute:hAng,morgen:mAng,kor,schnee};
+    $("pHeute").textContent=hAng!=null?kwh(hAng):"–";
+    $("pMorgen").textContent=mAng!=null?kwh(mAng):"–"; $("pUeber").textContent=tU?kwh(tU.kwh):"–";
+    $("pMorgenWetter").textContent=wtxt(tM)+(schnee&&tM&&Math.abs(mAng-tM.kwh)>=0.5?` · Schnee-Verdacht (sonst ${kwh(tM.kwh)})`:""); $("pUeberWetter").textContent=wtxt(tU);
+    const pz=f=>Math.round(f*100)+" %";
+    $("pHeuteIst").textContent=progIst.length>1?`bisher ${kwh(ist)} gemessen, Prognose ${kwh(sollBisher)}`
+      +(kor&&(Math.abs(kor.fo-1)>=0.05||Math.abs(kor.fw-1)>=0.05)?` · Rest angepasst (Ost ${pz(kor.fo)}, West ${pz(kor.fw)}), reine Prognose ${kwh(tH.kwh)}`:"")
+      +(schnee&&!kor?` · Schnee-Verdacht: weniger erwartet (reine Prognose ${kwh(tH.kwh)})`:""):(tH?wtxt(tH):"");
     // Sonnenfenster morgen: zusammenhängende Stunden mit mehr als 3 kW
     const hM=prog.stunden.filter(h=>h.t>=morgen&&h.t<ueber&&h.sum>=3000);
     const uhr=t=>new Date(t).getHours();
@@ -2586,10 +2714,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Einschätzung
     let tipp="";
     if(tM){
-      const naechster=prog.tage.find(d=>d.t>morgen&&d.kwh>=30);
-      if(tM.kwh>=30) tipp=`Morgen viel Sonne (${kwh(tM.kwh)}). Die Batterie wird voraussichtlich voll.`;
-      else if(tM.kwh>=15) tipp=`Morgen gemischt (${kwh(tM.kwh)}). Grosse Verbraucher in das Sonnenfenster ${hM.length?"von "+fensterText(hM,true):"um die Mittagszeit"} legen.`;
-      else tipp=`Morgen wenig Sonne (${kwh(tM.kwh)}). Die PV deckt kaum mehr als den Grundbedarf.`+(naechster?` Der nächste sonnige Tag ist ${TAGE[new Date(naechster.t).getDay()]} ${fDay(naechster.t)} mit ${kwh(naechster.kwh)}.`:"");
+      const naechster=prog.tage.find(d=>d.t>morgen&&d.kwh>=30), mk=mAng!=null?mAng:tM.kwh;
+      if(mk>=30) tipp=`Morgen viel Sonne (${kwh(mk)}). Die Batterie wird voraussichtlich voll.`;
+      else if(mk>=15) tipp=`Morgen gemischt (${kwh(mk)}). Grosse Verbraucher in das Sonnenfenster ${hM.length?"von "+fensterText(hM,true):"um die Mittagszeit"} legen.`;
+      else tipp=`Morgen wenig Sonne (${kwh(mk)})${schnee&&mk<tM.kwh-0.5?", vermutlich liegt noch Schnee auf den Modulen":""}. Die PV deckt kaum mehr als den Grundbedarf.`+(naechster?` Der nächste sonnige Tag ist ${TAGE[new Date(naechster.t).getDay()]} ${fDay(naechster.t)} mit ${kwh(naechster.kwh)}.`:"");
     }
     $("pTipp").textContent=tipp; $("pTipp").hidden=!tipp;
     // Verlauf heute bis übermorgen
@@ -2602,10 +2730,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // gemessen: über 5 Minuten geglättet, dünn und etwas transparent, damit sie bei wechselnder Sonne nicht zur schwarzen Fläche wird
     const glatt=progIst.map((p,i)=>{let s=0,n=0;for(let k=i;k>=0&&p.t-progIst[k].t<5*6e4;k--){s+=progIst[k].v;n++}return {t:p.t,v:s/n,mn:s/n,mx:s/n}});
     if(progIst.length) PROG.lines.push({name:"Gemessen",col:"var(--ok)",series:glatt,punkt:true,breite:1.4,deckkraft:.85});
+    // angepasste Erwartung für den Rest von heute (und morgen bei Schnee-Verdacht)
+    if(kor||schnee){const bisA=schnee?morgen+864e5:morgen, ser=[];
+      for(let t=Math.floor(jetzt/9e5)*9e5;t<bisA;t+=9e5){const v=Math.round(pvAngepasst(t,kor,schnee)), h=stundeBei(t); if(h&&Math.abs(v-h.sum)<1&&t>morgen) continue; ser.push({t,v,mn:v,mx:v})}
+      if(ser.length) PROG.lines.push({name:"Angepasst",titel:"Erwartung mit Anpassung an die heutige Messung",col:"var(--fg)",series:ser,dash:"2 3",breite:1.8});}
     drawMulti(PROG);
     giltSetzen("chartProg",(PROG.zoom?spanneText(PROG.zoom.von,PROG.zoom.bis):spanTage(heute,heute+2.5*864e5))+" · Prognose "+fTime(progZeit));
     $("pZoomWeg").hidden=!PROG.zoom;
     zeichneTage(progIst.length>1?ist:null);
+    const gt=gueteText(); $("pGuete").textContent=gt; $("pGuete").hidden=!gt;
   }
   const PROG={farbig:true,fett:true,eigenerZoom:true,zoom:null,neuZeichnen:()=>zeichnePrognose(),ohnePunkt:true,teil:"prognose",svg:"chartProg",ro:"readoutProg",legend:"pLegend",lines:[],geo:null,null0:true,
     fmt:v=>fW(Math.max(0,v)), axis:v=>Math.abs(v)>=1000?(v/1000).toLocaleString("de-CH",{maximumFractionDigits:1})+" kW":v+" W",spanne:false,leer:"Noch keine Prognose"};
@@ -2614,14 +2747,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const svg=$("progTage"), tage=prog.tage.slice(0,7);
     const W=Math.round(Math.max(320,Math.min(900,svg.clientWidth||720))), H=240;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-    const oben=34, unten=58, sp=(W-8)/tage.length, max=Math.max(20,istHeute_kwh||0,...tage.map(d=>d.kwh))*1.1;
+    const ang=prog.angepasst||{}, kwhTag=d=>{const m=mitternacht(d.t), h=mitternacht(Date.now()); return m===h&&ang.heute!=null?ang.heute:m===h+864e5&&ang.morgen!=null?ang.morgen:d.kwh};
+    const oben=34, unten=58, sp=(W-8)/tage.length, max=Math.max(20,istHeute_kwh||0,...tage.map(kwhTag))*1.1;
     const heute=mitternacht(Date.now()), schmal=W<520;
     let g="";
     g+=`<line x1="4" x2="${W-4}" y1="${H-unten}" y2="${H-unten}" stroke="var(--muted)" stroke-width="1"/>`;
     tage.forEach((d,i)=>{
-      const x=4+i*sp, bw=Math.min(54,sp*0.62), cx=x+sp/2, h=(H-unten-oben)*d.kwh/max, y=H-unten-h;
+      const dk=kwhTag(d), x=4+i*sp, bw=Math.min(54,sp*0.62), cx=x+sp/2, h=(H-unten-oben)*dk/max, y=H-unten-h;
       const istHeute=mitternacht(d.t)===heute; let schildOben=null;
-      g+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="4" fill="var(--warm)" opacity="${istHeute?1:.75}"><title>${TAGE[new Date(d.t).getDay()]} ${fDay(d.t)}: ${kwh(d.kwh)}, ${WETTER(d.code)}, Sonne ${de(d.sonne,1)} h</title></rect>`;
+      g+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="4" fill="var(--warm)" opacity="${istHeute?1:.75}"><title>${TAGE[new Date(d.t).getDay()]} ${fDay(d.t)}: ${kwh(dk)}${Math.abs(dk-d.kwh)>=0.1?" (angepasst, reine Prognose "+kwh(d.kwh)+")":""}, ${WETTER(d.code)}, Sonne ${de(d.sonne,1)} h</title></rect>`;
       // heute: bereits produzierte Energie als grüner Teil im Balken
       if(istHeute&&istHeute_kwh!=null){
         const hi=(H-unten-oben)*istHeute_kwh/max, yi=H-unten-hi, bi=bw-8;
@@ -2633,7 +2767,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
           g+=`<text x="${cx.toFixed(1)}" y="${(yi-5).toFixed(1)}" text-anchor="middle" font-size="${fz}" font-weight="700" fill="#14202b" font-family="IBM Plex Sans, sans-serif">${zahl}</text>`;
         }
       }
- g+=`<text x="${cx.toFixed(1)}" y="${(Math.min(y,schildOben!=null?schildOben:(istHeute&&istHeute_kwh!=null?H-unten-(H-unten-oben)*istHeute_kwh/max:y))-8).toFixed(1)}" text-anchor="middle" font-size="${schmal?13:15.5}" font-weight="600" fill="var(--fg)" font-family="IBM Plex Sans, sans-serif">${d.kwh<10?de(d.kwh,1):Math.round(d.kwh)}</text>`;
+ g+=`<text x="${cx.toFixed(1)}" y="${(Math.min(y,schildOben!=null?schildOben:(istHeute&&istHeute_kwh!=null?H-unten-(H-unten-oben)*istHeute_kwh/max:y))-8).toFixed(1)}" text-anchor="middle" font-size="${schmal?13:15.5}" font-weight="600" fill="var(--fg)" font-family="IBM Plex Sans, sans-serif">${dk<10?de(dk,1):Math.round(dk)}</text>`;
       g+=`<text x="${cx.toFixed(1)}" y="${H-unten+17}" text-anchor="middle" font-size="${schmal?11:12}" font-weight="${istHeute?700:500}" fill="var(--fg)" font-family="IBM Plex Sans, sans-serif">${istHeute?"heute":TAGE[new Date(d.t).getDay()]+(schmal?"":" "+fDay(d.t))}</text>`;
       g+=`<text x="${cx.toFixed(1)}" y="${H-unten+33}" text-anchor="middle" font-size="${schmal?10:11}" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${WETTER(d.code)}</text>`;
       g+=`<text x="${cx.toFixed(1)}" y="${H-unten+48}" text-anchor="middle" font-size="${schmal?9.5:11}" fill="var(--muted)" font-family="${schmal?"IBM Plex Sans, sans-serif":"IBM Plex Mono, monospace"}">${Math.round(d.tmin)}–${Math.round(d.tmax)}°C</text>`;
@@ -2892,10 +3026,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     let konst=700;   // ohne Lastmodell: Mittel der Tageswerte
     if(GELD&&GELD.tage&&GELD.tage.length){const l=GELD.tage.slice(-7).filter(r=>r[7]>=20);if(l.length) konst=l.reduce((a,r)=>a+r[2],0)/l.length/24*1000}
     const prof=LM&&LM.profil, auto=STEU&&STEU.cfg&&STEU.cfg.modus==="auto"&&STEU.plan;
-    const pvRoh=t=>{const h=prog.stunden.find(x=>t>=x.t-18e5&&t<x.t+18e5);return h?h.sum:0};
-    // PV-Korrektur: gemessen gegenüber Prognose in den letzten 2,5 h; wirkt ab jetzt und läuft mit ca. 3 h aus, ab Mitternacht nicht mehr
-    const kor=pvKorrektur(pvRoh,t0);
-    const pv=t=>{const v=pvRoh(t); if(!kor||t>=m0+864e5) return v; return v*(1+(kor.f-1)*Math.exp(-(t-t0)/(3*36e5)))};
+    // PV mit Anpassung an die heutige Messung (je Dach, abklingend) und Schnee-Verdacht – gleich wie im PV-Diagramm
+    const kor=korrekturHeute(t0), schnee=schneePruefen(t0);
+    const pv=t=>pvAngepasst(t,kor,schnee);
     // WP pro Tag
     const k=(LM&&LM.wp&&LM.wp.k)||WP_K_STD, standby=(LM&&LM.wp&&LM.wp.standby!=null)?LM.wp.standby:1;
     const tage=[0,1].map(d=>{const td=m0+d*864e5, tm=tagesMittelAussen(td), heiz=tm==null?0:k*Math.max(0,16-tm);
@@ -2932,20 +3065,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       e=neu; d.teile.grund+=g*dt/1000; d.teile.wp+=w*dt/1000; d.teile.boiler+=b*dt/1000;
       pts.push([t+schritt,e/cap*100,Math.round(last),Math.round(pv(tm)),tb==null?null:Math.round(tb*10)/10]);
     }
-    return {pts,tage,modell:!!prof,konst,k,standby,mitLM:!!LM,kor};
-  }
-  // Faktor gemessen/prognostiziert aus den letzten 2,5 Stunden (nur wenn genug Sonne erwartet war).
-  // Zeiten mit voller Batterie (≥ 98 %) zählen nicht, weil die Anlage dann evtl. abregelt.
-  function pvKorrektur(pvRoh,jetzt){
-    if(!progIst||progIst.length<5) return null;
-    const von=jetzt-2.5*36e5, socBei=t=>{let s=null;for(const p of progSoc){if(p[0]>t)break;s=p[1]}return s};
-    let ist=0,soll=0;
-    for(let i=0;i<progIst.length-1;i++){const a=progIst[i]; if(a.t<von||a.t>jetzt) continue;
-      const dt=Math.min(progIst[i+1].t-a.t,10*6e4)/36e5, sc=socBei(a.t); if(sc!=null&&sc>=98) continue;
-      ist+=Math.max(0,a.v)*dt; soll+=pvRoh(a.t)*dt}
-    if(soll<1000) return null;   // weniger als 1 kWh erwartet (Morgen, Abend, trüb): keine Korrektur
-    const f=Math.max(0.2,Math.min(1.5,ist/soll));
-    return {f,ist,soll};
+    return {pts,tage,modell:!!prof,konst,k,standby,mitLM:!!LM,kor,schnee};
   }
   // Für die Batterie-Kachel: voll heute/morgen bzw. Höchststand
   function battPrognose(soc){
@@ -2984,7 +3104,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("pBattLegend").innerHTML=`<span data-hl="ist"><i style="width:18px;border-top:2px solid var(--ok);display:inline-block"></i>gemessen</span><span data-hl="sim"><i style="width:18px;border-top:2px dashed var(--ok);display:inline-block"></i>erwartet</span>`;
     hlVerbinden($("pBattLegend"),svg);
     if(sim){const kw=v=>de(v,1)+" kWh", tg=(d,n)=>`${n}: Grundlast ${kw(d.teile.grund)} · WP ${kw(d.teile.wp)}${d.tm!=null?` (Ø aussen ${de(d.tm,1)} °C)`:""}${d.teile.boiler>0.05?` · Boiler ${kw(d.teile.boiler)}`:""}`;
-      $("pBattInfo").textContent=(sim.kor?`PV in den letzten 2,5 h: ${Math.round(sim.kor.f*100)} % der Prognose${Math.abs(sim.kor.f-1)>=0.05?" – für den Rest des Tages angepasst":""}. `:"")+`Erwarteter Verbrauch – ${tg(sim.tage[0],"heute ab jetzt")}; ${tg(sim.tage[1],"morgen")}.`+(sim.mitLM?` WP: ${de(sim.k,1)} kWh pro Kelvin unter 16 °C${LM&&LM.wp&&LM.wp.k==null?" (Annahme, noch zu wenig Messtage)":" (gemessen)"}.`:" Lastmodell wird geladen …")}
+      $("pBattInfo").textContent=(sim.kor?`PV in den letzten 2,5 h: Ost ${Math.round(sim.kor.fo*100)} %, West ${Math.round(sim.kor.fw*100)} % der Prognose${Math.abs(sim.kor.fo-1)>=0.05||Math.abs(sim.kor.fw-1)>=0.05?" – für den Rest des Tages angepasst":""}. `:"")+(sim.schnee&&!sim.kor?"Schnee-Verdacht: weniger PV erwartet. ":"")+`Erwarteter Verbrauch – ${tg(sim.tage[0],"heute ab jetzt")}; ${tg(sim.tage[1],"morgen")}.`+(sim.mitLM?` WP: ${de(sim.k,1)} kWh pro Kelvin unter 16 °C${LM&&LM.wp&&LM.wp.k==null?" (Annahme, noch zu wenig Messtage)":" (gemessen)"}.`:" Lastmodell wird geladen …")}
     else $("pBattInfo").textContent="Für die Abschätzung fehlt noch der aktuelle Ladestand.";
     const alle=ist.concat(sim?sim.pts:[]);
     const zeig=t=>{if(!alle.length)return;const p=alle.reduce((b,x)=>Math.abs(x[0]-t)<Math.abs(b[0]-t)?x:b);
