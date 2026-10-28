@@ -739,6 +739,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="k q" title="Anteil des Hausverbrauchs aus eigener Produktion"><b id="eAut">–</b><span>Autarkie</span><i class="bar"><i id="eAutBar"></i></i></div>
         <div class="k q" title="Anteil der PV-Produktion, der im Haus oder in der Batterie bleibt"><b id="eEig">–</b><span>Eigenverbrauch</span><i class="bar"><i id="eEigBar"></i></i></div>
       </div>
+      <div class="chartbox" style="margin-top:14px"><svg id="eSaeulen" viewBox="0 0 720 230" role="img" aria-label="Energien im gewählten Zeitraum: PV-Produktion, Netzbezug, Einspeisung, Boiler, Wärmepumpe, Wallbox, Übriges"></svg></div>
     </section>
 
     <section class="panel">
@@ -1028,7 +1029,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 28.10.26 16:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 28.10.26 16:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2123,6 +2124,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     return {pv:integral(pvS,v=>Math.max(0,v)), last:integral(linie("Hausverbrauch"),v=>Math.max(0,v)),
       ein:integral(linie("Einspeisung"),v=>Math.max(0,v)), bez:integral(linie("Netzbezug"),v=>Math.max(0,-v)),   // Einspeisung +, Netzbezug −
       lad:integral(linie("Batterie"),v=>Math.max(0,v)), ent:integral(linie("Batterie"),v=>Math.max(0,-v)),
+      boiler:integral(linie("Boiler"),v=>Math.max(0,v)), wp:integral(linie("Wärmepumpe"),v=>Math.max(0,v)), wb:integral(linie("Wallbox"),v=>Math.max(0,v)), ueb:integral(linie("Übriges"),v=>Math.max(0,v)),
+      hat:{boiler:linie("Boiler").length>1, wp:linie("Wärmepumpe").length>1, wb:linie("Wallbox").length>1, ueb:linie("Übriges").length>1},
       von:pvS.length?pvS[0].t:null, bis:pvS.length?pvS[pvS.length-1].t:null};
   }
   // Laufender Tag aus den Minutenwerten der Seite (aktueller als der Tageswert von Google), wenn sie ab Mitternacht vorhanden sind
@@ -2141,6 +2144,28 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const aut=last>0?Math.max(0,Math.min(100,(last-bez)/last*100)):null, eig=pv>0?Math.max(0,Math.min(100,(pv-ein)/pv*100)):null;
     $("eAut").textContent=aut==null||leer?"–":Math.round(aut)+" %"; $("eAutBar").style.width=(aut||0)+"%";
     $("eEig").textContent=eig==null||leer?"–":Math.round(eig)+" %"; $("eEigBar").style.width=(eig||0)+"%";
+    zeichneEnergieSaeulen(b,leer);
+  }
+  // Säulen: Energie je Grösse im gewählten Zeitraum (gleiche Farben wie überall)
+  function zeichneEnergieSaeulen(b,leer){
+    const svg=$("eSaeulen"); if(!svg) return;
+    const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=W<520?210:230, schmal=W<520;
+    svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+    if(leer){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--muted)" font-size="14" font-family="IBM Plex Sans, sans-serif">Keine Werte im gewählten Zeitraum</text>`;return}
+    const S=[["PV-Produktion","PV",b.pv,"var(--c-pv)",true],["Netzbezug","Bezug",b.bez,"var(--c-bezug)",true],["Einspeisung","Einsp.",b.ein,"var(--c-einsp)",true],
+      ["Boiler","Boiler",b.boiler,"var(--c-boiler)",b.hat.boiler],["Wärmepumpe","WP",b.wp,"var(--c-wp)",b.hat.wp],["Wallbox","Wallbox",b.wb,"var(--c-wb)",b.hat.wb],
+      ["Übriges (Haus ohne WP, Boiler, Wallbox)","Übriges",b.ueb,"var(--c-ueb)",b.hat.ueb]];
+    const oben=26, unten=34, sp=(W-8)/S.length, max=Math.max(1,...S.map(x=>x[4]?x[2]:0))*1.08;
+    const zahl=v=>v>=1000?de(v/1000,1)+" MWh":v<10?de(v,1):String(Math.round(v)), fz=schmal?11.5:13.5;
+    let g=`<line x1="4" x2="${W-4}" y1="${H-unten}" y2="${H-unten}" stroke="var(--muted)" stroke-width="1"/>`;
+    S.forEach(([lang,kurz,v,col,hat],i)=>{
+      const cx=4+i*sp+sp/2, bw=Math.min(56,sp*0.62), h=hat?(H-unten-oben)*v/max:0, y=H-unten-h;
+      if(hat) g+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="4" fill="${col}" opacity=".85"><title>${lang}: ${kwh(v)}</title></rect>`;
+      g+=`<text x="${cx.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="${fz}" font-weight="600" fill="${hat?col:"var(--muted)"}" font-family="IBM Plex Sans, sans-serif">${hat?zahl(v):"–"}</text>`;
+      g+=`<text x="${cx.toFixed(1)}" y="${(H-unten+16).toFixed(1)}" text-anchor="middle" font-size="${schmal?10.5:12}" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif"><title>${lang}</title>${kurz}</text>`;
+    });
+    g+=`<text x="${W-4}" y="14" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">kWh</text>`;
+    svg.innerHTML=g;
   }
 
   /* ---------- Reiter Wattpilot ---------- */
