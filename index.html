@@ -739,7 +739,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="k q" title="Anteil des Hausverbrauchs aus eigener Produktion"><b id="eAut">–</b><span>Autarkie</span><i class="bar"><i id="eAutBar"></i></i></div>
         <div class="k q" title="Anteil der PV-Produktion, der im Haus oder in der Batterie bleibt"><b id="eEig">–</b><span>Eigenverbrauch</span><i class="bar"><i id="eEigBar"></i></i></div>
       </div>
-      <div class="chartbox" style="margin-top:14px"><svg id="eSaeulen" viewBox="0 0 720 230" role="img" aria-label="Energien im gewählten Zeitraum: PV-Produktion, Netzbezug, Einspeisung, Boiler, Wärmepumpe, Wallbox, Übriges"></svg></div>
+      <div class="chartbox" style="margin-top:14px"><svg id="eSaeulen" viewBox="0 0 720 230" role="img" aria-label="Energien im gewählten Zeitraum: PV-Produktion, Einspeisung, Netzbezug, Boiler, Wärmepumpe, Wallbox, Übriges"></svg></div>
     </section>
 
     <section class="panel">
@@ -1029,7 +1029,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 28.10.26 16:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 28.10.26 20:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2152,7 +2152,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=W<520?210:230, schmal=W<520;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     if(leer){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--muted)" font-size="14" font-family="IBM Plex Sans, sans-serif">Keine Werte im gewählten Zeitraum</text>`;return}
-    const S=[["PV-Produktion","PV",b.pv,"var(--c-pv)",true],["Netzbezug","Bezug",b.bez,"var(--c-bezug)",true],["Einspeisung","Einsp.",b.ein,"var(--c-einsp)",true],
+    const S=[["PV-Produktion","PV",b.pv,"var(--c-pv)",true],["Einspeisung","Einsp.",b.ein,"var(--c-einsp)",true],["Netzbezug","Bezug",b.bez,"var(--c-bezug)",true],
       ["Boiler","Boiler",b.boiler,"var(--c-boiler)",b.hat.boiler],["Wärmepumpe","WP",b.wp,"var(--c-wp)",b.hat.wp],["Wallbox","Wallbox",b.wb,"var(--c-wb)",b.hat.wb],
       ["Übriges (Haus ohne WP, Boiler, Wallbox)","Übriges",b.ueb,"var(--c-ueb)",b.hat.ueb]];
     const oben=26, unten=34, sp=(W-8)/S.length, max=Math.max(1,...S.map(x=>x[4]?x[2]:0))*1.08;
