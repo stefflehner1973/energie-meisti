@@ -793,7 +793,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel">
       <div class="histhead"><h2 class="tc-pv" style="margin:0"><span class="gilt" data-gilt="chartProg" hidden></span>PV-Leistung heute bis übermorgen</h2><button type="button" class="pzoom" id="pZoomWeg" hidden>Zoom aufheben</button></div>
       <div class="legend" id="pLegend"></div>
-      <div class="chartbox"><svg id="chartProg" viewBox="0 0 720 280" role="img" aria-label="Erwartete PV-Leistung nach Dachseite und gemessene Leistung"></svg></div>
+      <div class="chartbox"><svg id="chartProg" viewBox="0 0 720 280" role="img" aria-label="Gemessene PV-Leistung bis jetzt und erwartete Leistung ab jetzt"></svg></div>
       <div class="readout" id="readoutProg"></div>
     </section>
 
@@ -1028,7 +1028,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 28.10.26 15:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 28.10.26 15:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1812,7 +1812,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         s.forEach((p,i)=>{const x=X(p.t).toFixed(1),neu=!i||p.t-s[i-1].t>gap;
           if(neu){if(st!=null)f+=`L${en},${y0}L${st},${y0}Z`;st=x;f+=`M${x},${Y(p.v).toFixed(1)}`}else f+=`L${x},${Y(p.v).toFixed(1)}`;en=x});
         f+=`L${en},${y0}L${st},${y0}Z`;
-        g+=`<path d="${f}" fill="${l.col}" opacity="${l.flaecheDeckkraft||.14}" stroke="none"/>`}
+        if(l.schraffur){const pid=c.svg+"S"+c.lines.indexOf(l);
+          g+=`<defs><pattern id="${pid}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="${l.col}" fill-opacity="${l.flaecheDeckkraft||.14}"/><line x1="0" y1="0" x2="0" y2="6" stroke="${l.col}" stroke-width="2" stroke-opacity=".8"/></pattern></defs><path d="${f}" fill="url(#${pid})" stroke="none"/>`}
+        else g+=`<path d="${f}" fill="${l.col}" opacity="${l.flaecheDeckkraft||.14}" stroke="none"/>`}
       g+=`<path class="lp" d="${d}" fill="none" stroke="${l.col}" stroke-width="${l.breite||2}" stroke-linejoin="round" stroke-linecap="round"${l.dash?` stroke-dasharray="${l.dash}"`:""}${l.deckkraft?` stroke-opacity="${l.deckkraft}"`:""}/>`;
       const last=s[s.length-1];
       if(!c.ohnePunkt||l.punkt) g+=`<circle cx="${X(last.t).toFixed(1)}" cy="${Y(last.v).toFixed(1)}" r="3.5" fill="${l.col}" stroke="var(--panel)" stroke-width="2"/>`;
@@ -2656,8 +2658,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
 
   // Erwartete Leistung (W) zur Zeit t mit allen Anpassungen: Faktor heute je Dach, Schnee-Verdacht
-  function pvAngepasst(t,kor,schnee){
-    const h=stundeBei(t); if(!h) return 0;
+  function pvAngepasst(t,kor,schnee){const x=pvTeile(t,kor,schnee); return x.o+x.w}
+  function pvTeile(t,kor,schnee,hStd){
+    const h=hStd||stundeBei(t); if(!h) return {o:0,w:0};
     const m0=mitternacht(Date.now());
     let fo=1,fw=1;
     if(kor&&t<kor.ende){const k=kor.abkling(t); fo=1+(kor.fo-1)*k; fw=1+(kor.fw-1)*k}
@@ -2665,7 +2668,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const tag=mitternacht(t), heuteOhneKor=tag===m0&&!kor;
       if(heuteOhneKor||tag===m0+864e5){const td=prog.tage.find(d=>mitternacht(d.t)===tag), f=td&&td.tmax>=5?(schnee.f+1)/2:schnee.f; fo=fw=f}
     }
-    return h.ost*fo+h.west*fw;
+    return {o:h.ost*fo,w:h.west*fw};
   }
   // Tagessumme kWh mit Anpassung (heute: gemessen bis jetzt + angepasster Rest)
   function tagAngepasst(tag,kor,schnee,istBisher){
@@ -2724,16 +2727,22 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const fenster={von:heute,bis:heute+3*864e5};
     const reihe=k=>prog.stunden.filter(h=>h.t>=fenster.von-36e5&&h.t<=fenster.bis+36e5).map(h=>({t:h.t,v:Math.round(h[k]),mn:h[k],mx:h[k]}));
     PROG.fenster=fenster;
-    PROG.lines=[{name:"Prognose gesamt",col:"var(--warm)",series:reihe("sum"),flaeche:true},
-      {name:"Ostdach 10,5 kWp",col:"var(--accent)",series:reihe("ost"),dash:"5 4",breite:1.6},
-      {name:"Westdach 7,0 kWp",col:"var(--wp)",series:reihe("west"),dash:"5 4",breite:1.6}];
-    // gemessen: über 5 Minuten geglättet, dünn und etwas transparent, damit sie bei wechselnder Sonne nicht zur schwarzen Fläche wird
-    const glatt=progIst.map((p,i)=>{let s=0,n=0;for(let k=i;k>=0&&p.t-progIst[k].t<5*6e4;k--){s+=progIst[k].v;n++}return {t:p.t,v:s/n,mn:s/n,mx:s/n}});
-    if(progIst.length) PROG.lines.push({name:"Gemessen",col:"var(--ok)",series:glatt,punkt:true,breite:1.4,deckkraft:.85});
-    // angepasste Erwartung für den Rest von heute (und morgen bei Schnee-Verdacht)
-    if(kor||schnee){const bisA=schnee?morgen+864e5:morgen, ser=[];
-      for(let t=Math.floor(jetzt/9e5)*9e5;t<bisA;t+=9e5){const v=Math.round(pvAngepasst(t,kor,schnee)), h=stundeBei(t); if(h&&Math.abs(v-h.sum)<1&&t>morgen) continue; ser.push({t,v,mn:v,mx:v})}
-      if(ser.length) PROG.lines.push({name:"Angepasst",titel:"Erwartung mit Anpassung an die heutige Messung",col:"var(--fg)",series:ser,dash:"2 3",breite:1.8});}
+    // Bis jetzt: gemessene PV als Fläche. Ab jetzt: erwartete PV (mit allen Anpassungen) schraffiert, Ost/West als Strichlinien.
+    // Die Prognose für die Vergangenheit wird nicht mehr gezeigt (Wunsch Stephan 28.10.2026).
+    const glatt=progIst.filter(p=>p.t>=fenster.von-6e5).map((p,i,a)=>{let s=0,n=0;for(let k=i;k>=0&&p.t-a[k].t<5*6e4;k--){s+=a[k].v;n++}const v=Math.max(0,s/n);return {t:p.t,v,mn:v,mx:v}});
+    const zuk={sum:[],o:[],w:[]}, punkt=(t,x)=>{const sm=Math.round(x.o+x.w);zuk.sum.push({t,v:sm,mn:sm,mx:sm});zuk.o.push({t,v:Math.round(x.o),mn:x.o,mx:x.o});zuk.w.push({t,v:Math.round(x.w),mn:x.w,mx:x.w})};
+    const std=prog.stunden.filter(h=>h.t<=fenster.bis+36e5), nach=std.findIndex(h=>h.t>jetzt);
+    if(nach>=0){
+      const h1=std[nach], h0=nach>0?std[nach-1]:null, a=pvTeile(h1.t,kor,schnee,h1);
+      if(h0){const b=pvTeile(h0.t,kor,schnee,h0), f=(jetzt-h0.t)/(h1.t-h0.t); punkt(jetzt,{o:b.o+(a.o-b.o)*f,w:b.w+(a.w-b.w)*f})}
+      for(let i=nach;i<std.length;i++) punkt(std[i].t,pvTeile(std[i].t,kor,schnee,std[i]));
+    }
+    const angTxt=kor||schnee?" (angepasst an die heutige Messung)":"";
+    PROG.lines=[];
+    if(glatt.length) PROG.lines.push({name:"Gemessen",titel:"Gemessene PV-Leistung bis jetzt (5 min geglättet)",col:"var(--c-pv)",series:glatt,flaeche:true,flaecheDeckkraft:.75,breite:1.2,deckkraft:1,punkt:true});
+    PROG.lines.push({name:"Erwartet",titel:"Erwartete PV-Leistung ab jetzt"+angTxt,col:"var(--c-pv)",series:zuk.sum,flaeche:true,schraffur:true,flaecheDeckkraft:.18,breite:1.4,deckkraft:.9},
+      {name:"Ostdach 10,5 kWp",col:"var(--accent)",series:zuk.o,dash:"5 4",breite:1.4},
+      {name:"Westdach 7,0 kWp",col:"var(--wp)",series:zuk.w,dash:"5 4",breite:1.4});
     drawMulti(PROG);
     giltSetzen("chartProg",(PROG.zoom?spanneText(PROG.zoom.von,PROG.zoom.bis):spanTage(heute,heute+2.5*864e5))+" · Prognose "+fTime(progZeit));
     $("pZoomWeg").hidden=!PROG.zoom;
