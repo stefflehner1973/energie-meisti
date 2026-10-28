@@ -1028,7 +1028,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 28.10.26 16:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 28.10.26 16:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1781,6 +1781,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     const lg=$(c.legend); lg.textContent=""; if(c.fett){lg.style.fontSize=".92rem";lg.style.gap="6px 20px"}
     c.lines.forEach(l=>{
+      if(l.ohneLegende) return;
       const sp=document.createElement("span"),dot=document.createElement("i");
       if(l.dash){dot.className="line";dot.style.borderColor=l.col}else{dot.className="dot";dot.style.background=l.col}
       const b=document.createElement("b");
@@ -1813,12 +1814,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
           if(neu){if(st!=null)f+=`L${en},${y0}L${st},${y0}Z`;st=x;f+=`M${x},${Y(p.v).toFixed(1)}`}else f+=`L${x},${Y(p.v).toFixed(1)}`;en=x});
         f+=`L${en},${y0}L${st},${y0}Z`;
         if(l.schraffur){const pid=c.svg+"S"+c.lines.indexOf(l);
-          g+=`<defs><pattern id="${pid}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="${l.col}" fill-opacity="${l.flaecheDeckkraft||.14}"/><line x1="0" y1="0" x2="0" y2="6" stroke="${l.col}" stroke-width="2" stroke-opacity=".8"/></pattern></defs><path d="${f}" fill="url(#${pid})" stroke="none"/>`}
+          g+=`<defs><pattern id="${pid}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="${l.col}" fill-opacity="${l.flaecheDeckkraft||.14}"/><line x1="0" y1="0" x2="0" y2="6" stroke="${l.col}" stroke-width="1.6" stroke-opacity="${l.streifen||.8}"/></pattern></defs><path d="${f}" fill="url(#${pid})" stroke="none"/>`}
         else g+=`<path d="${f}" fill="${l.col}" opacity="${l.flaecheDeckkraft||.14}" stroke="none"/>`}
       if(l.dashAb){let d1="",d2="",v=null;
         s.forEach((p,i)=>{const pt=X(p.t).toFixed(1)+","+Y(p.v).toFixed(1), zus=i&&p.t-s[i-1].t<=gap;
           if(p.t<l.dashAb){d1+=(zus?"L":"M")+pt;v=pt}else{d2+=(d2?"L":(v&&p.t-s[i-1].t<=Math.max(gap,36e5)?"M"+v+"L":"M"))+pt}});
-        g+=`<path class="lp" d="${d1}" fill="none" stroke="${l.col}" stroke-width="${l.breiteVor||1}" stroke-linejoin="round" stroke-opacity="${l.deckkraftVor||.55}"/>`
+        g+=`<path class="lp" d="${d1}" fill="none" stroke="${l.col}" stroke-width="${l.breiteVor||1.4}" stroke-linejoin="round" stroke-opacity="${l.deckkraftVor||.9}"/>`
           +`<path class="lp" d="${d2}" fill="none" stroke="${l.col}" stroke-width="${l.breite||2}" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="${l.dash||"5 4"}"/>`}
       else g+=`<path class="lp" d="${d}" fill="none" stroke="${l.col}" stroke-width="${l.breite||2}" stroke-linejoin="round" stroke-linecap="round"${l.dash?` stroke-dasharray="${l.dash}"`:""}${l.deckkraft?` stroke-opacity="${l.deckkraft}"`:""}/>`;
       const last=s[s.length-1];
@@ -2746,8 +2747,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     }
     const angTxt=kor||schnee?" (angepasst an die heutige Messung)":"";
     PROG.lines=[];
-    if(glatt.length) PROG.lines.push({name:"Gemessen",titel:"Gemessene PV-Leistung bis jetzt (5 min geglättet)",col:"var(--c-pv)",series:glatt,flaeche:true,flaecheDeckkraft:.75,breite:1.2,deckkraft:1,punkt:true});
-    PROG.lines.push({name:"Erwartet",titel:"Erwartete PV-Leistung ab jetzt"+angTxt,col:"var(--c-pv)",series:zuk.sum,flaeche:true,schraffur:true,flaecheDeckkraft:.18,breite:1.4,deckkraft:.9},
+    if(glatt.length) PROG.lines.push({name:"Gemessen",titel:"Gemessene PV-Leistung bis jetzt (5 min geglättet)",col:"var(--c-pv)",series:glatt,flaeche:true,flaecheDeckkraft:.22,breite:1.3,deckkraft:.9,punkt:true,ohneLegende:true});
+    PROG.lines.push({name:"Erwartet",titel:"Erwartete PV-Leistung ab jetzt"+angTxt,col:"var(--c-pv)",series:zuk.sum,flaeche:true,schraffur:true,flaecheDeckkraft:.06,streifen:.4,breite:1.3,deckkraft:.8,ohneLegende:true},
       {name:"Ostdach 10,5 kWp",titel:"Ostdach: bis jetzt gemessen (feine Linie), ab jetzt erwartet (gestrichelt)",col:"var(--accent)",series:istO.concat(zuk.o),dash:"5 4",dashAb:jetzt,breite:1.4},
       {name:"Westdach 7,0 kWp",titel:"Westdach: bis jetzt gemessen (feine Linie), ab jetzt erwartet (gestrichelt)",col:"var(--wp)",series:istW.concat(zuk.w),dash:"5 4",dashAb:jetzt,breite:1.4});
     drawMulti(PROG);
