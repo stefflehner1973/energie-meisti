@@ -556,6 +556,10 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       </div>
     </form>
     <svg id="chartK" class="kchart" role="img" aria-label="Verlauf der Schaltzustände"></svg>
+    <div class="sublabel ksub" aria-live="polite"><span><b>Lastmanagement</b> · Fronius (Last 1–4)</span><span class="sub" id="lmAge"></span></div>
+    <svg id="chartLM" class="kchart" role="img" aria-label="Verlauf des Fronius-Lastmanagements: Boiler Stufe 1 und 2, Speicher Stufe 1 und 2"></svg>
+    <div class="readout" id="readoutLM"></div>
+    <p class="hint" id="lmHint" hidden>Noch keine Werte vom Lastmanagement. Neues Skript «Fronius nach Google» auf dem Shelly U12 und neues Google-Skript (Stand 31.10.2026) einspielen.</p>
     <p class="hint" id="kHint" hidden>Noch keine Schaltzustände. Im Google-Skript unter Projekteinstellungen → Skripteigenschaften „K14_ID“ mit der Geräte-ID des Shelly Pro 3 eintragen.</p>
     <p class="hint" id="histhint" hidden></p>
   </section>
@@ -755,7 +759,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="legend" id="fLegend"></div>
       <div class="chartbox"><svg id="chartF" viewBox="0 0 720 280" role="img" aria-label="Verlauf von PV, Hausverbrauch, Netz, Batterie, Boiler, Wärmepumpe, Wallbox und übrigem Verbrauch"></svg></div>
       <div class="readout" id="readoutF"></div>
-      <p class="hint" style="font-size:.74rem;line-height:1.4">Über null fliesst Strom hinein (Batterie laden, ins Netz einspeisen), unter null heraus (Batterie entladen, Netzbezug). Übriges = Hausverbrauch minus Wärmepumpe, Boiler und Wallbox. Namen in der Legende antippen hebt eine Linie hervor.</p>
+      <p class="hint" style="font-size:.74rem;line-height:1.4">Über null fliesst Strom hinein (Batterie laden, ins Netz einspeisen), unter null heraus (Batterie entladen, Netzbezug). Übriges = Hausverbrauch minus Wärmepumpe, Boiler und Wallbox. Namen in der Legende antippen hebt eine Linie hervor. Hinterlegt: Fronius-Lastmanagement ein (orange-rot = Boiler, blau = Speicher).</p>
     </section>
 
 
@@ -1029,7 +1033,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 28.10.26 20:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 31.10.26 19:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1320,8 +1324,82 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const x=g.X(t).toFixed(1); l.setAttribute("x1",x); l.setAttribute("x2",x); svg.querySelector(".hov").setAttribute("visibility","visible");
   }
 
+  /* ---------- Lastmanagement Fronius (nur Anzeige) ---------- */
+  const LMNAMEN=["Boiler Stufe 1","Boiler Stufe 2","Speicher 1→2","Speicher 2→1"], LMFARBE=["var(--c-boiler)","var(--c-boiler)","var(--c-wp)","var(--c-wp)"], LMDECK=[.6,1,.6,1];
+  const LMGRUND=["Konfiguration fehlt","Leistung unbekannt","max. Laufzeit erreicht","Mindestlaufzeit läuft","unter Schwelle","über Schwelle","Soll-Laufzeit offen"];
+  let lmJetzt=null;
+  // Zeilen [t, s1..s4, g1..g4] inkl. aktuellem Zustand
+  function lmListe(){
+    const v=(ROH&&ROH.lm&&ROH.lm.rows)||[], l=v.slice();
+    if(lmJetzt&&lmJetzt.a&&lmJetzt.zeit&&(!l.length||l[l.length-1][0]<lmJetzt.zeit)) l.push([lmJetzt.zeit].concat(lmJetzt.a,lmJetzt.g||[]));
+    return l;
+  }
+  // EIN-Stücke [[von,bis],…] je Last; ohne Meldung länger als 75 min gilt als unbekannt
+  function lmStuecke(liste,i){
+    const st=[];
+    for(let j=0;j<liste.length;j++){
+      const a=liste[j][0], n=j+1<liste.length?liste[j+1][0]:Date.now(), e=Math.min(n,a+75*6e4);
+      if(liste[j][i+1]!==1) continue;
+      const l=st[st.length-1]; if(l&&l[1]>=a) l[1]=Math.max(l[1],e); else st.push([a,e]);
+    }
+    return st;
+  }
+  function lmZustandText(z){   // z = Zeile [t, s1..s4, g1..g4]
+    if(!z) return "";
+    return LMNAMEN.map((n,i)=>{const s=z[i+1], g=z[i+5]; return n+": "+(s===1?"ein":s===0?"aus":"–")+(typeof g==="number"&&LMGRUND[g]?" ("+LMGRUND[g]+")":"")}).join(" · ");
+  }
+  function lmReadout(t){
+    const l=lmListe(); if(!l.length){$("readoutLM").textContent="";return}
+    let z=l[l.length-1];
+    if(t!=null){z=null;for(const r of l){if(r[0]>t)break;z=r}}
+    $("readoutLM").textContent=z?(t!=null?fStempel(t)+" · ":"Jetzt · ")+lmZustandText(z):"";
+  }
+  const LMC={svg:"chartLM",ro:null,gruppe:"ueb",geo:null};
+  function zeichneLM(){
+    const svg=$("chartLM"); if(!svg) return;
+    const liste=lmListe();
+    $("lmHint").hidden=!!liste.length;
+    if(!liste.length){svg.innerHTML="";svg.removeAttribute("viewBox");svg.style.height="0";$("lmAge").textContent="";$("readoutLM").textContent="";LMC.geo=null;return}
+    svg.style.height="";
+    const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), lane=36, oben=4, H=oben+4*lane+24, Lr=L, Rr=R;
+    svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+    const fb=bereich(), t1=fb.bis||Date.now(), t0=fb.von||t1-(tage||1)*864e5;
+    const X=t=>Lr+(Math.min(t1,Math.max(t0,t))-t0)/(t1-t0)*(W-Lr-Rr);
+    const gp=lmJetzt&&(lmJetzt.geprueft||lmJetzt.zeit); $("lmAge").textContent=gp?"Stand "+fStempel(gp):"";
+    const letzte=liste[liste.length-1];
+    let g="";
+    LMNAMEN.forEach((n,i)=>{
+      const y=oben+i*lane, yb=y+15, hb=14; let ein=0, bars="";
+      lmStuecke(liste,i).forEach(([a,e])=>{const b=Math.min(e,t1); if(b<=t0||a>=t1) return;
+        const xa=X(a),xb=X(b); ein+=b-Math.max(a,t0);
+        bars+=`<rect x="${xa.toFixed(1)}" y="${yb}" width="${Math.max(1.5,xb-xa).toFixed(1)}" height="${hb}" rx="3" fill="${LMFARBE[i]}" opacity="${LMDECK[i]}"><title>${n}: ein ${fStempel(a)} – ${fStempel(e)}</title></rect>`});
+      const gr=letzte[i+5], fehlt=gr===0;
+      g+=`<rect x="${Lr}" y="${yb}" width="${W-Lr-Rr}" height="${hb}" rx="3" fill="var(--line)" opacity=".45"/>`+bars;
+      g+=`<text x="${Lr}" y="${y+11}" font-size="11.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}<tspan fill="var(--fg)" font-weight="600"> · ${ein>0?de(ein/36e5,1)+" h ein":"aus"}</tspan>${fehlt?`<tspan fill="var(--c-bezug)"> · Konfiguration fehlt</tspan>`:""}</text>`;
+    });
+    const yA=oben+4*lane;
+    LMC.geo={t0,t1,X,W,Lr,Rr};
+    for(const [t,lab] of xTicks(t0,t1)){const x=X(t).toFixed(1);g+=lab?`<line x1="${x}" x2="${x}" y1="${yA}" y2="${yA+5}" stroke="var(--muted)"/><text x="${x}" y="${yA+18}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${lab}</text>`:`<line x1="${x}" x2="${x}" y1="${yA}" y2="${yA+4}" stroke="var(--muted)" opacity=".7"/>`}
+    g+=`<g class="hov" visibility="hidden"><line class="hovl" y1="${oben}" y2="${yA}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3"/></g>`;
+    g+=`<rect class="khit" x="${Lr}" y="${oben}" width="${W-Lr}" height="${yA-oben}" fill="transparent" style="cursor:crosshair;touch-action:pan-y"/>`;
+    svg.innerHTML=g; lmReadout(null);
+    const hit=svg.querySelector(".khit"), hv=e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;einzelGruppe(LMC).forEach(k=>zeigeBei(k,t0+(x-Lr)/(W-Lr-Rr)*(t1-t0)))};
+    hit.addEventListener("pointermove",hv); hit.addEventListener("pointerdown",hv); hit.addEventListener("pointerleave",()=>hoverWeg(LMC));
+  }
+  function lmLinie(t){
+    const svg=$("chartLM"), g=LMC.geo, l=svg&&svg.querySelector(".hovl"); if(!g||!l||t<g.t0||t>g.t1) return;
+    const x=g.X(t).toFixed(1); l.setAttribute("x1",x); l.setAttribute("x2",x); svg.querySelector(".hov").setAttribute("visibility","visible");
+    lmReadout(t);
+  }
+  // hinterlegte Bereiche für „Leistungen im Verlauf“: solange eine Last ein ist
+  function lmBaender(){
+    const l=lmListe(); if(!l.length) return [];
+    const b=[]; LMNAMEN.forEach((n,i)=>lmStuecke(l,i).forEach(([a,e])=>b.push({a,e,col:LMFARBE[i],titel:"Lastmanagement: "+n+" ein"})));
+    return b;
+  }
+
   function renderAktuell(a){
-    renderK14(a.k14);
+    renderK14(a.k14); lmJetzt=a.lm||null;
     const tb=a.temp||{}, bo=a.boiler||{}, wp=a.wp||{};
     // Boiler-Temperatur
     const t=typeof tb.t==="number"?tb.t:null;
@@ -1629,7 +1707,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
      Jeder Teil wird gezeichnet, sobald er da ist. Die letzte Antwort je Teil bleibt im Browser
      gespeichert und erscheint beim nächsten Öffnen sofort. */
   const TEILE={uebersicht:["mess","fronius"],temperatur:["ma"],energie:["fronius","mess"],auto:["fronius"],sonne:[],prognose:[],steuerung:["mess"],geld:[]};   // Steuerung: Boiler-Leistung für „geladen“ bei Boiler mit Überschuss
-  const FELDER={mess:["temp","boiler","wp","k14"],ma:["ma"],fronius:["fronius"]};
+  const FELDER={mess:["temp","boiler","wp","k14","lm"],ma:["ma"],fronius:["fronius"]};
   const laedtTeil=new Set(), geladen={}, teilNr={}, laedtMit={}, teilZeit={};
   const FRISCH=3*6e4;   // so lange gelten geladene Daten als aktuell (Reiterwechsel lädt dann nicht neu)
   const teilFrisch=(t,schl)=>geladen[t]===schl&&(zoom||Date.now()-(teilZeit[t]||0)<FRISCH);
@@ -1723,8 +1801,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"7 Tage",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
     document.querySelectorAll(".elab").forEach(e=>e.textContent=lab);
     document.querySelectorAll(".ebz").forEach(e=>e.textContent="· "+lab.replace("Energie ",""));   // Zeitraum der Kacheln
-    Object.values(CH).forEach(drawChart);drawMulti(MA);zeichneK14();
-    if(!$("tabEnergie").hidden){drawMulti(FL);zeichneStraenge();drawChart(FS);energieBilanz();renderFlow();if(GELD)zeichneEB()}
+    Object.values(CH).forEach(drawChart);drawMulti(MA);zeichneK14();zeichneLM();
+    if(!$("tabEnergie").hidden){FL.baender=lmBaender();drawMulti(FL);zeichneStraenge();drawChart(FS);energieBilanz();renderFlow();if(GELD)zeichneEB()}
     if(!$("tabUeb").hidden){FS2.series=FS.series;drawChart(FS2)}
     zeichneAuto();   // Kennzahlen Wattpilot (Übersicht und Reiter), Diagramme nur im Reiter
   }
@@ -1805,6 +1883,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     for(const [t,lab] of xTicks(t0,t1)){const x=X(t).toFixed(1);g+=lab?`<line x1="${x}" x2="${x}" y1="${H-B}" y2="${H-B+5}" stroke="var(--muted)" stroke-width="1"/><text x="${x}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${lab}</text>`:`<line x1="${x}" x2="${x}" y1="${H-B}" y2="${H-B+4}" stroke="var(--muted)" stroke-width="1" opacity=".7"/>`}
     g+=`<line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="var(--muted)" stroke-width="1"/>`;
     g+=`<defs><clipPath id="${c.svg}Clip"><rect x="${L}" y="${T-6}" width="${W-L-R}" height="${H-T-B+12}"/></clipPath></defs><g clip-path="url(#${c.svg}Clip)">`;
+    (c.baender||[]).forEach(b=>{const a=Math.max(b.a,t0), e=Math.min(b.e,t1); if(e<=a) return;
+      g+=`<rect x="${X(a).toFixed(1)}" y="${T}" width="${Math.max(1,X(e)-X(a)).toFixed(1)}" height="${H-T-B}" fill="${b.col}" opacity=".09"><title>${b.titel}</title></rect>`});
     lines.forEach(l=>{
       g+=`<g data-hl="${c.lines.indexOf(l)}">`;
       const s=l.series, gap=gapOf(s); let d="";
@@ -1920,7 +2000,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
 
   // Diagramme mit gleicher „gruppe“ (Übersicht: Boiler-Temperatur, Boiler-Leistung, WP, Ladestand) zeigen den Mausstrich gemeinsam
   // gleiche Zeitbasis = gleiche „gruppe“: Übersicht (Boiler, WP, Ladestand, Schaltzustände), Energiefluss (Leistungen, PV je Strang, Ladestand)
-  const einzelGruppe=c=>c.gruppe?Object.values(CH).concat([FS,FS2,FL,PVS,K14C]).filter(x=>x.gruppe===c.gruppe):[c];
+  const einzelGruppe=c=>c.gruppe?Object.values(CH).concat([FS,FS2,FL,PVS,K14C,LMC]).filter(x=>x.gruppe===c.gruppe):[c];
   function hover(c,e){
     if(!c.geo) return;
     const svg=$(c.svg),r=svg.getBoundingClientRect(),g=c.geo;
@@ -1928,10 +2008,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t=g.t0+(x-L)/(g.W-L-R)*(g.t1-g.t0);
     einzelGruppe(c).forEach(k=>zeigeBei(k,t));
   }
-  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT})}
+  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null)})}
   function zeigeBei(c,t){
     if(c.lines) return zeigeMultiBei(c,t);
     if(c===K14C) return k14Linie(t);
+    if(c===LMC) return lmLinie(t);
     const svg=$(c.svg),s=c.series,g=c.geo;
     if(!g||!svg||!s.length||!svg.querySelector(".hovl")) return;
     let a=0,b=s.length-1;
