@@ -292,7 +292,8 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thbetrieb{margin:10px 0 4px}
 .thknopf{font-weight:700;padding:7px 14px;font-size:.92rem}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
-.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}.thregeln{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thregeln .seinst label>span:last-child{white-space:nowrap;flex:none}.thregeln .seinst input{width:4.6em;padding:4px 6px}.thregeln .seinst label>span:first-child{min-width:0}.thregeln .thtrenn{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
+.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}.tip{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(300px,80vw);padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:.8rem;line-height:1.35;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:normal}
+.thregeln{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thregeln .seinst label>span:last-child{white-space:nowrap;flex:none}.thregeln .seinst input{width:4.6em;padding:4px 6px}.thregeln .seinst label>span:first-child{min-width:0}.thregeln .thtrenn{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
 .thvh{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;margin:8px 0}
@@ -1101,7 +1102,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 18:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 18:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3348,8 +3349,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let STEU=null, steuZeit=0, steuNr=0, steuWartet=null;
   const SZ_FARBE={alltag:"var(--s5)",heim:"var(--accent)",aus:"var(--muted)"};
   const AUSG=["Boiler SPERREN","Boiler MANUELL 1h","WP ABSENKEN"];
-  const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand (0 = genau am Sollwert)","°C",0.1],["minFrei","WP nach Freigabe mindestens frei","min",15],["minAbs","WP einmal abgesenkt mindestens","min",5],["raumMax","Ohne Raumwert nicht absenken (+ Meldung) nach","min",10]]],
-    ["Solarüberschuss (nur bei «Zu Hause»)",[["pvPlus","Sollwert höher um (0 = aus)","°C",0.1],["pvSchwelle","Einspeisung ins Netz mindestens","W",100],["pvMin","während mindestens","min",5],["pvSoc","Batterie mindestens","%",5],["pvNach","gilt danach noch","min",15]]]];
+  const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand","°C",0.1,"Abstand total zwischen den beiden Schaltpunkten, je die Hälfte über und unter dem Sollwert. Beispiel Sollwert 21,9 und 0,2: abgesenkt ab 22,0, wieder frei bei 21,8 °C. Dazwischen bleibt es, wie es ist. 0 = genau am Sollwert."],["minFrei","WP nach Freigabe mindestens frei","min",15,"Einmal freigegeben, bleibt die WP mindestens so lange frei, auch wenn der Raum schon warm genug ist (verhindert häufiges Schalten)."],["minAbs","WP einmal abgesenkt mindestens","min",5,"Einmal abgesenkt, bleibt die WP mindestens so lange abgesenkt."],["raumMax","Ohne Raumwert nicht absenken nach","min",10,"Meldet die Wetterstation so lange keine Raumtemperatur, wird die WP nicht mehr abgesenkt, und es kommt eine Meldung aufs Handy."]]],
+    ["Solarüberschuss (nur bei «Zu Hause»)",[["pvPlus","Sollwert höher um","°C",0.1,"Bei Solarüberschuss wird der Sollwert «Zu Hause» um so viel angehoben, damit die WP mit eigenem Strom heizt. 0 = aus."],["pvSchwelle","Einspeisung ins Netz mindestens","W",100,"So viel Strom muss ins Netz fliessen, damit es als Überschuss zählt."],["pvMin","während mindestens","min",5,"So lange muss die Einspeisung ohne Unterbruch über der Schwelle liegen."],["pvSoc","Batterie mindestens","%",5,"Die Anhebung gilt erst, wenn die Batterie mindestens so voll ist."],["pvNach","gilt danach noch","min",15,"So lange bleibt die Anhebung nach dem letzten Überschuss bestehen."]]]];
   const PARAM=[
     ["komfort","Fenster-Regel: Komfort (Heimkommen, zu Hause)","°C",0.1],["nacht","Fenster-Regel: nachts / niemand da","°C",0.1],["aus","Fenster-Regel: auswärts (Frostschutz)","°C",0.5],["hyst","Fenster-Regel: Abstand bis wieder absenken","°C",0.1],
     ["nachtAb","Fenster-Regel: Nacht ab","Uhr",1],["nachtBis","Fenster-Regel: Nacht bis","Uhr",1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
@@ -3685,7 +3686,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     box.innerHTML="";
     TH_PARAM.forEach(([titel,liste])=>{const h=document.createElement("div");h.className="thtrenn";h.textContent=titel;
       const g=document.createElement("div");g.className="seinst";
-      liste.forEach(([k,n,e,step])=>{const l=document.createElement("label");l.innerHTML=`<span>${n}</span><span><input type="number" step="${step}" data-rp="${k}" value="${c.p[k]!=null?c.p[k]:""}"> ${e}</span>`;g.append(l)});
+      liste.forEach(([k,n,e,step,tip])=>{const l=document.createElement("label");l.innerHTML=`<span>${tip?`<span class="tip" tabindex="0" data-tip="${esc(tip)}">${n}</span>`:n}</span><span><input type="number" step="${step}" data-rp="${k}" value="${c.p[k]!=null?c.p[k]:""}"> ${e}</span>`;g.append(l)});
       box.append(h,g)});
     $("thRegelnSpeichern").disabled=true; $("thRegelnVerwerfen").hidden=true;
   }
