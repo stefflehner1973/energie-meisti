@@ -880,7 +880,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel" id="thPanel">
       <div class="histhead"><h2 class="tc-wp" style="margin:0">Raumthermostat · Wärmepumpe</h2>
         <div class="seg" role="group" aria-label="Regel für WP ABSENKEN"><button type="button" data-th="1" aria-pressed="false" title="WP ABSENKEN nach Raumtemperatur (Wetterstation innen) gegen den Sollwert">Raumthermostat</button><button type="button" data-th="0" aria-pressed="false" title="Bisherige Regel: frei im wärmsten Zeitfenster der Prognose">Wärmstes Fenster</button></div></div>
-      <div class="thbetrieb"><div class="seg" role="group" aria-label="Betriebsart Raumthermostat"><button type="button" data-tb="plan" aria-pressed="false" title="Zu Hause und Nacht nach Zeitplan">Zeitplan</button><button type="button" data-tb="aus" aria-pressed="false" title="Auswärts-Sollwert, bis du zurückstellst oder bis zum Rückkehrdatum">Auswärts</button></div></div>
+      <div class="thbetrieb"><div class="seg" role="group" aria-label="Betriebsart Raumthermostat"><button type="button" data-tb="plan" aria-pressed="false" title="Zu Hause und Abgesenkt nach Zeitplan">Zeitplan</button><button type="button" data-tb="aus" aria-pressed="false" title="Auswärts-Sollwert, bis du zurückstellst oder bis zum Rückkehrdatum">Auswärts</button></div></div>
       <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <p class="thstat" id="thStatus">–</p>
       <div class="krow" id="thAbw"></div>
@@ -889,12 +889,12 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="thsoll" id="thSoll"></div>
       <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
       <details class="thplanbox" id="thPlanBox">
-        <summary>Zeitplan Zu Hause / Nacht</summary>
+        <summary>Zeitplan Zu Hause / Abgesenkt</summary>
         <div class="thplan" id="thPlan"></div>
         <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
         <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
-        <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Nacht"></svg>
-        <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Nacht</span></div>
+        <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Abgesenkt"></svg>
+        <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
         <div class="krow"><button type="button" class="knopfklein" id="thPlanSpeichern" disabled>Zeitplan speichern</button><button type="button" class="knopfklein ghost" id="thPlanVerwerfen" hidden>Verwerfen</button></div>
       </details>
       <form class="krow spinbox" id="sPinBox" hidden autocomplete="off">
@@ -904,7 +904,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <button type="button" class="knopfklein ghost" id="sPinAbbr">Abbrechen</button>
       </form>
       <p class="hint" id="sMeldung" aria-live="polite"></p>
-      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Nacht wechseln nach dem Zeitplan je Wochentag («Zu Hause ab», «Nacht ab»; liegt «Nacht ab» früher als «Zu Hause ab», gilt es nach Mitternacht). «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
+      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Abgesenkt wechseln nach dem Zeitplan je Wochentag («Zu Hause ab», «Abgesenkt ab»; liegt «Abgesenkt ab» früher als «Zu Hause ab», gilt es nach Mitternacht). «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
     </section>
     <section class="panel" id="sSzenPanel" hidden>
       <h2>Szenario wählen</h2>
@@ -1079,7 +1079,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 16:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 16:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3508,7 +3508,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("ueVerwerfen").addEventListener("click",()=>{$("uePanel").dataset.dirty="";$("ueMeldung").textContent="";zeichneUeb()});
   const esc=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   /* ---------- Raumthermostat (rechnet und schaltet im Google-Skript, steuern_) ---------- */
-  const TH_SOLL=[["sollTag","Zu Hause"],["sollNacht","Nacht"],["sollAus","Auswärts"]];
+  const TH_SOLL=[["sollTag","Zu Hause"],["sollNacht","Abgesenkt"],["sollAus","Auswärts"]];
   let thEdit=null;
   function zeichneThermo(){
     if(!STEU) return;
@@ -3536,8 +3536,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const soll=`Soll jetzt <b>${dez(th.soll)} °C</b>${th.pvAn?` (inkl. +${dez(c.p.pvPlus)} °C PV-Überschuss)`:""}`;
     const regel=th.genau?`frei unter ${dez(th.soll)}, abgesenkt über ${dez(th.soll)} °C`:`frei bei ${dez(th.frei)} °C und tiefer, abgesenkt bei ${dez(th.abs)} °C und höher`;
     const wp=st.ch&&st.ch[2], istT=wp&&wp.ist===1?"abgesenkt":wp&&wp.ist===0?"frei":"–";
-    const MN=["Zu Hause","Nacht","Auswärts"], q={zeitplan:"Zeitplan",vorheizen:"Vorheizen nach Zeitplan",abweichung:"Abweichung",auswärts:cth.ausBis?"bis "+fDay(cth.ausBis)+" "+fTime(cth.ausBis):"bis du zurückstellst"}[th.quelle]||"";
-    const naechst=th.wechsel?` · ${th.mod===0?"Nacht":"Zu Hause"} ab ${fDay(th.wechsel)===fDay(Date.now())?"":fDay(th.wechsel)+" "}${fTime(th.wechsel)}${th.quelle==="auswärts"?" (Vorheizen)":""}`:"";
+    const MN=["Zu Hause","Abgesenkt","Auswärts"], q={zeitplan:"Zeitplan",vorheizen:"Vorheizen nach Zeitplan",abweichung:"Abweichung",auswärts:cth.ausBis?"bis "+fDay(cth.ausBis)+" "+fTime(cth.ausBis):"bis du zurückstellst"}[th.quelle]||"";
+    const naechst=th.wechsel?` · ${th.mod===0?"Abgesenkt":"Zu Hause"} ab ${fDay(th.wechsel)===fDay(Date.now())?"":fDay(th.wechsel)+" "}${fTime(th.wechsel)}${th.quelle==="auswärts"?" (Vorheizen)":""}`:"";
     $("thStatus").innerHTML=(typeof th.mod==="number"?`<b class="tc-wp">${MN[th.mod]}</b> (${q})${naechst}<br>`:"")+`${raum} · ${soll} · WP jetzt <b>${istT}</b><br><span class="sub" style="text-transform:none;letter-spacing:0">${regel}</span>`;
     const ab=$("thAbw"); ab.innerHTML="";
     if((cth.betrieb||"plan")==="plan"&&typeof th.mod==="number"){
@@ -3564,12 +3564,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!erzwingen&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#thPlanBox")&&planEdit) return;   // nicht neu aufbauen, während eine Auswahl offen ist
     if(planEdit&&planGleich()) planEdit=null;
     if(!planEdit) planEdit={plan:JSON.parse(JSON.stringify(cth.plan||{})),vorheiz:c.p.vorheiz};
-    const box=$("thPlan"); box.innerHTML=`<span class="k">Wochentag</span><span class="k">Zu Hause ab</span><span class="k">Nacht ab</span>`;
+    const box=$("thPlan"); box.innerHTML=`<span class="k">Wochentag</span><span class="k">Zu Hause ab</span><span class="k">Abgesenkt ab</span>`;
     const sel=(opt,wert,fn,lab)=>{const s=document.createElement("select");s.setAttribute("aria-label",lab);const o=opt.includes(wert)?opt:opt.concat([wert]);
       o.forEach(v=>{const e=document.createElement("option");e.value=v;e.textContent=v;s.append(e)});s.value=wert;s.addEventListener("change",()=>{fn(s.value);planDirty()});return s};
     TH_TAGE.forEach(([k,n])=>{const w=planEdit.plan[k]||{tag:"06:00",nacht:"22:00"};planEdit.plan[k]=w;
       const b=document.createElement("b");b.textContent=n;
-      box.append(b,sel(TH_TAG_OPT,w.tag,v=>{w.tag=v},n+": Zu Hause ab"),sel(TH_NACHT_OPT,w.nacht,v=>{w.nacht=v},n+": Nacht ab"))});
+      box.append(b,sel(TH_TAG_OPT,w.tag,v=>{w.tag=v},n+": Zu Hause ab"),sel(TH_NACHT_OPT,w.nacht,v=>{w.nacht=v},n+": Abgesenkt ab"))});
     $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h";
     $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12;
     planDirty();
@@ -3611,7 +3611,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("thAusOhne").addEventListener("click",()=>{$("thAusForm").hidden=true; steuerSenden({aktion:"thermo",th:{betrieb:"aus"}},"Auswärts, bis du zurückstellst")});
   function thDirty(){const c=STEU&&STEU.cfg; if(!c||!thEdit) return; const d=TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]); $("thSpeichern").disabled=!d; $("thVerwerfen").hidden=!d}
   $("thSpeichern").addEventListener("click",()=>{if(!thEdit)return; const p={sollTag:thEdit.sollTag,sollNacht:thEdit.sollNacht,sollAus:thEdit.sollAus};
-    steuerSenden({aktion:"einstellungen",p},`Sollwerte gespeichert: Tag ${dez(p.sollTag)}, Nacht ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
+    steuerSenden({aktion:"einstellungen",p},`Sollwerte gespeichert: Zu Hause ${dez(p.sollTag)}, Abgesenkt ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
   $("thVerwerfen").addEventListener("click",()=>{thEdit=null;zeichneThermo()});
   document.querySelectorAll("#thPanel .seg button").forEach(b=>b.addEventListener("click",()=>{
     if(!STEU) return; const v=+b.dataset.th; if((STEU.cfg.p.wpThermo===1?1:0)===v) return;
@@ -3661,7 +3661,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const spur=(k,name)=>{g+=`<text x="${Lp-6}" y="${(yl(k)+lane/2+4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${name}</text>`};
     spur(0,P.mod&&P.mod.length?"Soll":"Szen."); spur(1,thermo?"Fenster":"Plan"); spur(2,"Ist");
     let i0=0;
-    const MOD_F=["var(--s5)","var(--accent)","var(--muted)"], MOD_N=["Zu Hause","Nacht","Auswärts"], mods=P.mod&&P.mod.length?P.mod:null;
+    const MOD_F=["var(--s5)","var(--accent)","var(--muted)"], MOD_N=["Zu Hause","Abgesenkt","Auswärts"], mods=P.mod&&P.mod.length?P.mod:null;
     if(mods){for(let i=1;i<=mods.length;i++){if(i===mods.length||mods[i]!==mods[i0]){const m=mods[i0];g+=`<rect x="${X(t0+i0*P.schritt).toFixed(1)}" y="${yl(0)}" width="${Math.max(1,X(t0+i*P.schritt)-X(t0+i0*P.schritt)-1).toFixed(1)}" height="${lane}" rx="3" fill="${MOD_F[m]}" opacity="${m===0?.85:.55}" data-hl="mod-${m}"/>`;i0=i}}}
     else for(let i=1;i<=P.sz.length;i++){if(i===P.sz.length||P.sz[i]!==P.sz[i0]){const a=P.arten[P.sz[i0]];g+=`<rect x="${X(t0+i0*P.schritt).toFixed(1)}" y="${yl(0)}" width="${Math.max(1,X(t0+i*P.schritt)-X(t0+i0*P.schritt)-1).toFixed(1)}" height="${lane}" rx="3" fill="${SZ_FARBE[a]}" opacity=".85" data-hl="sz-${a}"/>`;i0=i}}
     i0=0;
