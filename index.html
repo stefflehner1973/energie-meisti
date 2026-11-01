@@ -435,6 +435,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <button type="button" role="tab" id="tabBtnProg" aria-controls="tabProg" aria-selected="false" tabindex="-1">Prognose</button>
     <button type="button" role="tab" id="tabBtnSteuer" aria-controls="tabSteuer" aria-selected="false" tabindex="-1">Steuerung</button>
     <button type="button" role="tab" id="tabBtnGeld" aria-controls="tabGeld" aria-selected="false" tabindex="-1">$$$</button>
+    <button type="button" role="tab" id="tabBtnBoiler" aria-controls="tabBoiler" aria-selected="false" tabindex="-1">Boiler</button>
   </nav>
 
   <div id="tabUeb" role="tabpanel" aria-labelledby="tabBtnUeb" class="tabpanel">
@@ -875,50 +876,6 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <p class="hint" id="sPause" hidden></p>
       <p class="hint" id="sHint" hidden></p>
     </section>
-    <section class="panel" id="uePanel">
-      <div class="uekopf">
-        <h2 style="margin:0">Boiler mit Überschuss</h2>
-        <div class="bsel" role="group" aria-label="Boiler mit Überschuss ein- oder ausschalten">
-          <button type="button" data-a="0" aria-pressed="false">Aus</button>
-          <button type="button" data-a="1" aria-pressed="false">Ein</button>
-        </div>
-      </div>
-      <p class="hint" style="margin-top:4px">Läuft für sich, unabhängig vom Modus oben. Schaltet nur «Boiler MANUELL» (O2).</p>
-      <div class="uezust" id="ueZust" data-z="aus"><div class="z1"><i aria-hidden="true"></i><b id="ueTitel">–</b></div><span id="ueText"></span></div>
-      <p class="hint" id="uePause" hidden></p>
-      <div class="uebed">
-        <div class="ukopf"><span>Bedingungen (alle müssen stimmen)</span><span>jetzt</span></div>
-        <div class="uezeile"><span class="ueok" id="ueOkSoc" role="img"></span>
-          <label for="ueSoc">Batterie über <span><input id="ueSoc" type="number" min="5" max="99" step="5" inputmode="numeric"> %</span><span class="uehyst" id="ueHyst"></span></label><b id="ueJSoc">–</b></div>
-        <div class="uezeile"><span class="ueok" id="ueOkFrei" role="img"></span>
-          <label for="ueFrei">Freie Leistung über <span><input id="ueFrei" type="number" min="0.5" max="15" step="0.5" inputmode="decimal"> kW</span></label><b id="ueJFrei">–</b>
-          <div class="uerech" id="ueRech"></div></div>
-        <div class="uezeile"><span class="ueok" id="ueOkTemp" role="img"></span>
-          <label for="ueTemp">Boiler unter <span><input id="ueTemp" type="number" min="30" max="80" step="1" inputmode="numeric"> °C</span></label><b id="ueJTemp">–</b></div>
-        <div class="uezeile" style="border-bottom:0"><span class="ueok uhr"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5.3"/><path d="M7 4v3.2l2 1.3"/></svg></span>
-          <label for="ueDauer">Dann Boiler ein für <span><input id="ueDauer" type="number" min="3" max="30" step="1" inputmode="numeric"> min</span></label><b id="ueRest" title="Restlaufzeit Boiler MANUELL">–</b></div>
-        <p class="hint" id="ueDauerText" style="margin-top:0"></p>
-      </div>
-      <div class="uevor"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span><b>«Boiler SPERREN» hat Vorrang.</b> Ist die Sperre ein, schaltet diese Funktion den Boiler nicht ein und wartet, bis die Sperre wieder aus ist.</span></div>
-      <div class="krow"><button type="button" class="knopfklein" id="ueSpeichern">Grenzwerte speichern</button><button type="button" class="knopfklein ghost" id="ueVerwerfen">Verwerfen</button></div>
-      <form class="krow spinbox" id="uePinBox" hidden autocomplete="off">
-        <input type="password" id="uePin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
-        <label class="kmerk"><input type="checkbox" id="ueMerk"> 30 Tage merken</label>
-        <button type="submit" class="knopfklein">Senden</button>
-        <button type="button" class="knopfklein ghost" id="uePinAbbr">Abbrechen</button>
-      </form>
-      <p class="hint" id="ueMeldung" aria-live="polite"></p>
-      <div class="ueheute">
-        <span class="sublabel" style="margin:0">Heute</span>
-        <div class="zahlen" id="ueZahlen"></div>
-        <ul class="ueliste" id="ueListe"></ul>
-      </div>
-      <dialog class="uewarn" id="ueWarn" aria-labelledby="ueWarnTitel" aria-describedby="ueWarnText">
-        <h3 id="ueWarnTitel"><span><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span>Boiler ist gesperrt</h3>
-        <p id="ueWarnText">«Boiler SPERREN» ist im Moment eingeschaltet. Die Sperre hat Vorrang: Diese Funktion ist jetzt zwar ein, schaltet den Boiler aber erst ein, wenn die Sperre wieder aus ist.</p>
-        <form method="dialog"><button type="submit" value="ok" autofocus>OK</button></form>
-      </dialog>
-    </section>
     <section class="panel" id="thPanel">
       <div class="histhead"><h2 class="tc-wp" style="margin:0">Raumthermostat · Wärmepumpe</h2>
         <div class="seg" role="group" aria-label="Regel für WP ABSENKEN"><button type="button" data-th="1" aria-pressed="false" title="WP ABSENKEN nach Raumtemperatur (Wetterstation innen) gegen den Sollwert">Raumthermostat</button><button type="button" data-th="0" aria-pressed="false" title="Bisherige Regel: frei im wärmsten Zeitfenster der Prognose">Wärmstes Fenster</button></div></div>
@@ -1024,6 +981,53 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </section>
   </div>
 
+  <div id="tabBoiler" role="tabpanel" aria-labelledby="tabBtnBoiler" class="tabpanel" hidden>
+    <section class="panel" id="uePanel">
+      <div class="uekopf">
+        <h2 style="margin:0">Boiler mit Überschuss</h2>
+        <div class="bsel" role="group" aria-label="Boiler mit Überschuss ein- oder ausschalten">
+          <button type="button" data-a="0" aria-pressed="false">Aus</button>
+          <button type="button" data-a="1" aria-pressed="false">Ein</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:4px">Läuft für sich, unabhängig vom Modus im Reiter Steuerung. Schaltet nur «Boiler MANUELL» (O2).</p>
+      <div class="uezust" id="ueZust" data-z="aus"><div class="z1"><i aria-hidden="true"></i><b id="ueTitel">–</b></div><span id="ueText"></span></div>
+      <p class="hint" id="uePause" hidden></p>
+      <div class="uebed">
+        <div class="ukopf"><span>Bedingungen (alle müssen stimmen)</span><span>jetzt</span></div>
+        <div class="uezeile"><span class="ueok" id="ueOkSoc" role="img"></span>
+          <label for="ueSoc">Batterie über <span><input id="ueSoc" type="number" min="5" max="99" step="5" inputmode="numeric"> %</span><span class="uehyst" id="ueHyst"></span></label><b id="ueJSoc">–</b></div>
+        <div class="uezeile"><span class="ueok" id="ueOkFrei" role="img"></span>
+          <label for="ueFrei">Freie Leistung über <span><input id="ueFrei" type="number" min="0.5" max="15" step="0.5" inputmode="decimal"> kW</span></label><b id="ueJFrei">–</b>
+          <div class="uerech" id="ueRech"></div></div>
+        <div class="uezeile"><span class="ueok" id="ueOkTemp" role="img"></span>
+          <label for="ueTemp">Boiler unter <span><input id="ueTemp" type="number" min="30" max="80" step="1" inputmode="numeric"> °C</span></label><b id="ueJTemp">–</b></div>
+        <div class="uezeile" style="border-bottom:0"><span class="ueok uhr"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5.3"/><path d="M7 4v3.2l2 1.3"/></svg></span>
+          <label for="ueDauer">Dann Boiler ein für <span><input id="ueDauer" type="number" min="3" max="30" step="1" inputmode="numeric"> min</span></label><b id="ueRest" title="Restlaufzeit Boiler MANUELL">–</b></div>
+        <p class="hint" id="ueDauerText" style="margin-top:0"></p>
+      </div>
+      <div class="uevor"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span><b>«Boiler SPERREN» hat Vorrang.</b> Ist die Sperre ein, schaltet diese Funktion den Boiler nicht ein und wartet, bis die Sperre wieder aus ist.</span></div>
+      <div class="krow"><button type="button" class="knopfklein" id="ueSpeichern">Grenzwerte speichern</button><button type="button" class="knopfklein ghost" id="ueVerwerfen">Verwerfen</button></div>
+      <form class="krow spinbox" id="uePinBox" hidden autocomplete="off">
+        <input type="password" id="uePin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
+        <label class="kmerk"><input type="checkbox" id="ueMerk"> 30 Tage merken</label>
+        <button type="submit" class="knopfklein">Senden</button>
+        <button type="button" class="knopfklein ghost" id="uePinAbbr">Abbrechen</button>
+      </form>
+      <p class="hint" id="ueMeldung" aria-live="polite"></p>
+      <div class="ueheute">
+        <span class="sublabel" style="margin:0">Heute</span>
+        <div class="zahlen" id="ueZahlen"></div>
+        <ul class="ueliste" id="ueListe"></ul>
+      </div>
+      <dialog class="uewarn" id="ueWarn" aria-labelledby="ueWarnTitel" aria-describedby="ueWarnText">
+        <h3 id="ueWarnTitel"><span><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span>Boiler ist gesperrt</h3>
+        <p id="ueWarnText">«Boiler SPERREN» ist im Moment eingeschaltet. Die Sperre hat Vorrang: Diese Funktion ist jetzt zwar ein, schaltet den Boiler aber erst ein, wenn die Sperre wieder aus ist.</p>
+        <form method="dialog"><button type="submit" value="ok" autofocus>OK</button></form>
+      </dialog>
+    </section>
+  </div>
+
   <div id="tabSonne" role="tabpanel" aria-labelledby="tabBtnSonne" class="tabpanel" hidden>
     <section class="panel">
       <div class="sunhead">
@@ -1073,7 +1077,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 15:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 15:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1467,7 +1471,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("bHint").textContent=soc==null?"Kein Ladestand in der Tabelle. Läuft auf dem Shelly U12 das Skript „Fronius nach Google“?":"";
     $("bHint").hidden=soc!=null;
     aktLetzt=a; battVollZeigen(soc,a.batt||null);
-    if(reiter==="steuerung"&&STEU) zeichneUeb();   // Boiler mit Überschuss: „jetzt“ mit den frischen Minutenwerten
+    if(steuerReiter()&&STEU) zeichneUeb();   // Boiler mit Überschuss: „jetzt“ mit den frischen Minutenwerten
     // Wärmepumpe
     const wpP=typeof wp.p==="number"?Math.max(0,wp.p):null;
     if(wpP==null){$("wPow").textContent="–"}
@@ -1748,7 +1752,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* Verlauf in drei Teilen gleichzeitig laden, nur was der offene Reiter braucht.
      Jeder Teil wird gezeichnet, sobald er da ist. Die letzte Antwort je Teil bleibt im Browser
      gespeichert und erscheint beim nächsten Öffnen sofort. */
-  const TEILE={uebersicht:["mess","fronius"],temperatur:["ma"],energie:["fronius","mess"],auto:["fronius"],sonne:[],prognose:[],steuerung:["mess","ma"],geld:[]};   // Steuerung: Boiler-Leistung für „geladen“ bei Boiler mit Überschuss
+  const TEILE={uebersicht:["mess","fronius"],temperatur:["ma"],energie:["fronius","mess"],auto:["fronius"],sonne:[],prognose:[],steuerung:["mess","ma"],boiler:["mess"],geld:[]};   // Steuerung: Boiler-Leistung für „geladen“ bei Boiler mit Überschuss
   const FELDER={mess:["temp","boiler","wp","k14","lm"],ma:["ma"],fronius:["fronius"]};
   const laedtTeil=new Set(), geladen={}, teilNr={}, laedtMit={}, teilZeit={};
   const FRISCH=3*6e4;   // so lange gelten geladene Daten als aktuell (Reiterwechsel lädt dann nicht neu)
@@ -1839,7 +1843,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
 
   function drawAll(){
-    try{if(reiter==="steuerung"&&STEU){zeichneUeb();zeichneFahrplan()}}catch(e){}   // STEU wird weiter unten angelegt (beim ersten Aufruf evtl. noch nicht); Fahrplan mit gemessenem Raum
+    try{if(steuerReiter()&&STEU){zeichneUeb();zeichneFahrplan()}}catch(e){}   // STEU wird weiter unten angelegt (beim ersten Aufruf evtl. noch nicht); Fahrplan mit gemessenem Raum
     const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"7 Tage",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
     document.querySelectorAll(".elab").forEach(e=>e.textContent=lab);
     document.querySelectorAll(".ebz").forEach(e=>e.textContent="· "+lab.replace("Energie ",""));   // Zeitraum der Kacheln
@@ -2453,7 +2457,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("aZumReiter").addEventListener("click",()=>{zeigeReiter("auto");window.scrollTo(0,0)});
 
   /* ---------- Reiter ---------- */
-  const REITER={uebersicht:["tabBtnUeb","tabUeb"],energie:["tabBtnEnergie","tabEnergie"],auto:["tabBtnAuto","tabAuto"],temperatur:["tabBtnTemp","tabTemp"],sonne:["tabBtnSonne","tabSonne"],prognose:["tabBtnProg","tabProg"],steuerung:["tabBtnSteuer","tabSteuer"],geld:["tabBtnGeld","tabGeld"]};
+  const REITER={uebersicht:["tabBtnUeb","tabUeb"],energie:["tabBtnEnergie","tabEnergie"],auto:["tabBtnAuto","tabAuto"],temperatur:["tabBtnTemp","tabTemp"],sonne:["tabBtnSonne","tabSonne"],prognose:["tabBtnProg","tabProg"],steuerung:["tabBtnSteuer","tabSteuer"],geld:["tabBtnGeld","tabGeld"],boiler:["tabBtnBoiler","tabBoiler"]};
+  function steuerReiter(){return reiter==="steuerung"||reiter==="boiler"}   // beide Reiter brauchen die Daten der Steuerung
   let reiter=store.get("tb.reiter","uebersicht"); if(!REITER[reiter]) reiter="uebersicht";
   function zeigeReiter(r,ohneLaden){
     reiter=r; store.set("tb.reiter",r);
@@ -2464,7 +2469,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Daten, die im Hintergrund schon aktuell geladen wurden, nur zeichnen; sonst zuerst Gespeichertes zeigen und neu laden
     const frisch=z=>Date.now()-z<FRISCH;
     if(r==="geld"){ if(GELD) zeichneGeld(); if(!ohneLaden&&!(GELD&&frisch(geldZeit))) ladeGeld(); }
-    else if(r==="steuerung"){ if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); }
+    else if(r==="steuerung"||r==="boiler"){ if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); }
     else if(r==="sonne") zeichneSonne();
     else if(r==="prognose"){ if(prog) zeichnePrognose(); if(!ohneLaden&&!(prog&&frisch(progZeit))) ladePrognose(true); }
     else {drawAll(); if(!ohneLaden&&typeof loadHist==="function") loadHist(true); if(r==="energie"||r==="auto"){ if(GELD) (r==="auto"?zeichneAutoTage:zeichneEB)(); if(!(GELD&&frisch(geldZeit))) ladeGeld(false,true); }}
@@ -3331,7 +3336,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   async function ladeSteuerung(neu,hintergrund){
     if(!cfg.histurl||!cfg.histtok) return;
     if(hintergrund&&!neu&&STEU&&Date.now()-steuZeit<FRISCH) return;
-    if(!STEU){try{const c=JSON.parse(localStorage.getItem("tb.steuer")||"null");if(c&&c.cfg){STEU=c;if(reiter==="steuerung")zeichneSteuerung()}}catch(e){}}
+    if(!STEU){try{const c=JSON.parse(localStorage.getItem("tb.steuer")||"null");if(c&&c.cfg){STEU=c;if(steuerReiter())zeichneSteuerung()}}catch(e){}}
     const nr=++steuNr;
     if(!hintergrund) $("sBusy").hidden=false;
     try{
@@ -3342,7 +3347,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       $("sHint").hidden=true;
     }catch(e){ if(!hintergrund){$("sHint").textContent=e.message;$("sHint").hidden=false} }
     finally{ if(nr===steuNr) $("sBusy").hidden=true }
-    if(reiter==="steuerung") zeichneSteuerung();
+    if(steuerReiter()) zeichneSteuerung();
   }
   const pill=(v,an,aus,diff)=>v===null||v===undefined?`<span class="spill">–</span>`:`<span class="spill${v?" an":""}${diff?" diff":""}">${v?an:aus}</span>`;
   function zeichneSteuerung(){
@@ -3425,7 +3430,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t=Math.floor(r/60)+":"+String(r%60).padStart(2,"0");
     el.textContent="noch "+t; el.setAttribute("aria-label","Restlaufzeit "+t+" Minuten");
   }
-  setInterval(()=>{if(reiter==="steuerung"&&!document.hidden) ueRestZeigen()},1000);
+  setInterval(()=>{if(steuerReiter()&&!document.hidden) ueRestZeigen()},1000);
   function ueEingaben(){   // Werte in den Feldern (auch ungespeichert), sonst die gespeicherten
     const c=(STEU&&STEU.ueb&&STEU.ueb.cfg)||{}, o={};
     Object.entries(UE_FELD).forEach(([k,id])=>{const v=parseFloat(String($(id).value).replace(",","."));o[k]=isFinite(v)?v:c[k]});
@@ -3734,13 +3739,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     try{
       const vorne=[update()];
       if(reiter==="sonne"&&istHeute()) zeichneSonne();
-      if(reiter==="steuerung") vorne.push(ladeSteuerung(true,leise));   // jede Minute, unabhängig vom Verlaufs-Zeitraum
+      if(steuerReiter()) vorne.push(ladeSteuerung(true,leise));   // jede Minute, unabhängig vom Verlaufs-Zeitraum
       const wetterAlt=Date.now()-progZeit>=15*6e4;
       if(verlaufAuch){
         letzterVerlauf=Date.now();
         if(reiter==="prognose") vorne.push(wetterAlt||!prog?ladePrognose(true,leise):ladeProgIst());
         else if(reiter==="geld") vorne.push(ladeGeld(true,leise));
-        else if(reiter==="steuerung") vorne.push(loadHist(false,{rest:false,still:leise}));   // Steuerung selbst: unten, jede Minute; hier Boiler-Leistung (mess)
+        else if(steuerReiter()) vorne.push(loadHist(false,{rest:false,still:leise}));   // Steuerung selbst: unten, jede Minute; hier Boiler-Leistung (mess)
         else if(reiter!=="sonne") vorne.push(loadHist(false,{rest:false,still:leise}));
       }
       await Promise.allSettled(vorne);
@@ -3749,7 +3754,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const hinten=[loadHist(false,{teile:ALLE_TEILE.filter(t=>!(TEILE[reiter]||[]).includes(t)),still:true})];
       if(reiter!=="prognose") hinten.push(wetterAlt||!prog?ladePrognose(true,true):ladeProgIst());
       if(reiter!=="geld") hinten.push(ladeGeld(true,true));
-      if(reiter!=="steuerung") hinten.push(ladeSteuerung(true,true));
+      if(!steuerReiter()) hinten.push(ladeSteuerung(true,true));
       await Promise.allSettled(hinten);
     }finally{ laeuft=false }
   }
