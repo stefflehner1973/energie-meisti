@@ -287,6 +287,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thmod .punkt{width:10px;height:10px;border-radius:50%;border:2px solid var(--muted)}
 .thmod.an{border-color:var(--c-wp);background:color-mix(in srgb,var(--c-wp) 10%,transparent);font-weight:600}
 .thmod.an .punkt{border-color:var(--c-wp);background:var(--c-wp)}.thmod.an small{color:var(--c-wp)}
+.thmeld{font-size:.86rem;margin:4px 0;color:var(--fg)}.thmeld .spin,button .spin{display:inline-block;margin-right:6px;vertical-align:-2px}
 .thbetrieb{margin:10px 0 4px}.thaus{margin:6px 0}
 .thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanbox summary{cursor:pointer;font-weight:600}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
@@ -884,6 +885,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <p class="thstat" id="thStatus">–</p>
       <div class="krow" id="thAbw"></div>
+      <p class="thmeld" id="thMeld" aria-live="polite" hidden></p>
       <p class="thhand" id="thHand" hidden></p>
       <p class="thbeob" id="thBeob"></p>
       <div class="thsoll" id="thSoll"></div>
@@ -1080,7 +1082,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 16:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 16:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3510,9 +3512,21 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const esc=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   /* ---------- Raumthermostat (rechnet und schaltet im Google-Skript, steuern_) ---------- */
   const TH_SOLL=[["sollTag","Zu Hause"],["sollNacht","Abgesenkt"],["sollAus","Auswärts"]];
-  let thEdit=null;
+  let thEdit=null, thLaeuft=false;
+  /* Sofortige Rückmeldung für alle Knöpfe des Raumthermostats: Knopf sperren, «… wird ausgeführt» anzeigen,
+     Ergebnis direkt beim Thermostat zeigen; braucht es den PIN, zum PIN-Feld springen. */
+  async function thSenden(knopf,text,daten,ok){
+    const m=$("thMeld"); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
+    if(knopf){knopf.disabled=true; knopf.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`}
+    thLaeuft=true;
+    try{ await steuerSenden(daten,ok); }finally{ thLaeuft=false; }
+    if(!$("sPinBox").hidden){ m.textContent="Bitte Schalt-PIN eingeben (Feld unten) – danach wird es ausgeführt."; $("sPinBox").scrollIntoView({block:"center",behavior:"smooth"}); $("sPin").focus({preventScroll:true}); }
+    else { const t=$("sMeldung").textContent, fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":"✓ ")+t:""; m.hidden=!t;
+      if(!fehler){const jetzt=m.textContent; setTimeout(()=>{if(m.textContent===jetzt) m.hidden=true},8000)} }
+    if(STEU) zeichneSteuerung();
+  }
   function zeichneThermo(){
-    if(!STEU) return;
+    if(!STEU||thLaeuft) return;   // während eine Aktion läuft, Rückmeldung am Knopf stehen lassen
     const c=STEU.cfg, st=STEU.status, th=st&&st.th, aktiv=c.p.wpThermo===1;
     document.querySelectorAll("#thPanel .seg button").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.th===(aktiv?1:0))));
     if(thEdit&&!TH_SOLL.some(([k])=>thEdit[k]!==c.p[k])) thEdit=null;   // nichts geändert: immer die gespeicherten Werte zeigen
@@ -3543,14 +3557,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const ab=$("thAbw"); ab.innerHTML="";
     if((cth.betrieb||"plan")==="plan"&&typeof th.mod==="number"){
       if(th.quelle==="abweichung"){const t=document.createElement("span");t.className="sub";t.style.textTransform="none";t.textContent=`Abweichung vom Zeitplan bis ${fDay(th.wechsel)} ${fTime(th.wechsel)}`;
-        const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Abweichung aufheben";b.addEventListener("click",()=>steuerSenden({aktion:"thermo",th:{abw:null}},"Zurück zum Zeitplan"));ab.append(t,b)}
+        const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Abweichung aufheben";b.addEventListener("click",()=>thSenden(b,"Abweichung wird aufgehoben",{aktion:"thermo",th:{abw:null}},"Zurück zum Zeitplan"));ab.append(t,b)}
       else{const z=th.mod===0?1:0, b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent=`Jetzt ${MN[z]} bis zum nächsten Wechsel`;
-        b.addEventListener("click",()=>steuerSenden({aktion:"thermo",th:{abw:{mod:z}}},`Jetzt ${MN[z]} bis zum nächsten Wechsel`));ab.append(b)}
+        b.addEventListener("click",()=>thSenden(b,`Jetzt ${MN[z]} wird gesetzt`,{aktion:"thermo",th:{abw:{mod:z}}},`Jetzt ${MN[z]} bis zum nächsten Wechsel`));ab.append(b)}
     }
     const hb=$("thHand"), hp=wp&&wp.pause;
     hb.hidden=!hp; hb.innerHTML="";
     if(hp){const t=document.createElement("span");t.innerHTML=`<b>WP ABSENKEN von Hand geschaltet</b>${wp.handSeit?" (erkannt "+fStempel(wp.handSeit)+")":""} – die Automatik schaltet O3 nicht, ${hp>=PAUSE_OFFEN?"bis du fortsetzt.":"bis "+fTime(hp)+"."}`;
-      const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Automatik sofort fortsetzen";b.addEventListener("click",()=>steuerSenden({aktion:"pauseWeg"},"Automatik fortgesetzt"));hb.append(t,b)}
+      const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Automatik sofort fortsetzen";b.addEventListener("click",()=>thSenden(b,"Automatik wird fortgesetzt",{aktion:"pauseWeg"},"Automatik fortgesetzt"));hb.append(t,b)}
     if(th.raum==null&&th.raumZeit) $("thStatus").innerHTML+=`<br><b style="color:var(--c-bezug)">Wetterstation meldet seit ${fStempel(th.raumZeit)} nichts – WP wird nicht abgesenkt.</b>`;
     $("thBeob").textContent=aktiv?(th.fenster?"Zum Beobachten – Regel «wärmstes Fenster» würde: "+(th.fenster.soll?"absenken":"frei")+" ("+th.fenster.grund+")":""):"Aktiv ist die Regel «wärmstes Fenster». Das Raumthermostat würde: "+(th.zustand?"absenken":"frei")+" ("+th.grund+")";
   }
@@ -3619,25 +3633,25 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function zeichnePlanNurEdit(){zeichnePlan(true)}
   const vhSchritt=d=>{if(!planEdit)return; planEdit.vorheiz=Math.max(0,Math.min(12,Math.round(planEdit.vorheiz+d))); $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h"; $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12; planDirty()};
   $("thVhMinus").addEventListener("click",()=>vhSchritt(-1)); $("thVhPlus").addEventListener("click",()=>vhSchritt(1));
-  $("thPlanSpeichern").addEventListener("click",()=>{if(!planEdit)return; steuerSenden({aktion:"thermo",th:{plan:planEdit.plan},p:{vorheiz:planEdit.vorheiz}},"Zeitplan gespeichert")});
+  $("thPlanSpeichern").addEventListener("click",()=>{if(!planEdit)return; thSenden($("thPlanSpeichern"),"Zeitplan wird gespeichert",{aktion:"thermo",th:{plan:planEdit.plan},p:{vorheiz:planEdit.vorheiz}},"Zeitplan gespeichert")});
   $("thPlanVerwerfen").addEventListener("click",()=>{planEdit=null;zeichnePlan()});
   document.querySelectorAll("#thPanel [data-tb]").forEach(b=>b.addEventListener("click",()=>{
     if(!STEU) return; const v=b.dataset.tb, cur=(STEU.cfg.th||{}).betrieb||"plan";
-    if(v==="plan"){$("thAusForm").hidden=true; if(cur!=="plan") steuerSenden({aktion:"thermo",th:{betrieb:"plan"}},"Raumthermostat: Zeitplan"); return}
+    if(v==="plan"){$("thAusForm").hidden=true; if(cur!=="plan") thSenden(b,"Zeitplan wird eingeschaltet",{aktion:"thermo",th:{betrieb:"plan"}},"Raumthermostat: Zeitplan"); return}
     $("thAusForm").hidden=!$("thAusForm").hidden;
     if(!$("thAusDatum").value){const d=new Date(Date.now()+2*864e5);$("thAusDatum").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}}));
   $("thAusOk").addEventListener("click",()=>{const d=$("thAusDatum").value, z=$("thAusZeit").value||"17:00"; if(!d){$("sMeldung").textContent="Bitte Datum der Rückkehr wählen.";return}
     const [y,mo,da]=d.split("-").map(Number),[h,mi]=z.split(":").map(Number), t=new Date(y,mo-1,da,h,mi||0).getTime();
     if(t<=Date.now()){$("sMeldung").textContent="Die Rückkehr muss in der Zukunft liegen.";return}
-    $("thAusForm").hidden=true; steuerSenden({aktion:"thermo",th:{betrieb:"aus",ausBis:t}},"Auswärts bis "+fDay(t)+" "+fTime(t))});
-  $("thAusOhne").addEventListener("click",()=>{$("thAusForm").hidden=true; steuerSenden({aktion:"thermo",th:{betrieb:"aus"}},"Auswärts, bis du zurückstellst")});
+    $("thAusForm").hidden=true; thSenden(null,"Auswärts wird eingestellt",{aktion:"thermo",th:{betrieb:"aus",ausBis:t}},"Auswärts bis "+fDay(t)+" "+fTime(t))});
+  $("thAusOhne").addEventListener("click",()=>{$("thAusForm").hidden=true; thSenden(null,"Auswärts wird eingestellt",{aktion:"thermo",th:{betrieb:"aus"}},"Auswärts, bis du zurückstellst")});
   function thDirty(){const c=STEU&&STEU.cfg; if(!c||!thEdit) return; const d=TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]); $("thSpeichern").disabled=!d; $("thVerwerfen").hidden=!d}
   $("thSpeichern").addEventListener("click",()=>{if(!thEdit)return; const p={sollTag:thEdit.sollTag,sollNacht:thEdit.sollNacht,sollAus:thEdit.sollAus};
-    steuerSenden({aktion:"einstellungen",p},`Sollwerte gespeichert: Zu Hause ${dez(p.sollTag)}, Abgesenkt ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
+    thSenden($("thSpeichern"),"Sollwerte werden gespeichert",{aktion:"einstellungen",p},`Sollwerte gespeichert: Zu Hause ${dez(p.sollTag)}, Abgesenkt ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
   $("thVerwerfen").addEventListener("click",()=>{thEdit=null;zeichneThermo()});
   document.querySelectorAll("#thPanel .seg button").forEach(b=>b.addEventListener("click",()=>{
     if(!STEU) return; const v=+b.dataset.th; if((STEU.cfg.p.wpThermo===1?1:0)===v) return;
-    steuerSenden({aktion:"einstellungen",p:{wpThermo:v}},v?"Regel: Raumthermostat":"Regel: wärmstes Fenster")}));
+    thSenden(b,v?"Raumthermostat wird gewählt":"Wärmstes Fenster wird gewählt",{aktion:"einstellungen",p:{wpThermo:v}},v?"Regel: Raumthermostat":"Regel: wärmstes Fenster")}));
   function zeichneWoche(){
     const c=STEU.cfg, box=$("sWoche"); box.innerHTML="";
     WTAGE.forEach(([k,n])=>{const w=c.plan[k]||{art:"alltag"};
@@ -3733,7 +3747,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     }
   }
   [UI_S,UI_U].forEach(ui=>{
-    $(ui.box).addEventListener("submit",ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui)});
+    $(ui.box).addEventListener("submit",async ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;
+      const thm=ui===UI_S&&!$("thMeld").hidden; if(thm) $("thMeld").innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
+      await steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui);
+      if(thm){const t=$(ui.msg).textContent; $("thMeld").textContent=t?(/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t)?"⚠ ":"✓ ")+t:""; $("thMeld").scrollIntoView({block:"center",behavior:"smooth"})}});
     $(ui.box).querySelector(".ghost").addEventListener("click",()=>{$(ui.box).hidden=true;steuWartet=null;$(ui.msg).textContent=""});
   });
   document.querySelectorAll(".ssel button").forEach(b=>b.addEventListener("click",()=>{
