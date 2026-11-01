@@ -292,7 +292,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thbetrieb{margin:10px 0 4px}
 .thknopf{font-weight:700;padding:7px 14px;font-size:.92rem}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
-.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanbox summary{cursor:pointer;font-weight:600}
+.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplantitel{font-weight:600;margin-bottom:6px}.thplanzu{margin-top:10px}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
 .thvh{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;margin:8px 0}
@@ -346,7 +346,14 @@ form{display:grid;gap:14px}
 .field label{font-size:.82rem;font-weight:600}
 .field input{font:inherit;font-family:var(--f-mono);font-size:.9rem;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
 .field small{color:var(--muted);font-size:.78rem}
-details summary{cursor:pointer;font-weight:600}
+details>summary{cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:5px 12px 5px 8px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:8px;width:fit-content;max-width:100%}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";flex:none;width:16px;height:16px;background:var(--accent);transition:transform .15s;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3l5 5-5 5' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3l5 5-5 5' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+details[open]>summary::before{transform:rotate(90deg)}
+details>summary:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+details>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .magrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
 .matile{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .matile .nm{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;overflow-wrap:anywhere}
@@ -893,12 +900,14 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <div class="thsoll" id="thSoll"></div>
       <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
-      <details class="thplanbox" id="thPlanBox">
-        <summary>Zeitplan Zu Hause / Abgesenkt</summary>
+      <div class="thplanbox">
+        <div class="thplantitel">Zeitplan Zu Hause / Abgesenkt</div>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Abgesenkt"></svg>
         <p class="hint" id="thWocheAbw" style="margin:4px 0 0" hidden></p>
         <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
-        <div class="thtrenn" style="margin-top:10px">Zeiten einstellen</div>
+      </div>
+      <details class="thplanzu" id="thPlanBox">
+        <summary>Zeiten einstellen</summary>
         <div class="thplan" id="thPlan"></div>
         <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
         <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
@@ -1087,7 +1096,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 17:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
