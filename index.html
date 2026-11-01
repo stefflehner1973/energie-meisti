@@ -1131,7 +1131,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 21:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 21:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3708,10 +3708,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("thWocheAbw").hidden=!ab;
     if(ab) $("thWocheAbw").textContent=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][ab.mod]} bis ${ab.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(ab.bis)+" "+fTime(ab.bis)}: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
     for(let h=1;h<24;h++){const x=X(h).toFixed(1);g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-18}" stroke="var(--bg)" stroke-opacity="${h%6===0?.55:.3}" stroke-width="1"/>`}   // Stundenlinien auch über den Balken
-    { // aktuelle Zeit: roter Strich über die ganze Woche, kräftig beim heutigen Tag
+    { // aktuelle Zeit: roter Strich nur beim heutigen Tag
       const dmj=mitternacht(jetzt), rj=TH_TAGE.findIndex(([k])=>k===new Date(dmj).getDay()), xj=X((jetzt-dmj)/36e5).toFixed(1), rot="#e5484d";
-      g+=`<line x1="${xj}" x2="${xj}" y1="0" y2="${7*(lane+gap)-gap}" stroke="${rot}" stroke-opacity=".35" stroke-width="1"/>`;
-      if(rj>=0){const y=rj*(lane+gap); g+=`<line x1="${xj}" x2="${xj}" y1="${y-3}" y2="${y+lane+3}" stroke="${rot}" stroke-width="2.5" stroke-linecap="round"><title>jetzt ${fTime(jetzt)}</title></line><circle cx="${xj}" cy="${y-3}" r="3" fill="${rot}"/>`}
+      if(rj>=0){const y=rj*(lane+gap); g+=`<line x1="${xj}" x2="${xj}" y1="${y-3}" y2="${y+lane+3}" stroke="${rot}" stroke-width="2.5" stroke-linecap="round"><title>jetzt ${fTime(jetzt)}</title></line>`}
     }
     svg.innerHTML=g;
   }
