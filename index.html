@@ -1125,7 +1125,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 20:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 20:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3386,7 +3386,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const PARAM=PARAM_GR.flatMap(g=>g[1]);
   // 6. Feld = Anzeige-Faktor: angezeigt wird gespeichert / Faktor (z. B. W → kW, min → h)
   const BOILER_PARAM=[["Auswärts: frei bei Einspeisung",[["einspeisung","Frei ab Einspeisung","kW",0.5,"Auswärts ist der Boiler gesperrt und wird bei so viel Einspeisung ins Netz freigegeben.",1000],["bezug","Wieder sperren unter Einspeisung","W",50,"Fliesst weniger als so viel ins Netz (während der Zeit daneben), wird der Boiler wieder gesperrt. 0 = sperren, sobald Strom aus dem Netz bezogen wird."],["bezugMin","Einspeisung zu tief während","min",1]]],
-    ["Auswärts: Boiler statt Batterie laden",[["auSoc","Batterie mindestens","%",5,"Ist die Batterie so voll, wird der Überschuss in den Boiler statt in die Batterie geleitet."],["auPv","Freie Leistung mindestens","kW",0.5,"Freie Leistung = Batterie laden + Einspeisung (+ Leistung des laufenden Boilers, damit er sich nicht selbst wieder abschaltet). Sinnvoll: etwa die Leistung von Boiler Stufe 1. Dann: «Boiler SPERREN» aus und «Boiler MANUELL» ein. 0 = aus.",1000],["auFreiMin","Boiler ein für","min",1,"Bei jeder Prüfung (etwa alle 2 min) wieder auf diese Zeit verlängert, solange alles stimmt. Stimmt etwas nicht mehr, läuft der Boiler die restliche Zeit fertig, danach ist er wieder gesperrt."]]],
+    ["Auswärts: Boiler statt Batterie laden",[["auSoc","Batterie mindestens","%",5,"Ist die Batterie so voll und die freie Leistung hoch genug, wird «Boiler SPERREN» ausgeschaltet. Das Fronius-Lastmanagement schaltet dann Boiler Stufe 1 ein."],["auPv","Sperre aus ab freier Leistung","kW",0.5,"Freie Leistung = Batterie laden + Einspeisung + Leistung des laufenden Boilers (damit er sich nicht selbst wieder sperrt). 0 = aus.",1000],
+      ["auAus","Wieder sperren unter freier Leistung","kW",0.5,"Fällt die freie Leistung (inkl. laufendem Boiler) unter diesen Wert …",1000],["auFreiMin","… während","min",1,"… während so langer Zeit, wird «Boiler SPERREN» wieder eingeschaltet."]]],
     ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
     const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
