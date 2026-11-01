@@ -1017,9 +1017,19 @@ h3{font-size:.92rem;margin:0;font-weight:600}
   </div>
 
   <div id="tabBoiler" role="tabpanel" aria-labelledby="tabBtnBoiler" class="tabpanel" hidden>
+    <section class="panel">
+      <details id="bEinst" class="h2box">
+        <summary><h2>Boiler auswärts</h2></summary>
+        <p class="hint" style="margin-top:0">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (10) eingespielt ist.</p>
+        <div id="bParam"></div>
+        <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
+        <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
+      </details>
+    </section>
     <section class="panel" id="uePanel">
+      <details id="ueBox" class="h2box">
+      <summary><h2><span class="tip" tabindex="0" data-tip="Eigentlich nicht mehr nötig: Das Fronius-Lastmanagement (Last 1 und 2) schaltet den Boiler bei Überschuss schon vorher ein. Diese Funktion bleibt als Ergänzung.">Boiler mit Überschuss</span></h2><span class="sub" id="ueSum" style="text-transform:none;letter-spacing:0"></span></summary>
       <div class="uekopf">
-        <h2 style="margin:0">Boiler mit Überschuss</h2>
         <div class="bsel" role="group" aria-label="Boiler mit Überschuss ein- oder ausschalten">
           <button type="button" data-a="0" aria-pressed="false">Aus</button>
           <button type="button" data-a="1" aria-pressed="false">Ein</button>
@@ -1043,13 +1053,6 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       </div>
       <div class="uevor"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span><b>«Boiler SPERREN» hat Vorrang.</b> Ist die Sperre ein, schaltet diese Funktion den Boiler nicht ein und wartet, bis die Sperre wieder aus ist.</span></div>
       <div class="krow"><button type="button" class="knopfklein" id="ueSpeichern">Grenzwerte speichern</button><button type="button" class="knopfklein ghost" id="ueVerwerfen">Verwerfen</button></div>
-      <form class="krow spinbox" id="uePinBox" hidden autocomplete="off">
-        <input type="password" id="uePin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
-        <label class="kmerk"><input type="checkbox" id="ueMerk"> 30 Tage merken</label>
-        <button type="submit" class="knopfklein">Senden</button>
-        <button type="button" class="knopfklein ghost" id="uePinAbbr">Abbrechen</button>
-      </form>
-      <p class="hint" id="ueMeldung" aria-live="polite"></p>
       <div class="ueheute">
         <span class="sublabel" style="margin:0">Heute</span>
         <div class="zahlen" id="ueZahlen"></div>
@@ -1060,15 +1063,14 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <p id="ueWarnText">«Boiler SPERREN» ist im Moment eingeschaltet. Die Sperre hat Vorrang: Diese Funktion ist jetzt zwar ein, schaltet den Boiler aber erst ein, wenn die Sperre wieder aus ist.</p>
         <form method="dialog"><button type="submit" value="ok" autofocus>OK</button></form>
       </dialog>
-    </section>
-    <section class="panel">
-      <details id="bEinst" class="h2box">
-        <summary><h2>Boiler auswärts</h2></summary>
-        <p class="hint" style="margin-top:0">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (10) eingespielt ist.</p>
-        <div id="bParam"></div>
-        <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
-        <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
       </details>
+      <form class="krow spinbox" id="uePinBox" hidden autocomplete="off">
+        <input type="password" id="uePin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
+        <label class="kmerk"><input type="checkbox" id="ueMerk"> 30 Tage merken</label>
+        <button type="submit" class="knopfklein">Senden</button>
+        <button type="button" class="knopfklein ghost" id="uePinAbbr">Abbrechen</button>
+      </form>
+      <p class="hint" id="ueMeldung" aria-live="polite"></p>
     </section>
   </div>
 
@@ -1121,7 +1123,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 19:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 19:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3534,6 +3536,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(st&&st.fehler&&zs!=="fehler") text+=" · "+st.fehler;
     if(c.aktiv&&st&&st.zeit&&Date.now()-st.zeit>10*6e4) text+=` · Letzte Prüfung ${fDay(st.zeit)} ${fTime(st.zeit)}.`;
     zust.dataset.z=zs; $("ueTitel").textContent=titel; $("ueText").textContent=text;
+    $("ueSum").textContent=c.aktiv?"· Ein · "+titel:"· Aus";
     const pz=$("uePause"); pz.hidden=zs!=="pause"; pz.innerHTML="";
     if(zs==="pause"){const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Sofort fortsetzen";b.addEventListener("click",()=>steuerSenden({aktion:"ueberschuss",ueb:{pauseWeg:true}},"Fortgesetzt.",undefined,undefined,UI_U));pz.append(b)}
     // Heute
