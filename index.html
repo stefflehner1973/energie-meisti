@@ -956,7 +956,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="swoche" id="sWoche" hidden></div>
       <details id="sEinst" class="h2box">
         <summary><h2>Einstellungen</h2></summary>
-        <p class="hint" style="margin-top:0">Regel «wärmstes Fenster» (nur zum Beobachten), Boiler und Allgemeines. Raumthermostat-Werte stehen beim Raumthermostat.</p>
+        <p class="hint" style="margin-top:0">Regel «wärmstes Fenster» (nur zum Beobachten) und Allgemeines. Raumthermostat-Werte stehen beim Raumthermostat, Boiler-Werte im Reiter Boiler.</p>
         <div id="sParam"></div>
         <p class="hint">Warmes Zeitfenster: Länge je nach Tagesmittel aussen (je kälter, desto länger), gelegt auf die wärmsten Stunden der Prognose. Ausserhalb des Fensters ist die WP abgesenkt, ausser der Raum ist unter der Mindesttemperatur. Raum = Wetterstation innen, aussen = Prognose Open-Meteo.</p>
         <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="sSpeichern">Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="sVerwerfen">Verwerfen</button></div>
@@ -1061,6 +1061,15 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <form method="dialog"><button type="submit" value="ok" autofocus>OK</button></form>
       </dialog>
     </section>
+    <section class="panel">
+      <details id="bEinst" class="h2box">
+        <summary><h2>Boiler auswärts</h2></summary>
+        <p class="hint" style="margin-top:0">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm.</p>
+        <div id="bParam"></div>
+        <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
+        <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
+      </details>
+    </section>
   </div>
 
   <div id="tabSonne" role="tabpanel" aria-labelledby="tabBtnSonne" class="tabpanel" hidden>
@@ -1112,7 +1121,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 19:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 19:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3365,10 +3374,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     ["Regel «wärmstes Fenster»",[["komfort","Komfort","°C",0.1,"Sollwert der Fenster-Regel beim Heimkommen und zu Hause."],["nacht","Nachts / niemand da","°C",0.1],["aus","Auswärts (Frostschutz)","°C",0.5],
       ["hyst","Abstand bis wieder absenken","°C",0.1],["nachtAb","Nacht ab","Uhr",1],["nachtBis","Nacht bis","Uhr",1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
       ["frost","Nicht absenken unter Tagesmittel","°C",1,"Ist das Tagesmittel aussen kälter, wird gar nicht abgesenkt."]]],
-    ["Boiler",[["einspeisung","Auswärts: frei ab Einspeisung","W",100,"Auswärts ist der Boiler gesperrt und wird erst bei so viel Einspeisung freigegeben."],["bezug","Wieder sperren ab Netzbezug","W",50],["bezugMin","Netzbezug während","min",1],
-      ["boilerMin","Bei Ankunft mindestens","°C",1],["boilerVorlauf","Prüfen vor Rückkehr","min",15]]],
     ["Allgemein",[["pause","Pause nach Handschaltung","h",0.5,"0 = Handschaltung gilt, bis du «Automatik sofort fortsetzen» drückst."],["absSicher","Absenken endet ohne Google nach","h",0.5,"Sicherheit: Meldet sich Google nicht mehr, schaltet der Shelly das Absenken nach dieser Zeit selbst aus."]]]];
   const PARAM=PARAM_GR.flatMap(g=>g[1]);
+  const BOILER_PARAM=[["Auswärts",[["einspeisung","Frei ab Einspeisung","W",100,"Auswärts ist der Boiler gesperrt und wird erst bei so viel Einspeisung ins Netz freigegeben."],["bezug","Wieder sperren ab Netzbezug","W",50,"Bezieht das Haus so viel Strom aus dem Netz (während der Zeit darunter), wird der Boiler wieder gesperrt."],["bezugMin","Netzbezug während","min",1]]],
+    ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","min",15,"So lange vor der Rückkehr wird die Boilertemperatur geprüft."]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert)=>{const l=document.createElement("label");
     l.innerHTML=`<span class="n">${tip?`<span class="tip" tabindex="0" data-tip="${esc(tip)}">${n}</span>`:n}</span><input type="number" step="${step}" ${attr}="${k}" value="${wert!=null?wert:""}" aria-label="${esc(n)}"><span class="e">${e}</span>`;return l};
   const WTAGE=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
@@ -3553,14 +3562,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
      Ergebnis direkt beim Thermostat zeigen; braucht es den PIN, zum PIN-Feld springen. */
   const thSenden=(knopf,text,daten,ok)=>knopfSenden(knopf,text,daten,ok,"thMeld");
   let meldAktiv="thMeld";
-  async function knopfSenden(knopf,text,daten,ok,meldId){
-    meldAktiv=meldId; const m=$(meldId); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
+  async function knopfSenden(knopf,text,daten,ok,meldId,ui){
+    ui=ui||UI_S; meldAktiv=meldId; const m=$(meldId); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
     const alt=knopf?{html:knopf.innerHTML,dis:knopf.disabled}:null;
     if(knopf){knopf.disabled=true; knopf.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`}
     thLaeuft=true;
-    try{ await steuerSenden(daten,ok); }finally{ thLaeuft=false; if(knopf){knopf.innerHTML=alt.html; knopf.disabled=alt.dis} }   // Knopf immer zurücksetzen (feste Knöpfe werden nicht neu gezeichnet)
-    if(!$("sPinBox").hidden){ m.textContent="Bitte Schalt-PIN eingeben (Feld unten) – danach wird es ausgeführt."; $("sPinBox").scrollIntoView({block:"center",behavior:"smooth"}); $("sPin").focus({preventScroll:true}); }
-    else { const t=$("sMeldung").textContent; $("sMeldung").textContent=""; const fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":"✓ ")+t:""; m.hidden=!t;
+    try{ await steuerSenden(daten,ok,undefined,undefined,ui); }finally{ thLaeuft=false; if(knopf){knopf.innerHTML=alt.html; knopf.disabled=alt.dis} }   // Knopf immer zurücksetzen (feste Knöpfe werden nicht neu gezeichnet)
+    if(!$(ui.box).hidden){ m.textContent="Bitte Schalt-PIN eingeben – danach wird es ausgeführt."; $(ui.box).scrollIntoView({block:"center",behavior:"smooth"}); $(ui.pin).focus({preventScroll:true}); }
+    else { const t=$(ui.msg).textContent; $(ui.msg).textContent=""; const fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":"✓ ")+t:""; m.hidden=!t;
       if(!fehler){const jetzt=m.textContent; setTimeout(()=>{if(m.textContent===jetzt) m.hidden=true},8000)} }
     if(STEU) zeichneSteuerung();
   }
@@ -3593,7 +3602,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const set=d=>{thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); thDirty()};
       minus.addEventListener("click",()=>set(-0.1)); plus.addEventListener("click",()=>set(0.1));
       r.append(minus,v,document.createTextNode("°C"),plus); box.append(l,r)});
-    thDirty(); zeichneRegeln(); zeichneRelais();
+    thDirty(); zeichneRegeln(); zeichneRelais(); zeichneBoilerEinst();
     // Zustand
     if(!th){$("thStatus").textContent="Noch kein Lauf mit dem Raumthermostat. Neues Google-Skript (Stand 01.11.2026) einspielen.";$("thBeob").textContent="";return}
     const raum=th.raum!=null?`Raum <b>${dez(th.raum)} °C</b>`:"Raum <b>–</b>";
@@ -3708,6 +3717,21 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     box.innerHTML=`<span class="k">Relais</span><span class="z"><i aria-hidden="true"></i>${v===1?"Abgesenkt":v===0?"Normal":"–"}</span>`+
       (hand?`<small style="color:var(--c-bezug)">von Hand geschaltet</small>`:"")+(zeit?`<small>Stand ${fTime(zeit)}</small>`:"");
   }
+  let bEdit=false;
+  function zeichneBoilerEinst(erzwingen){
+    const box=$("bParam"), c=STEU&&STEU.cfg; if(!box||!c) return;
+    if(!erzwingen&&(bEdit||box.contains(document.activeElement))) return;
+    box.innerHTML="";
+    BOILER_PARAM.forEach(([titel,liste])=>{const h=document.createElement("div");h.className="thtrenn";h.textContent=titel;
+      const g=document.createElement("div");g.className="seinst"; liste.forEach(([k,n,e,step,tip])=>g.append(einstZeile(k,n,e,step,tip,"data-bp",c.p[k])));box.append(h,g)});
+    $("bSpeichern").disabled=true; $("bVerwerfen").hidden=true;
+  }
+  $("bParam").addEventListener("input",()=>{const c=STEU&&STEU.cfg; if(!c) return;
+    bEdit=[...document.querySelectorAll("#bParam input")].some(i=>i.value!==""&&+i.value!==c.p[i.dataset.bp]);
+    $("bSpeichern").disabled=!bEdit; $("bVerwerfen").hidden=!bEdit});
+  $("bVerwerfen").addEventListener("click",()=>{bEdit=false;zeichneBoilerEinst(true)});
+  $("bSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#bParam input").forEach(i=>{if(i.value!=="")p[i.dataset.bp]=+i.value});
+    await knopfSenden($("bSpeichern"),"Wird gespeichert",{aktion:"einstellungen",p},"Boiler-Einstellungen gespeichert","bMeld",UI_U); if($("uePinBox").hidden) zeichneBoilerEinst(true)});
   let regelnEdit=false;
   function zeichneRegeln(erzwingen){
     const box=$("thRegelnBox"), c=STEU&&STEU.cfg; if(!box||!c) return;
@@ -3819,7 +3843,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
       STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
       $(ui.box).hidden=true; steuWartet=null; $(ui.msg).textContent=ok||"Gespeichert.";
-      if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; }
+      if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; bEdit=false; }
       if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.soc!==undefined) $("uePanel").dataset.dirty="";
       zeichneSteuerung();
       if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.aktiv===true&&!ueWarnGezeigt&&j.ueb&&j.ueb.status&&j.ueb.status.zustand==="gesperrt") ueWarnen();
@@ -3830,7 +3854,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   [UI_S,UI_U].forEach(ui=>{
     $(ui.box).addEventListener("submit",async ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;
-      const mm=$(meldAktiv), thm=ui===UI_S&&!mm.hidden; if(thm) mm.innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
+      const mm=$(meldAktiv), thm=!mm.hidden&&(ui===UI_S)===(meldAktiv!=="bMeld"); if(thm) mm.innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
       await steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui);
       if(thm){const t=$(ui.msg).textContent; $(ui.msg).textContent=""; mm.textContent=t?(/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t)?"⚠ ":"✓ ")+t:""; mm.scrollIntoView({block:"center",behavior:"smooth"})}});
     $(ui.box).querySelector(".ghost").addEventListener("click",()=>{$(ui.box).hidden=true;steuWartet=null;$(ui.msg).textContent=""});
