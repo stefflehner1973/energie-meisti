@@ -1121,7 +1121,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 19:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 19:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1283,6 +1283,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const KFARBE=["var(--hot)","var(--warm)","var(--cold)"], KNAMEN=["Boiler SPERREN","Boiler MANUELL 1h","WP ABSENKEN"], kurz=n=>String(n).replace(/\s*\(O\d\)\s*$/,"");
   let k14Jetzt=null, kStand="", kBereich="";
   const kAgeZeigen=()=>{$("kAge").textContent=[kStand,kBereich&&"Verlauf "+kBereich].filter(Boolean).join(" · ")};
+  function steuerModusAuto(){ let c=STEU; if(!c){try{c=JSON.parse(localStorage.getItem("tb.steuer")||"null")}catch(e){c=null}} return !!(c&&c.cfg&&c.cfg.modus==="auto") }
   function renderK14(k){
     k14Jetzt=k||null; if(typeof zeichneRelais==="function"&&STEU) zeichneRelais();
     const box=$("kChips"); box.innerHTML="";
@@ -1303,7 +1304,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       kb.addEventListener("click",()=>schaltFrage(i,v!==1,n,kb)); d.append(kb);
       // Restlaufzeit, wenn ein Auto-Aus-Timer läuft
       const ende=k&&k.ende?k.ende[i]:null;
-      if(v===1&&ende&&ende>Date.now()){const rl=document.createElement("em");rl.className="krest";rl.dataset.ende=ende;rl.textContent=restText(ende);sp.append(document.createElement("br"),rl);
+      // WP ABSENKEN unter Automatik: die Restzeit ist nur das Sicherheits-Aus am Shelly (wird von Google laufend erneuert) – nicht anzeigen
+      const autoWp=i===2&&v===1&&!(k&&k.hand&&k.hand[2])&&steuerModusAuto();
+      if(autoWp){const rl=document.createElement("em");rl.className="krest";rl.textContent="Automatik";rl.title="Wie lange abgesenkt bleibt, entscheidet das Raumthermostat. Das Sicherheits-Aus am Shelly ("+(ende&&ende>Date.now()?"jetzt noch "+restText(ende):"einige Stunden")+") wird von Google laufend erneuert.";sp.append(document.createElement("br"),rl)}
+      else if(v===1&&ende&&ende>Date.now()){const rl=document.createElement("em");rl.className="krest";rl.dataset.ende=ende;rl.textContent=restText(ende);sp.append(document.createElement("br"),rl);
         // Restzeit anpassen: eigene Zeile unter den Knöpfen, schaltet mit neuer Dauer neu ein
         const zeit=document.createElement("div");zeit.className="kzeit";
         [[-60,"−1h"],[-15,"−15"],[15,"+15"],[60,"+1h"]].forEach(([dm,t])=>{const b=document.createElement("button");b.type="button";b.className="kmini";b.textContent=t;b.title=(Math.abs(dm)===60?"1 Stunde ":"15 Minuten ")+(dm>0?"länger":"kürzer");
@@ -1367,7 +1371,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   });
 
   function restText(ende){const m=Math.max(0,Math.ceil((ende-Date.now())/6e4));return "noch "+(m>=60?Math.floor(m/60)+":"+String(m%60).padStart(2,"0")+" h":m+" min")}
-  setInterval(()=>document.querySelectorAll(".krest").forEach(e=>{const t=+e.dataset.ende; e.textContent=t>Date.now()?restText(t):"läuft ab …"}),15000);
+  setInterval(()=>document.querySelectorAll(".krest[data-ende]").forEach(e=>{const t=+e.dataset.ende; e.textContent=t>Date.now()?restText(t):"läuft ab …"}),15000);
 
   function zeichneK14(){
     const svg=$("chartK"); if(!svg) return;
@@ -3395,6 +3399,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       STEU=j; steuZeit=Date.now();
       try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
       $("sHint").hidden=true;
+      if(k14Jetzt) renderK14(k14Jetzt);   // Anzeige «Automatik» bei WP ABSENKEN nachführen
     }catch(e){ if(!hintergrund){$("sHint").textContent=e.message;$("sHint").hidden=false} }
     finally{ if(nr===steuNr) $("sBusy").hidden=true }
     if(steuerReiter()) zeichneSteuerung();
