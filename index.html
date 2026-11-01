@@ -892,8 +892,9 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <summary>Zeitplan Zu Hause / Nacht</summary>
         <div class="thplan" id="thPlan"></div>
         <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
-        <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Tag ab»</div>
+        <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Nacht"></svg>
+        <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Nacht</span></div>
         <div class="krow"><button type="button" class="knopfklein" id="thPlanSpeichern" disabled>Zeitplan speichern</button><button type="button" class="knopfklein ghost" id="thPlanVerwerfen" hidden>Verwerfen</button></div>
       </details>
       <form class="krow spinbox" id="sPinBox" hidden autocomplete="off">
@@ -903,7 +904,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <button type="button" class="knopfklein ghost" id="sPinAbbr">Abbrechen</button>
       </form>
       <p class="hint" id="sMeldung" aria-live="polite"></p>
-      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Nacht wechseln nach dem Zeitplan je Wochentag. «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
+      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Nacht wechseln nach dem Zeitplan je Wochentag («Zu Hause ab», «Nacht ab»; liegt «Nacht ab» früher als «Zu Hause ab», gilt es nach Mitternacht). «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
     </section>
     <section class="panel" id="sSzenPanel" hidden>
       <h2>Szenario wählen</h2>
@@ -1078,7 +1079,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 16:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 16:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3563,12 +3564,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!erzwingen&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#thPlanBox")&&planEdit) return;   // nicht neu aufbauen, während eine Auswahl offen ist
     if(planEdit&&planGleich()) planEdit=null;
     if(!planEdit) planEdit={plan:JSON.parse(JSON.stringify(cth.plan||{})),vorheiz:c.p.vorheiz};
-    const box=$("thPlan"); box.innerHTML=`<span class="k">Tag</span><span class="k">Tag ab</span><span class="k">Nacht ab</span>`;
+    const box=$("thPlan"); box.innerHTML=`<span class="k">Wochentag</span><span class="k">Zu Hause ab</span><span class="k">Nacht ab</span>`;
     const sel=(opt,wert,fn,lab)=>{const s=document.createElement("select");s.setAttribute("aria-label",lab);const o=opt.includes(wert)?opt:opt.concat([wert]);
       o.forEach(v=>{const e=document.createElement("option");e.value=v;e.textContent=v;s.append(e)});s.value=wert;s.addEventListener("change",()=>{fn(s.value);planDirty()});return s};
     TH_TAGE.forEach(([k,n])=>{const w=planEdit.plan[k]||{tag:"06:00",nacht:"22:00"};planEdit.plan[k]=w;
       const b=document.createElement("b");b.textContent=n;
-      box.append(b,sel(TH_TAG_OPT,w.tag,v=>{w.tag=v},n+": Tag ab"),sel(TH_NACHT_OPT,w.nacht,v=>{w.nacht=v},n+": Nacht ab"))});
+      box.append(b,sel(TH_TAG_OPT,w.tag,v=>{w.tag=v},n+": Zu Hause ab"),sel(TH_NACHT_OPT,w.nacht,v=>{w.nacht=v},n+": Nacht ab"))});
     $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h";
     $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12;
     planDirty();
@@ -3583,8 +3584,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const stueck=(row,a,b,col,op)=>{if(b<=a)return;g+=`<rect x="${X(a).toFixed(1)}" y="${row*(lane+gap)}" width="${(X(b)-X(a)).toFixed(1)}" height="${lane}" rx="3" fill="${col}" opacity="${op}"/>`};
     TH_TAGE.forEach(([k,n],row)=>{const w=planEdit.plan[k]; const y=row*(lane+gap);
       g+=`<rect x="${Lb}" y="${y}" width="${W-Lb-Rb}" height="${lane}" rx="3" fill="var(--accent)" opacity=".18"/><text x="${Lb-5}" y="${y+12}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}</text>`;
-      if(!w) return; const a=hm(w.tag), v=Math.max(0,a-(planEdit.vorheiz||0)); let e=hm(w.nacht); if(e<=a) e+=24;
-      stueck(row,v,a,"var(--warm)",.35); stueck(row,a,Math.min(24,e),"var(--warm)",.9);
+      if(!w) return; const a=hm(w.tag), v=a-(planEdit.vorheiz||0); let e=hm(w.nacht); if(e<=a) e+=24;
+      // Vorheizen: beginnt es am Vorabend, auch dort zeigen (Zeile des Vortags)
+      stueck(row,Math.max(0,v),a,"var(--warm)",.35); if(v<0) stueck((row+6)%7,24+v,24,"var(--warm)",.35);
+      stueck(row,a,Math.min(24,e),"var(--warm)",.9);
       if(e>24){const nr=(row+1)%7; stueck(nr,0,e-24,"var(--warm)",.9)}});
     svg.innerHTML=g;
   }
