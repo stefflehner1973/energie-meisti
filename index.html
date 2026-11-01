@@ -1121,7 +1121,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 19:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 19:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3372,7 +3372,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     ["Solarüberschuss (nur bei «Zu Hause»)",[["pvPlus","Sollwert höher um","°C",0.1,"Bei Solarüberschuss wird der Sollwert «Zu Hause» um so viel angehoben, damit die WP mit eigenem Strom heizt. 0 = aus."],["pvSchwelle","Einspeisung ins Netz mindestens","W",100,"So viel Strom muss ins Netz fliessen, damit es als Überschuss zählt."],["pvMin","während mindestens","min",5,"So lange muss die Einspeisung ohne Unterbruch über der Schwelle liegen."],["pvSoc","Batterie mindestens","%",5,"Die Anhebung gilt erst, wenn die Batterie mindestens so voll ist."],["pvNach","gilt danach noch","min",15,"So lange bleibt die Anhebung nach dem letzten Überschuss bestehen."]]]];
   const PARAM_GR=[
     ["Regel «wärmstes Fenster»",[["komfort","Komfort","°C",0.1,"Sollwert der Fenster-Regel beim Heimkommen und zu Hause."],["nacht","Nachts / niemand da","°C",0.1],["aus","Auswärts (Frostschutz)","°C",0.5],
-      ["hyst","Abstand bis wieder absenken","°C",0.1],["nachtAb","Nacht ab","Uhr",1],["nachtBis","Nacht bis","Uhr",1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
+      ["hyst","Abstand bis wieder absenken","°C",0.1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
       ["frost","Nicht absenken unter Tagesmittel","°C",1,"Ist das Tagesmittel aussen kälter, wird gar nicht abgesenkt."]]],
     ["Allgemein",[["pause","Pause nach Handschaltung","h",0.5,"0 = Handschaltung gilt, bis du «Automatik sofort fortsetzen» drückst."],["absSicher","Absenken endet ohne Google nach","h",0.5,"Sicherheit: Meldet sich Google nicht mehr, schaltet der Shelly das Absenken nach dieser Zeit selbst aus."]]]];
   const PARAM=PARAM_GR.flatMap(g=>g[1]);
