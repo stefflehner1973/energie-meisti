@@ -292,7 +292,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thbetrieb{margin:10px 0 4px}
 .thknopf{font-weight:700;padding:7px 14px;font-size:.92rem}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
-.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplantitel{font-weight:600;margin-bottom:6px}.thplanzu{margin-top:10px}.thplanzu .thplan{margin-top:8px}
+.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
 .thvh{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;margin:8px 0}
@@ -896,12 +896,11 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <p class="thmeld" id="thMeld" aria-live="polite" hidden></p>
       <p class="thhand" id="thHand" hidden></p>
       <div class="thtrenn">Einstellungen</div>
-      <div class="thbetrieb"><div class="seg" role="group" aria-label="Betriebsart Raumthermostat"><button type="button" data-tb="plan" aria-pressed="false" title="Zu Hause und Abgesenkt nach Zeitplan">Zeitplan</button><button type="button" data-tb="aus" aria-pressed="false" title="Auswärts-Sollwert, bis du zurückstellst oder bis zum Rückkehrdatum">Auswärts</button></div></div>
-      <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <div class="thsoll" id="thSoll"></div>
+      <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
       <div class="thplanbox">
-        <div class="thplantitel">Zeitplan Zu Hause / Abgesenkt</div>
+        <button type="button" class="thmod klick thplanknopf" id="thPlanKnopf"><span class="punkt" aria-hidden="true"></span>Zeitplan Zu Hause / Abgesenkt<small id="thPlanKnopfTxt">&nbsp;</small></button>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Abgesenkt"></svg>
         <p class="hint" id="thWocheAbw" style="margin:4px 0 0" hidden></p>
         <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
@@ -1096,7 +1095,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 17:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3548,13 +3547,18 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!thEdit) thEdit={sollTag:c.p.sollTag,sollNacht:c.p.sollNacht,sollAus:c.p.sollAus};
     const box=$("thSoll"); box.innerHTML="";
     const mod=th&&typeof th.mod==="number"?th.mod:-1, cth=c.th||{};
-    document.querySelectorAll("#thPanel [data-tb]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tb===(cth.betrieb||"plan"))));
+    { const pa=(cth.betrieb||"plan")==="plan"; $("thPlanKnopf").classList.toggle("an",pa); $("thPlanKnopfTxt").textContent=pa?"gilt jetzt · antippen: Zeiten einstellen":"antippen: Zeitplan einschalten"; }
     TH_SOLL.forEach(([k,n],i)=>{
-      const imPlan=(cth.betrieb||"plan")==="plan"&&i<2&&mod>=0&&mod<2, knopf=imPlan&&i!==mod;   // Zu Hause / Abgesenkt antippen = bis zum nächsten Wechsel
-      const l=document.createElement(imPlan?"button":"div");l.className="thmod"+(i===mod?" an":"")+(imPlan?" klick":"");
-      if(imPlan){l.type="button";l.title=i===mod?"gilt jetzt":`Jetzt ${n} bis zum nächsten Wechsel`}
-      l.innerHTML=`<span class="punkt" aria-hidden="true"></span>${n}<small>${i===mod?"gilt jetzt":knopf?(th&&th.quelle==="abweichung"?"antippen: zurück zum Zeitplan":"antippen: bis zum nächsten Wechsel"):"&nbsp;"}</small>`;
-      if(imPlan) l.addEventListener("click",()=>{ if(i===mod){const m=$("thMeld");m.hidden=false;m.textContent=`✓ ${n} gilt bereits.`;setTimeout(()=>{if(m.textContent===`✓ ${n} gilt bereits.`)m.hidden=true},4000);return}
+      const betr=cth.betrieb||"plan", imPlan=betr==="plan"&&i<2&&mod>=0&&mod<2, knopf=imPlan&&i!==mod;   // Zu Hause / Abgesenkt antippen = bis zum nächsten Wechsel
+      const l=document.createElement("button");l.type="button";l.className="thmod klick"+(i===mod?" an":"");
+      let txt=i===mod?"gilt jetzt":"&nbsp;";
+      if(knopf) txt=th&&th.quelle==="abweichung"?"antippen: zurück zum Zeitplan":"antippen: bis zum nächsten Wechsel";
+      else if(i<2&&betr==="aus") txt="antippen: zurück zum Zeitplan";
+      else if(i===2) txt=i===mod?"gilt jetzt"+(cth.ausBis?" bis "+fDay(cth.ausBis)+" "+fTime(cth.ausBis):" bis du zurückstellst"):"antippen: Rückkehr wählen";
+      l.innerHTML=`<span class="punkt" aria-hidden="true"></span>${n}<small>${txt}</small>`;
+      if(i===2) l.addEventListener("click",()=>ausFormZeigen());
+      else if(betr==="aus") l.addEventListener("click",()=>planEin(l));
+      else if(imPlan) l.addEventListener("click",()=>{ if(i===mod){const m=$("thMeld");m.hidden=false;m.textContent=`✓ ${n} gilt bereits.`;setTimeout(()=>{if(m.textContent===`✓ ${n} gilt bereits.`)m.hidden=true},4000);return}
         if(th.quelle==="abweichung") thSenden(l,"Abweichung wird aufgehoben",{aktion:"thermo",th:{abw:null}},"Zurück zum Zeitplan");   // das andere ist der Zeitplan
         else thSenden(l,`Jetzt ${n} wird gesetzt`,{aktion:"thermo",th:{abw:{mod:i}}},`Jetzt ${n} bis zum nächsten Wechsel`)});
       const r=document.createElement("div");r.className="thstep";
@@ -3655,11 +3659,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("thVhMinus").addEventListener("click",()=>vhSchritt(-1)); $("thVhPlus").addEventListener("click",()=>vhSchritt(1));
   $("thPlanSpeichern").addEventListener("click",()=>{if(!planEdit)return; thSenden($("thPlanSpeichern"),"Zeitplan wird gespeichert",{aktion:"thermo",th:{plan:planEdit.plan},p:{vorheiz:planEdit.vorheiz}},"Zeitplan gespeichert")});
   $("thPlanVerwerfen").addEventListener("click",()=>{planEdit=null;zeichnePlan()});
-  document.querySelectorAll("#thPanel [data-tb]").forEach(b=>b.addEventListener("click",()=>{
-    if(!STEU) return; const v=b.dataset.tb, cur=(STEU.cfg.th||{}).betrieb||"plan";
-    if(v==="plan"){$("thAusForm").hidden=true; if(cur!=="plan") thSenden(b,"Zeitplan wird eingeschaltet",{aktion:"thermo",th:{betrieb:"plan"}},"Raumthermostat: Zeitplan"); return}
-    $("thAusForm").hidden=!$("thAusForm").hidden;
-    if(!$("thAusDatum").value){const d=new Date(Date.now()+2*864e5);$("thAusDatum").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}}));
+  function planEin(knopf){ if(!STEU) return; $("thAusForm").hidden=true;
+    if(((STEU.cfg.th||{}).betrieb||"plan")!=="plan") thSenden(knopf,"Zeitplan wird eingeschaltet",{aktion:"thermo",th:{betrieb:"plan"}},"Raumthermostat: Zeitplan") }
+  function ausFormZeigen(){ $("thAusForm").hidden=!$("thAusForm").hidden;
+    if(!$("thAusDatum").value){const d=new Date(Date.now()+2*864e5);$("thAusDatum").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")} }
+  $("thPlanKnopf").addEventListener("click",()=>{ const box=$("thPlanBox"); box.open=true; zeichnePlan(true); box.scrollIntoView({block:"nearest",behavior:"smooth"}); planEin($("thPlanKnopf")) });
   $("thAusOk").addEventListener("click",()=>{const d=$("thAusDatum").value, z=$("thAusZeit").value||"17:00"; if(!d){$("sMeldung").textContent="Bitte Datum der Rückkehr wählen.";return}
     const [y,mo,da]=d.split("-").map(Number),[h,mi]=z.split(":").map(Number), t=new Date(y,mo-1,da,h,mi||0).getTime();
     if(t<=Date.now()){$("sMeldung").textContent="Die Rückkehr muss in der Zukunft liegen.";return}
