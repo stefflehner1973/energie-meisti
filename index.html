@@ -1024,6 +1024,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="uekopf"><h2 style="margin:0">Boiler auswärts</h2><div class="bstat" id="bStat"></div></div>
         <p class="hint" style="margin-top:8px">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (11) eingespielt ist.</p>
         <div id="bParam"></div>
+        <p class="hint" id="bWarn" style="color:var(--c-bezug)" hidden></p>
         <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
         <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
       </div>
@@ -1125,7 +1126,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 20:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 21:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3386,8 +3387,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const PARAM=PARAM_GR.flatMap(g=>g[1]);
   // 6. Feld = Anzeige-Faktor: angezeigt wird gespeichert / Faktor (z. B. W → kW, min → h)
   const BOILER_PARAM=[["Auswärts: frei bei Einspeisung",[["einspeisung","Frei ab Einspeisung","kW",0.5,"Auswärts ist der Boiler gesperrt und wird bei so viel Einspeisung ins Netz freigegeben.",1000],["bezug","Wieder sperren unter Einspeisung","W",50,"Fliesst weniger als so viel ins Netz (während der Zeit daneben), wird der Boiler wieder gesperrt. 0 = sperren, sobald Strom aus dem Netz bezogen wird."],["bezugMin","Einspeisung zu tief während","min",1]]],
-    ["Auswärts: Boiler statt Batterie laden",[["auSoc","Batterie mindestens","%",5,"Ist die Batterie so voll und die freie Leistung hoch genug, wird «Boiler SPERREN» ausgeschaltet. Das Fronius-Lastmanagement schaltet dann Boiler Stufe 1 ein."],["auPv","Sperre aus ab freier Leistung","kW",0.5,"Freie Leistung = Batterie laden + Einspeisung + Leistung des laufenden Boilers (damit er sich nicht selbst wieder sperrt). 0 = aus.",1000],
-      ["auAus","Wieder sperren unter freier Leistung","W",50,"Fällt die freie Leistung (inkl. laufendem Boiler) unter diesen Wert …"],["auFreiMin","… während","min",1,"… während so langer Zeit, wird «Boiler SPERREN» wieder eingeschaltet."]]],
+    ["Auswärts: Boiler statt Batterie laden (zählt: Batterie laden + Einspeisung)",[["auPv","Sperre aus ab","kW",0.5,"Batterie laden + Einspeisung mindestens so viel (und Batterie voll genug) → «Boiler SPERREN» aus, das Fronius-Lastmanagement schaltet Stufe 1. 0 = aus.",1000],
+      ["auAus","Wieder sperren unter","W",50,"Batterie laden + Einspeisung unter diesem Wert (während der Zeit unten) → wieder sperren. Läuft der Boiler, ist seine Leistung darin schon abgezogen. Darum muss dieser Wert kleiner sein als «Sperre aus ab» minus Leistung Stufe 1, sonst sperrt der Boiler sich selbst wieder."],
+      ["auSoc","Batterie mindestens","%",5],["auFreiMin","Wieder sperren nach","min",1,"So lange muss der Wert unter «Wieder sperren unter» liegen."]]],
     ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
     const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
@@ -3750,11 +3752,16 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     box.innerHTML="";
     BOILER_PARAM.forEach(([titel,liste])=>{const h=document.createElement("div");h.className="thtrenn";h.textContent=titel;
       const g=document.createElement("div");g.className="seinst"; liste.forEach(([k,n,e,step,tip,f])=>g.append(einstZeile(k,n,e,step,tip,"data-bp",c.p[k],f)));box.append(h,g)});
+    bPruefen();
     $("bSpeichern").disabled=true; $("bVerwerfen").hidden=true;
   }
+  function bPruefen(){const ein=document.querySelector('#bParam input[data-bp=auPv]'), aus=document.querySelector('#bParam input[data-bp=auAus]'), m=$("bWarn"); if(!ein||!aus||!m) return true;
+    const e=einstWert(ein), a=einstWert(aus), schlecht=e>0&&aus.value!==""&&a>=e;
+    m.hidden=!schlecht; if(schlecht) m.textContent=`«Wieder sperren unter» (${a} W) muss kleiner sein als «Sperre aus ab» (${e} W) – und zwar um mindestens die Leistung von Stufe 1.`;
+    return !schlecht}
   $("bParam").addEventListener("input",()=>{const c=STEU&&STEU.cfg; if(!c) return;
     bEdit=[...document.querySelectorAll("#bParam input")].some(i=>i.value!==""&&einstWert(i)!==c.p[i.dataset.bp]);
-    $("bSpeichern").disabled=!bEdit; $("bVerwerfen").hidden=!bEdit});
+    const ok=bPruefen(); $("bSpeichern").disabled=!bEdit||!ok; $("bVerwerfen").hidden=!bEdit});
   $("bVerwerfen").addEventListener("click",()=>{bEdit=false;zeichneBoilerEinst(true)});
   $("bSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#bParam input").forEach(i=>{if(i.value!=="")p[i.dataset.bp]=einstWert(i)});
     await knopfSenden($("bSpeichern"),"Wird gespeichert",{aktion:"einstellungen",p},"Boiler-Einstellungen gespeichert","bMeld",UI_U); if($("uePinBox").hidden) zeichneBoilerEinst(true)});
