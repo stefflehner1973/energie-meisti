@@ -902,6 +902,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
         <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
         <div class="krow"><button type="button" class="knopfklein" id="thPlanSpeichern" disabled>Zeitplan speichern</button><button type="button" class="knopfklein ghost" id="thPlanVerwerfen" hidden>Verwerfen</button></div>
+        <p class="hint" style="margin-top:12px">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Abgesenkt wechseln nach dem Zeitplan je Wochentag («Zu Hause ab», «Abgesenkt ab»; liegt «Abgesenkt ab» früher als «Zu Hause ab», gilt es nach Mitternacht). «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
       </details>
       <p class="thbeob" id="thBeob"></p>
       <form class="krow spinbox" id="sPinBox" hidden autocomplete="off">
@@ -911,7 +912,6 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <button type="button" class="knopfklein ghost" id="sPinAbbr">Abbrechen</button>
       </form>
       <p class="hint" id="sMeldung" aria-live="polite"></p>
-      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Abgesenkt wechseln nach dem Zeitplan je Wochentag («Zu Hause ab», «Abgesenkt ab»; liegt «Abgesenkt ab» früher als «Zu Hause ab», gilt es nach Mitternacht). «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
     </section>
     <section class="panel" id="sSzenPanel" hidden>
       <h2>Szenario wählen</h2>
@@ -1086,7 +1086,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 17:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3526,7 +3526,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     thLaeuft=true;
     try{ await steuerSenden(daten,ok); }finally{ thLaeuft=false; if(knopf){knopf.innerHTML=alt.html; knopf.disabled=alt.dis} }   // Knopf immer zurücksetzen (feste Knöpfe werden nicht neu gezeichnet)
     if(!$("sPinBox").hidden){ m.textContent="Bitte Schalt-PIN eingeben (Feld unten) – danach wird es ausgeführt."; $("sPinBox").scrollIntoView({block:"center",behavior:"smooth"}); $("sPin").focus({preventScroll:true}); }
-    else { const t=$("sMeldung").textContent, fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":"✓ ")+t:""; m.hidden=!t;
+    else { const t=$("sMeldung").textContent; $("sMeldung").textContent=""; const fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":"✓ ")+t:""; m.hidden=!t;
       if(!fehler){const jetzt=m.textContent; setTimeout(()=>{if(m.textContent===jetzt) m.hidden=true},8000)} }
     if(STEU) zeichneSteuerung();
   }
@@ -3755,7 +3755,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $(ui.box).addEventListener("submit",async ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;
       const thm=ui===UI_S&&!$("thMeld").hidden; if(thm) $("thMeld").innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
       await steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui);
-      if(thm){const t=$(ui.msg).textContent; $("thMeld").textContent=t?(/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t)?"⚠ ":"✓ ")+t:""; $("thMeld").scrollIntoView({block:"center",behavior:"smooth"})}});
+      if(thm){const t=$(ui.msg).textContent; $(ui.msg).textContent=""; $("thMeld").textContent=t?(/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t)?"⚠ ":"✓ ")+t:""; $("thMeld").scrollIntoView({block:"center",behavior:"smooth"})}});
     $(ui.box).querySelector(".ghost").addEventListener("click",()=>{$(ui.box).hidden=true;steuWartet=null;$(ui.msg).textContent=""});
   });
   document.querySelectorAll(".ssel button").forEach(b=>b.addEventListener("click",()=>{
