@@ -291,7 +291,8 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanbox summary{cursor:pointer;font-weight:600}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
-.thvh{display:block;font-size:.88rem;margin:8px 0}.thvh select{font-size:.95rem;padding:3px 6px;margin:0 4px}
+.thvh{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;margin:8px 0}
+.thvhs{display:inline-flex}.thvhs b{font-size:1.1rem;min-width:3.2ch}.thvhs button{width:30px;height:30px}
 .spaeter{display:inline-block;font-size:.72rem;font-weight:600;color:var(--muted);border:1px dashed var(--muted);border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:middle;text-transform:none;letter-spacing:0}
 .thstep{display:flex;align-items:center;gap:6px;justify-self:end}
 .thstep button{width:34px;height:34px;padding:0;font-size:1.1rem;line-height:1}
@@ -891,7 +892,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <summary>Zeitplan Zu Hause / Nacht</summary>
         <div class="thplan" id="thPlan"></div>
         <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
-        <label class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <select id="thVorheiz" aria-label="Vorheizen in Stunden"></select> vor «Tag ab»</label>
+        <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Tag ab»</div>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Nacht"></svg>
         <div class="krow"><button type="button" class="knopfklein" id="thPlanSpeichern" disabled>Zeitplan speichern</button><button type="button" class="knopfklein ghost" id="thPlanVerwerfen" hidden>Verwerfen</button></div>
       </details>
@@ -1077,7 +1078,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 15:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 15:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3568,8 +3569,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     TH_TAGE.forEach(([k,n])=>{const w=planEdit.plan[k]||{tag:"06:00",nacht:"22:00"};planEdit.plan[k]=w;
       const b=document.createElement("b");b.textContent=n;
       box.append(b,sel(TH_TAG_OPT,w.tag,v=>{w.tag=v},n+": Tag ab"),sel(TH_NACHT_OPT,w.nacht,v=>{w.nacht=v},n+": Nacht ab"))});
-    const vh=$("thVorheiz"); vh.innerHTML=""; [0,0.5,1,1.5,2,2.5,3,4].forEach(h=>{const e=document.createElement("option");e.value=h;e.textContent=dez(h)+" h";vh.append(e)});
-    vh.value=String(planEdit.vorheiz); vh.onchange=()=>{planEdit.vorheiz=+vh.value;planDirty()};
+    $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h";
+    $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=6;
     planDirty();
   }
   function zeichneWochenbalken(){
@@ -3591,6 +3592,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("thKopieWo").addEventListener("click",()=>{if(!planEdit)return;const m=planEdit.plan[1];[2,3,4,5].forEach(k=>planEdit.plan[k]={tag:m.tag,nacht:m.nacht});zeichnePlanNurEdit()});
   $("thKopieWe").addEventListener("click",()=>{if(!planEdit)return;const m=planEdit.plan[6];planEdit.plan[0]={tag:m.tag,nacht:m.nacht};zeichnePlanNurEdit()});
   function zeichnePlanNurEdit(){zeichnePlan(true)}
+  const vhSchritt=d=>{if(!planEdit)return; planEdit.vorheiz=Math.max(0,Math.min(6,Math.round(planEdit.vorheiz+d))); $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h"; $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=6; planDirty()};
+  $("thVhMinus").addEventListener("click",()=>vhSchritt(-1)); $("thVhPlus").addEventListener("click",()=>vhSchritt(1));
   $("thPlanSpeichern").addEventListener("click",()=>{if(!planEdit)return; steuerSenden({aktion:"thermo",th:{plan:planEdit.plan},p:{vorheiz:planEdit.vorheiz}},"Zeitplan gespeichert")});
   $("thPlanVerwerfen").addEventListener("click",()=>{planEdit=null;zeichnePlan()});
   document.querySelectorAll("#thPanel [data-tb]").forEach(b=>b.addEventListener("click",()=>{
