@@ -292,7 +292,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thbetrieb{margin:10px 0 4px}
 .thknopf{font-weight:700;padding:7px 14px;font-size:.92rem}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
-.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
+.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}.thregeln{margin-top:12px}.thregeln .seinst label>span:last-child{white-space:nowrap;flex:none}.thregeln .seinst input{width:4.6em;padding:4px 6px}.thregeln .seinst label>span:first-child{min-width:0}.thregeln .thtrenn{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
 .thvh{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;margin:8px 0}
@@ -900,6 +900,11 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="thsoll" id="thSoll"></div>
       <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
+      <details class="thregeln" id="thRegeln">
+        <summary>Schaltregeln und Solarüberschuss</summary>
+        <div id="thRegelnBox"></div>
+        <div class="krow" style="margin-top:10px"><button type="button" class="knopfklein" id="thRegelnSpeichern" disabled>Regeln speichern</button><button type="button" class="knopfklein ghost" id="thRegelnVerwerfen" hidden>Verwerfen</button></div>
+      </details>
       <div class="thplanbox">
         <button type="button" class="thmod klick thplanknopf" id="thPlanKnopf"><span class="punkt" aria-hidden="true"></span>Zeitplan Zu Hause / Abgesenkt<small id="thPlanKnopfTxt">&nbsp;</small></button>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Abgesenkt"></svg>
@@ -912,7 +917,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
         <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
         <div class="krow"><button type="button" class="knopfklein" id="thPlanSpeichern" disabled>Zeitplan speichern</button><button type="button" class="knopfklein ghost" id="thPlanVerwerfen" hidden>Verwerfen</button></div>
-        <p class="hint" style="margin-top:12px">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Abgesenkt wechseln nach dem Zeitplan je Wochentag («Zu Hause ab», «Abgesenkt ab»; liegt «Abgesenkt ab» früher als «Zu Hause ab», gilt es nach Mitternacht). «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
+        <p class="hint" style="margin-top:12px">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). «Zeitplan»: Zu Hause und Abgesenkt wechseln nach dem Zeitplan je Wochentag («Zu Hause ab», «Abgesenkt ab»; liegt «Abgesenkt ab» früher als «Zu Hause ab», gilt es nach Mitternacht). «Auswärts»: gilt bis du zurückstellst oder bis zum Rückkehrdatum (mit Vorheizen). PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und Solarüberschuss unter «Schaltregeln und Solarüberschuss». Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
       </details>
       <p class="thbeob" id="thBeob"></p>
       <form class="krow spinbox" id="sPinBox" hidden autocomplete="off">
@@ -1096,7 +1101,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 18:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 18:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3343,12 +3348,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let STEU=null, steuZeit=0, steuNr=0, steuWartet=null;
   const SZ_FARBE={alltag:"var(--s5)",heim:"var(--accent)",aus:"var(--muted)"};
   const AUSG=["Boiler SPERREN","Boiler MANUELL 1h","WP ABSENKEN"];
-  const PARAM=[["thHyst","Thermostat: Schaltabstand (0 = genau am Soll)","°C",0.1],["minAbs","Thermostat: einmal abgesenkt mindestens","min",5],["raumMax","Thermostat: ohne Raumwert nicht absenken (+ Meldung) nach","min",10],
-    ["pvPlus","PV-Überschuss: Soll höher um (0 = aus)","°C",0.1],["pvSchwelle","… ab Einspeisung","W",100],["pvSoc","… und Batterie mindestens","%",5],["pvMin","… während mindestens","min",5],["pvNach","… und noch danach","min",15],
+  const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand (0 = genau am Sollwert)","°C",0.1],["minFrei","WP nach Freigabe mindestens frei","min",15],["minAbs","WP einmal abgesenkt mindestens","min",5],["raumMax","Ohne Raumwert nicht absenken (+ Meldung) nach","min",10]]],
+    ["Solarüberschuss (nur bei «Zu Hause»)",[["pvPlus","Sollwert höher um (0 = aus)","°C",0.1],["pvSchwelle","Einspeisung ins Netz mindestens","W",100],["pvMin","während mindestens","min",5],["pvSoc","Batterie mindestens","%",5],["pvNach","gilt danach noch","min",15]]]];
+  const PARAM=[
     ["komfort","Fenster-Regel: Komfort (Heimkommen, zu Hause)","°C",0.1],["nacht","Fenster-Regel: nachts / niemand da","°C",0.1],["aus","Fenster-Regel: auswärts (Frostschutz)","°C",0.5],["hyst","Fenster-Regel: Abstand bis wieder absenken","°C",0.1],
     ["nachtAb","Fenster-Regel: Nacht ab","Uhr",1],["nachtBis","Fenster-Regel: Nacht bis","Uhr",1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
     ["frost","Nicht absenken unter Tagesmittel","°C",1],["einspeisung","Auswärts: Boiler frei ab Einspeisung","W",100],["bezug","Wieder sperren ab Netzbezug","W",50],["bezugMin","… während","min",1],
-    ["boilerMin","Boiler bei Ankunft mindestens","°C",1],["boilerVorlauf","Boiler prüfen vor Rückkehr","min",15],["pause","Pause nach Handschaltung (0 = bis «fortsetzen»)","h",0.5],["minFrei","WP nach Freigabe mindestens frei","min",15],["absSicher","Absenken endet ohne Google nach","h",0.5]];
+    ["boilerMin","Boiler bei Ankunft mindestens","°C",1],["boilerVorlauf","Boiler prüfen vor Rückkehr","min",15],["pause","Pause nach Handschaltung (0 = bis «fortsetzen»)","h",0.5],["absSicher","Absenken endet ohne Google nach","h",0.5]];
   const WTAGE=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
   const dez=v=>typeof v==="number"?String(Math.round(v*10)/10).replace(".",","):"–";
   const PAUSE_OFFEN=4102444800000, pauseTxt=p=>p>=PAUSE_OFFEN?"bis «Automatik fortsetzen»":"bis "+fTime(p);
@@ -3571,7 +3577,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const set=d=>{thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); thDirty()};
       minus.addEventListener("click",()=>set(-0.1)); plus.addEventListener("click",()=>set(0.1));
       r.append(minus,v,document.createTextNode("°C"),plus); box.append(l,r)});
-    thDirty();
+    thDirty(); zeichneRegeln();
     // Zustand
     if(!th){$("thStatus").textContent="Noch kein Lauf mit dem Raumthermostat. Neues Google-Skript (Stand 01.11.2026) einspielen.";$("thBeob").textContent="";return}
     const raum=th.raum!=null?`Raum <b>${dez(th.raum)} °C</b>`:"Raum <b>–</b>";
@@ -3672,6 +3678,23 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(t<=Date.now()){$("sMeldung").textContent="Die Rückkehr muss in der Zukunft liegen.";return}
     $("thAusForm").hidden=true; thSenden(null,"Auswärts wird eingestellt",{aktion:"thermo",th:{betrieb:"aus",ausBis:t}},"Auswärts bis "+fDay(t)+" "+fTime(t))});
   $("thAusOhne").addEventListener("click",()=>{$("thAusForm").hidden=true; thSenden(null,"Auswärts wird eingestellt",{aktion:"thermo",th:{betrieb:"aus"}},"Auswärts, bis du zurückstellst")});
+  let regelnEdit=false;
+  function zeichneRegeln(erzwingen){
+    const box=$("thRegelnBox"), c=STEU&&STEU.cfg; if(!box||!c) return;
+    if(!erzwingen&&(regelnEdit||box.contains(document.activeElement))) return;   // nicht überschreiben, während du änderst
+    box.innerHTML="";
+    TH_PARAM.forEach(([titel,liste])=>{const h=document.createElement("div");h.className="thtrenn";h.textContent=titel;
+      const g=document.createElement("div");g.className="seinst";
+      liste.forEach(([k,n,e,step])=>{const l=document.createElement("label");l.innerHTML=`<span>${n}</span><span><input type="number" step="${step}" data-rp="${k}" value="${c.p[k]!=null?c.p[k]:""}"> ${e}</span>`;g.append(l)});
+      box.append(h,g)});
+    $("thRegelnSpeichern").disabled=true; $("thRegelnVerwerfen").hidden=true;
+  }
+  $("thRegelnBox").addEventListener("input",()=>{const c=STEU&&STEU.cfg; if(!c) return;
+    regelnEdit=[...document.querySelectorAll("#thRegelnBox input")].some(i=>i.value!==""&&+i.value!==c.p[i.dataset.rp]);
+    $("thRegelnSpeichern").disabled=!regelnEdit; $("thRegelnVerwerfen").hidden=!regelnEdit});
+  $("thRegelnVerwerfen").addEventListener("click",()=>{regelnEdit=false;zeichneRegeln(true)});
+  $("thRegelnSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#thRegelnBox input").forEach(i=>{if(i.value!=="")p[i.dataset.rp]=+i.value});
+    await thSenden($("thRegelnSpeichern"),"Regeln werden gespeichert",{aktion:"einstellungen",p},"Regeln gespeichert"); if($("sPinBox").hidden) zeichneRegeln(true)});
   function thDirty(){const c=STEU&&STEU.cfg; if(!c||!thEdit) return; const d=TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]); $("thSpeichern").disabled=!d; $("thVerwerfen").hidden=!d}
   $("thSpeichern").addEventListener("click",()=>{if(!thEdit)return; const p={sollTag:thEdit.sollTag,sollNacht:thEdit.sollNacht,sollAus:thEdit.sollAus};
     thSenden($("thSpeichern"),"Sollwerte werden gespeichert",{aktion:"einstellungen",p},`Sollwerte gespeichert: Zu Hause ${dez(p.sollTag)}, Abgesenkt ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
@@ -3764,7 +3787,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
       STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
       $(ui.box).hidden=true; steuWartet=null; $(ui.msg).textContent=ok||"Gespeichert.";
-      if(daten.aktion==="einstellungen") $("sWoche").dataset.dirty="";
+      if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; }
       if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.soc!==undefined) $("uePanel").dataset.dirty="";
       zeichneSteuerung();
       if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.aktiv===true&&!ueWarnGezeigt&&j.ueb&&j.ueb.status&&j.ueb.status.zustand==="gesperrt") ueWarnen();
