@@ -881,6 +881,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
           <button type="button" data-m="auto" aria-pressed="false">Automatisch</button>
         </div>
       </div>
+      <p class="thmeld" id="sModusMeld" aria-live="polite" hidden></p>
       <p class="hint" id="sModusText"></p>
       <div class="sszen"><b id="sSzen">–</b><span id="sQuelle"></span><button type="button" class="knopfklein ghost" id="sZurueck" hidden>Zurück zum Wochenplan</button></div>
       <div class="swerte" id="sWerte"></div>
@@ -1095,7 +1096,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 18:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 18:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3528,8 +3529,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let thEdit=null, thLaeuft=false;
   /* Sofortige Rückmeldung für alle Knöpfe des Raumthermostats: Knopf sperren, «… wird ausgeführt» anzeigen,
      Ergebnis direkt beim Thermostat zeigen; braucht es den PIN, zum PIN-Feld springen. */
-  async function thSenden(knopf,text,daten,ok){
-    const m=$("thMeld"); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
+  const thSenden=(knopf,text,daten,ok)=>knopfSenden(knopf,text,daten,ok,"thMeld");
+  let meldAktiv="thMeld";
+  async function knopfSenden(knopf,text,daten,ok,meldId){
+    meldAktiv=meldId; const m=$(meldId); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
     const alt=knopf?{html:knopf.innerHTML,dis:knopf.disabled}:null;
     if(knopf){knopf.disabled=true; knopf.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`}
     thLaeuft=true;
@@ -3772,14 +3775,16 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   [UI_S,UI_U].forEach(ui=>{
     $(ui.box).addEventListener("submit",async ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;
-      const thm=ui===UI_S&&!$("thMeld").hidden; if(thm) $("thMeld").innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
+      const mm=$(meldAktiv), thm=ui===UI_S&&!mm.hidden; if(thm) mm.innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
       await steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui);
-      if(thm){const t=$(ui.msg).textContent; $(ui.msg).textContent=""; $("thMeld").textContent=t?(/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t)?"⚠ ":"✓ ")+t:""; $("thMeld").scrollIntoView({block:"center",behavior:"smooth"})}});
+      if(thm){const t=$(ui.msg).textContent; $(ui.msg).textContent=""; mm.textContent=t?(/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t)?"⚠ ":"✓ ")+t:""; mm.scrollIntoView({block:"center",behavior:"smooth"})}});
     $(ui.box).querySelector(".ghost").addEventListener("click",()=>{$(ui.box).hidden=true;steuWartet=null;$(ui.msg).textContent=""});
   });
   document.querySelectorAll(".ssel button").forEach(b=>b.addEventListener("click",()=>{
     if(STEU&&STEU.cfg.modus===b.dataset.m) return;
-    steuerSenden({aktion:"modus",modus:b.dataset.m},"Modus: "+b.textContent)}));
+    const name=b.textContent;
+    document.querySelectorAll(".ssel button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));   // sofort sichtbar
+    knopfSenden(b,"Modus «"+name+"» wird eingestellt",{aktion:"modus",modus:b.dataset.m},"Modus: "+name,"sModusMeld")}));
   const zeitHeute=(hm,morgenFallsVorbei)=>{const [h,m]=(hm||"18:00").split(":").map(Number);const d=new Date();d.setHours(h,m||0,0,0);if(morgenFallsVorbei&&d.getTime()<=Date.now())d.setDate(d.getDate()+1);return d.getTime()};
   $("sHeimOk").addEventListener("click",()=>{const t=zeitHeute($("sHeimZeit").value,true);steuerSenden({aktion:"szenario",eintrag:{art:"heim",bis:t}},"Komme nach Hause "+fDay(t)+" "+fTime(t))});
   $("sAusOk").addEventListener("click",()=>{const d=$("sAusDatum").value, z=$("sAusZeit").value||"17:00"; if(!d){$("sMeldung").textContent="Bitte Datum der Rückkehr wählen.";return}
