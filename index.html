@@ -286,6 +286,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thmod small{flex-basis:100%;padding-left:18px;color:var(--muted);font-size:.72rem}
 .thmod .punkt{width:10px;height:10px;border-radius:50%;border:2px solid var(--muted)}
 .thmod.an{border-color:var(--c-wp);background:color-mix(in srgb,var(--c-wp) 10%,transparent);font-weight:600}
+.thmod.klick:hover{border-color:var(--c-wp)}.thmod:disabled{opacity:.7;cursor:wait}
 .thmod.an .punkt{border-color:var(--c-wp);background:var(--c-wp)}.thmod.an small{color:var(--c-wp)}
 .thmeld{font-size:.86rem;margin:4px 0;color:var(--fg)}.thmeld .spin,button .spin{display:inline-block;margin-right:6px;vertical-align:-2px}
 .thbetrieb{margin:10px 0 4px}
@@ -1086,7 +1087,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 17:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3540,8 +3541,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const mod=th&&typeof th.mod==="number"?th.mod:-1, cth=c.th||{};
     document.querySelectorAll("#thPanel [data-tb]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tb===(cth.betrieb||"plan"))));
     TH_SOLL.forEach(([k,n],i)=>{
-      const l=document.createElement("div");l.className="thmod"+(i===mod?" an":"");
-      l.innerHTML=`<span class="punkt" aria-hidden="true"></span>${n}<small>${i===mod?"gilt jetzt":"&nbsp;"}</small>`;
+      const imPlan=(cth.betrieb||"plan")==="plan"&&i<2&&mod>=0&&mod<2, knopf=imPlan&&i!==mod;   // Zu Hause / Abgesenkt antippen = bis zum nächsten Wechsel
+      const l=document.createElement(imPlan?"button":"div");l.className="thmod"+(i===mod?" an":"")+(imPlan?" klick":"");
+      if(imPlan){l.type="button";l.title=i===mod?"gilt jetzt":`Jetzt ${n} bis zum nächsten Wechsel`}
+      l.innerHTML=`<span class="punkt" aria-hidden="true"></span>${n}<small>${i===mod?"gilt jetzt":knopf?(th&&th.quelle==="abweichung"?"antippen: zurück zum Zeitplan":"antippen: bis zum nächsten Wechsel"):"&nbsp;"}</small>`;
+      if(imPlan) l.addEventListener("click",()=>{ if(i===mod){const m=$("thMeld");m.hidden=false;m.textContent=`✓ ${n} gilt bereits.`;setTimeout(()=>{if(m.textContent===`✓ ${n} gilt bereits.`)m.hidden=true},4000);return}
+        if(th.quelle==="abweichung") thSenden(l,"Abweichung wird aufgehoben",{aktion:"thermo",th:{abw:null}},"Zurück zum Zeitplan");   // das andere ist der Zeitplan
+        else thSenden(l,`Jetzt ${n} wird gesetzt`,{aktion:"thermo",th:{abw:{mod:i}}},`Jetzt ${n} bis zum nächsten Wechsel`)});
       const r=document.createElement("div");r.className="thstep";
       const minus=document.createElement("button");minus.type="button";minus.className="knopfklein ghost";minus.textContent="−";minus.setAttribute("aria-label",n+": 0,1 °C tiefer");
       const v=document.createElement("b");v.textContent=dez(thEdit[k]);v.setAttribute("aria-live","polite");
