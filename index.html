@@ -1085,7 +1085,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 17:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3520,9 +3520,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
      Ergebnis direkt beim Thermostat zeigen; braucht es den PIN, zum PIN-Feld springen. */
   async function thSenden(knopf,text,daten,ok){
     const m=$("thMeld"); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
+    const alt=knopf?{html:knopf.innerHTML,dis:knopf.disabled}:null;
     if(knopf){knopf.disabled=true; knopf.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`}
     thLaeuft=true;
-    try{ await steuerSenden(daten,ok); }finally{ thLaeuft=false; }
+    try{ await steuerSenden(daten,ok); }finally{ thLaeuft=false; if(knopf){knopf.innerHTML=alt.html; knopf.disabled=alt.dis} }   // Knopf immer zurücksetzen (feste Knöpfe werden nicht neu gezeichnet)
     if(!$("sPinBox").hidden){ m.textContent="Bitte Schalt-PIN eingeben (Feld unten) – danach wird es ausgeführt."; $("sPinBox").scrollIntoView({block:"center",behavior:"smooth"}); $("sPin").focus({preventScroll:true}); }
     else { const t=$("sMeldung").textContent, fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":"✓ ")+t:""; m.hidden=!t;
       if(!fehler){const jetzt=m.textContent; setTimeout(()=>{if(m.textContent===jetzt) m.hidden=true},8000)} }
