@@ -893,12 +893,13 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
       <details class="thplanbox" id="thPlanBox">
         <summary>Zeitplan Zu Hause / Abgesenkt</summary>
-        <div class="thplan" id="thPlan"></div>
-        <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
-        <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Abgesenkt"></svg>
         <p class="hint" id="thWocheAbw" style="margin:4px 0 0" hidden></p>
         <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
+        <div class="thtrenn" style="margin-top:10px">Zeiten einstellen</div>
+        <div class="thplan" id="thPlan"></div>
+        <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
+        <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
         <div class="krow"><button type="button" class="knopfklein" id="thPlanSpeichern" disabled>Zeitplan speichern</button><button type="button" class="knopfklein ghost" id="thPlanVerwerfen" hidden>Verwerfen</button></div>
       </details>
       <p class="thbeob" id="thBeob"></p>
@@ -1084,7 +1085,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 17:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
