@@ -1112,7 +1112,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 18:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 19:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3638,6 +3638,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12;
     planDirty();
   }
+  setInterval(()=>{if(STEU&&$("thWoche")&&$("thWoche").clientWidth) zeichneWochenbalken()},60000);   // Zeit-Strich mitlaufen lassen
   function zeichneWochenbalken(){
     const svg=$("thWoche"); if(!svg||!planEdit) return;
     const W=Math.round(Math.max(300,Math.min(700,svg.clientWidth||600))), Lb=30, Rb=6, lane=16, gap=4, H=7*(lane+gap)+18;
@@ -3668,12 +3669,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         g+=`<rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" fill="var(--panel)"/><rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" rx="2" fill="${AB_F[ab.mod]}" opacity="${AB_O[ab.mod]}"/>`;
         g+=`<line x1="${X(ha).toFixed(1)}" x2="${X(hb).toFixed(1)}" y1="${y+hoch+.5}" y2="${y+hoch+.5}" stroke="var(--fg)" stroke-opacity=".5" stroke-dasharray="2 2"/>`;
       }
-      const dmj=mitternacht(jetzt), rj=TH_TAGE.findIndex(([k])=>k===new Date(dmj).getDay()), xj=X((jetzt-dmj)/36e5).toFixed(1);
-      if(rj>=0) g+=`<line x1="${xj}" x2="${xj}" y1="${rj*(lane+gap)-2}" y2="${rj*(lane+gap)+lane+2}" stroke="var(--fg)" stroke-width="1.5"/>`;
     }
     $("thWocheAbw").hidden=!ab;
     if(ab) $("thWocheAbw").textContent=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][ab.mod]} bis ${ab.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(ab.bis)+" "+fTime(ab.bis)}: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
     for(let h=1;h<24;h++){const x=X(h).toFixed(1);g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-18}" stroke="var(--bg)" stroke-opacity="${h%6===0?.55:.3}" stroke-width="1"/>`}   // Stundenlinien auch über den Balken
+    { // aktuelle Zeit: roter Strich über die ganze Woche, kräftig beim heutigen Tag
+      const dmj=mitternacht(jetzt), rj=TH_TAGE.findIndex(([k])=>k===new Date(dmj).getDay()), xj=X((jetzt-dmj)/36e5).toFixed(1), rot="#e5484d";
+      g+=`<line x1="${xj}" x2="${xj}" y1="0" y2="${7*(lane+gap)-gap}" stroke="${rot}" stroke-opacity=".35" stroke-width="1"/>`;
+      if(rj>=0){const y=rj*(lane+gap); g+=`<line x1="${xj}" x2="${xj}" y1="${y-3}" y2="${y+lane+3}" stroke="${rot}" stroke-width="2.5" stroke-linecap="round"><title>jetzt ${fTime(jetzt)}</title></line><circle cx="${xj}" cy="${y-3}" r="3" fill="${rot}"/>`}
+    }
     svg.innerHTML=g;
   }
   function planDirty(){const d=!planGleich(); $("thPlanSpeichern").disabled=!d; $("thPlanVerwerfen").hidden=!d; zeichneWochenbalken()}
