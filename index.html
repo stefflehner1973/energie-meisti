@@ -301,7 +301,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
 .thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.bstat{display:flex;gap:8px;flex-wrap:wrap}.bstat span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.8rem;color:var(--muted)}
 .bstat span i{width:8px;height:8px;border-radius:50%;background:var(--muted)}.bstat span.an{color:var(--fg);border-color:var(--warm)}.bstat span.an i{background:var(--warm)}
-.thplanzu{margin-top:10px}.tip{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(300px,80vw);padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:.8rem;line-height:1.35;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:normal}
+.thplanzu{margin-top:10px}.tip{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}.tip::after{pointer-events:none}.tip:hover::after,.tip:focus-visible::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(300px,80vw);padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:.8rem;line-height:1.35;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:normal}
 .thregeln{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thregeln .thtrenn{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
@@ -1038,6 +1038,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
           <button type="button" data-a="1" aria-pressed="false">Ein</button>
         </div>
       </div>
+      <p class="thmeld" id="ueMeld" aria-live="polite" hidden></p>
       <p class="hint" style="margin-top:4px">Läuft für sich, unabhängig vom Modus im Reiter Steuerung. Schaltet nur «Boiler MANUELL» (O2).</p>
       <div class="uezust" id="ueZust" data-z="aus"><div class="z1"><i aria-hidden="true"></i><b id="ueTitel">–</b></div><span id="ueText"></span></div>
       <p class="hint" id="uePause" hidden></p>
@@ -1126,7 +1127,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 21:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 21:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3545,7 +3546,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     zust.dataset.z=zs; $("ueTitel").textContent=titel; $("ueText").textContent=text;
     $("ueSum").textContent=c.aktiv?"· Ein · "+titel:"· Aus";
     const pz=$("uePause"); pz.hidden=zs!=="pause"; pz.innerHTML="";
-    if(zs==="pause"){const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Sofort fortsetzen";b.addEventListener("click",()=>steuerSenden({aktion:"ueberschuss",ueb:{pauseWeg:true}},"Fortgesetzt.",undefined,undefined,UI_U));pz.append(b)}
+    if(zs==="pause"){const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Sofort fortsetzen";b.addEventListener("click",()=>knopfSenden(b,"Wird fortgesetzt",{aktion:"ueberschuss",ueb:{pauseWeg:true}},"Fortgesetzt.","ueMeld",UI_U));pz.append(b)}
     // Heute
     const h=st&&st.heute&&st.zeit&&mitternacht(st.zeit)===mitternacht(Date.now())?st.heute:{n:0,ms:0,verlauf:[]};
     // Energie in den Boiler im Zeitraum [von, bis] aus der gemessenen Leistung U12 (Seite), falls das Skript (noch) nichts liefert
@@ -3568,9 +3569,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const an=b.dataset.a==="1", c=STEU&&STEU.ueb&&STEU.ueb.cfg; if(!c||c.aktiv===an) return;
     ueWarnGezeigt=false;
     if(an&&ueGesperrt()) ueWarnen();
-    steuerSenden({aktion:"ueberschuss",ueb:{aktiv:an}},"Boiler mit Überschuss ist "+(an?"ein.":"aus."),undefined,undefined,UI_U)}));
+    document.querySelectorAll(".bsel button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));   // sofort sichtbar
+    knopfSenden(b,an?"Wird eingeschaltet":"Wird ausgeschaltet",{aktion:"ueberschuss",ueb:{aktiv:an}},"Boiler mit Überschuss ist "+(an?"ein.":"aus."),"ueMeld",UI_U)}));
   Object.values(UE_FELD).forEach(id=>$(id).addEventListener("input",()=>{$("uePanel").dataset.dirty="1";zeichneUeb()}));
-  $("ueSpeichern").addEventListener("click",()=>{const g=ueEingaben();steuerSenden({aktion:"ueberschuss",ueb:{soc:g.soc,frei:g.frei,maxT:g.maxT,dauer:g.dauer}},"Grenzwerte gespeichert.",undefined,undefined,UI_U)});
+  $("ueSpeichern").addEventListener("click",()=>{const g=ueEingaben();knopfSenden($("ueSpeichern"),"Wird gespeichert",{aktion:"ueberschuss",ueb:{soc:g.soc,frei:g.frei,maxT:g.maxT,dauer:g.dauer}},"Grenzwerte gespeichert.","ueMeld",UI_U)});
   $("ueVerwerfen").addEventListener("click",()=>{$("uePanel").dataset.dirty="";$("ueMeldung").textContent="";zeichneUeb()});
   const esc=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   /* ---------- Raumthermostat (rechnet und schaltet im Google-Skript, steuern_) ---------- */
@@ -3579,9 +3581,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* Sofortige Rückmeldung für alle Knöpfe des Raumthermostats: Knopf sperren, «… wird ausgeführt» anzeigen,
      Ergebnis direkt beim Thermostat zeigen; braucht es den PIN, zum PIN-Feld springen. */
   const thSenden=(knopf,text,daten,ok)=>knopfSenden(knopf,text,daten,ok,"thMeld");
-  let meldAktiv="thMeld";
+  let meldAktiv="thMeld", uiAktiv=null;
   async function knopfSenden(knopf,text,daten,ok,meldId,ui){
-    ui=ui||UI_S; meldAktiv=meldId; const m=$(meldId); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
+    ui=ui||UI_S; meldAktiv=meldId; uiAktiv=ui; const m=$(meldId); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
     const alt=knopf?{html:knopf.innerHTML,dis:knopf.disabled}:null;
     if(knopf){knopf.disabled=true; knopf.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`}
     thLaeuft=true;
@@ -3887,7 +3889,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   [UI_S,UI_U].forEach(ui=>{
     $(ui.box).addEventListener("submit",async ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;
-      const mm=$(meldAktiv), thm=!mm.hidden&&(ui===UI_S)===(meldAktiv!=="bMeld"); if(thm) mm.innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
+      const mm=$(meldAktiv), thm=!mm.hidden&&ui===uiAktiv; if(thm) mm.innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
       await steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui);
       if(thm){const t=$(ui.msg).textContent; $(ui.msg).textContent=""; mm.textContent=t?(/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t)?"⚠ ":"✓ ")+t:""; mm.scrollIntoView({block:"center",behavior:"smooth"})}});
     $(ui.box).querySelector(".ghost").addEventListener("click",()=>{$(ui.box).hidden=true;steuWartet=null;$(ui.msg).textContent=""});
