@@ -1022,7 +1022,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel">
       <div id="bEinst">
         <div class="uekopf"><h2 style="margin:0">Boiler auswärts</h2><div class="bstat" id="bStat"></div></div>
-        <p class="hint" style="margin-top:8px">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (10) eingespielt ist.</p>
+        <p class="hint" style="margin-top:8px">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (11) eingespielt ist.</p>
         <div id="bParam"></div>
         <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
         <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
@@ -1125,7 +1125,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 20:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 20:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3385,7 +3385,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     ["Allgemein",[["pause","Pause nach Handschaltung","h",0.5,"0 = Handschaltung gilt, bis du «Automatik sofort fortsetzen» drückst."],["absSicher","Absenken endet ohne Google nach","h",0.5,"Sicherheit: Meldet sich Google nicht mehr, schaltet der Shelly das Absenken nach dieser Zeit selbst aus."]]]];
   const PARAM=PARAM_GR.flatMap(g=>g[1]);
   // 6. Feld = Anzeige-Faktor: angezeigt wird gespeichert / Faktor (z. B. W → kW, min → h)
-  const BOILER_PARAM=[["Auswärts",[["einspeisung","Frei ab Einspeisung","kW",0.5,"Auswärts ist der Boiler gesperrt und wird erst bei so viel Einspeisung ins Netz freigegeben.",1000],["bezug","Wieder sperren unter Einspeisung","W",50,"Fliesst weniger als so viel ins Netz (während der Zeit darunter), wird der Boiler wieder gesperrt. 0 = sperren, sobald Strom aus dem Netz bezogen wird."],["bezugMin","Einspeisung zu tief während","min",1]]],
+  const BOILER_PARAM=[["Auswärts",[["einspeisung","Frei ab Einspeisung","kW",0.5,"Auswärts ist der Boiler gesperrt und wird bei so viel Einspeisung ins Netz freigegeben.",1000],["auPv","oder frei ab PV-Produktion","kW",0.5,"Zusätzlich: Boiler auch frei, wenn die PV so viel produziert UND die Batterie mindestens so voll ist (Feld darunter). Solange das stimmt, wird nicht gesperrt. 0 = aus.",1000],["auSoc","… und Batterie mindestens","%",5],["bezug","Wieder sperren unter Einspeisung","W",50,"Fliesst weniger als so viel ins Netz (während der Zeit darunter), wird der Boiler wieder gesperrt. 0 = sperren, sobald Strom aus dem Netz bezogen wird."],["bezugMin","Einspeisung zu tief während","min",1]]],
     ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
     const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
