@@ -1052,7 +1052,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 14:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 14:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1540,6 +1540,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
 
   /* ---------- Verlauf ---------- */
   let tage=store.get("tb.tage",1);
+  if(typeof tage!=="number"||!isFinite(tage)){tage=1;store.set("tb.tage",1)}   // 01.11.2026: ungültigen Zeitraum (von den Thermostat-Knöpfen) reparieren
   const TAGE_GLOBAL=()=>tage;
   const L=48,R=14,T=14,B=30, HINT="";
 
@@ -1571,7 +1572,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const WB_STATUS={1:"kein Auto",2:"lädt",3:"Auto wartet",4:"fertig",5:"Fehler"};
   Object.values(CH).forEach(c=>c.gruppe="ueb");   // Mausstrich gemeinsam in allen Verläufen der Übersicht
 
-  document.querySelectorAll(".seg button").forEach(b=>{
+  document.querySelectorAll(".seg button[data-tage]").forEach(b=>{
     b.setAttribute("aria-pressed",String(+b.dataset.tage===tage));
     b.addEventListener("click",()=>{
       // Beim Anschauen eines älteren Zeitraums im selben Bereich bleiben: kleinerer Zeitraum = Anfang davon,
@@ -1579,7 +1580,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const neu=+b.dataset.tage, fenster=zoom?fensterFuer(neu,zoom):null;
       tage=neu; store.set("tb.tage",tage); zoom=fenster; zoomAnzeige();
       const ein={7:"woche",30:"monat",365:"jahr"}[neu]; if(ein){uEinteilung=ein;store.set("tb.ueinteilung",ein)}   // „Geladen pro …“ passend zur Zeitwahl
-      document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.tage===tage)));
+      document.querySelectorAll(".seg button[data-tage]").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.tage===tage)));
       if(zoom){zuschneiden();drawAll()}
       loadHist();
     });
