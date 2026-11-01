@@ -1064,7 +1064,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel">
       <details id="bEinst" class="h2box">
         <summary><h2>Boiler auswärts</h2></summary>
-        <p class="hint" style="margin-top:0">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm.</p>
+        <p class="hint" style="margin-top:0">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (10) eingespielt ist.</p>
         <div id="bParam"></div>
         <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
         <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
@@ -1121,7 +1121,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 19:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 19:40</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3380,10 +3380,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       ["frost","Nicht absenken unter Tagesmittel","°C",1,"Ist das Tagesmittel aussen kälter, wird gar nicht abgesenkt."]]],
     ["Allgemein",[["pause","Pause nach Handschaltung","h",0.5,"0 = Handschaltung gilt, bis du «Automatik sofort fortsetzen» drückst."],["absSicher","Absenken endet ohne Google nach","h",0.5,"Sicherheit: Meldet sich Google nicht mehr, schaltet der Shelly das Absenken nach dieser Zeit selbst aus."]]]];
   const PARAM=PARAM_GR.flatMap(g=>g[1]);
-  const BOILER_PARAM=[["Auswärts",[["einspeisung","Frei ab Einspeisung","W",100,"Auswärts ist der Boiler gesperrt und wird erst bei so viel Einspeisung ins Netz freigegeben."],["bezug","Wieder sperren ab Netzbezug","W",50,"Bezieht das Haus so viel Strom aus dem Netz (während der Zeit darunter), wird der Boiler wieder gesperrt."],["bezugMin","Netzbezug während","min",1]]],
-    ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","min",15,"So lange vor der Rückkehr wird die Boilertemperatur geprüft."]]]];
-  const einstZeile=(k,n,e,step,tip,attr,wert)=>{const l=document.createElement("label");
-    l.innerHTML=`<span class="n">${tip?`<span class="tip" tabindex="0" data-tip="${esc(tip)}">${n}</span>`:n}</span><input type="number" step="${step}" ${attr}="${k}" value="${wert!=null?wert:""}" aria-label="${esc(n)}"><span class="e">${e}</span>`;return l};
+  // 6. Feld = Anzeige-Faktor: angezeigt wird gespeichert / Faktor (z. B. W → kW, min → h)
+  const BOILER_PARAM=[["Auswärts",[["einspeisung","Frei ab Einspeisung","kW",0.5,"Auswärts ist der Boiler gesperrt und wird erst bei so viel Einspeisung ins Netz freigegeben.",1000],["bezug","Wieder sperren unter Einspeisung","W",50,"Fliesst weniger als so viel ins Netz (während der Zeit darunter), wird der Boiler wieder gesperrt. 0 = sperren, sobald Strom aus dem Netz bezogen wird."],["bezugMin","Einspeisung zu tief während","min",1]]],
+    ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
+  const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
+    const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
+    l.innerHTML=`<span class="n">${tip?`<span class="tip" tabindex="0" data-tip="${esc(tip)}">${n}</span>`:n}</span><input type="number" step="${step}" ${attr}="${k}" data-f="${f}" value="${anz}" aria-label="${esc(n)}"><span class="e">${e}</span>`;return l};
+  const einstWert=i=>Math.round(+i.value*(+i.dataset.f||1)*1000)/1000;   // Eingabe → gespeicherter Wert
   const WTAGE=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
   const dez=v=>typeof v==="number"?String(Math.round(v*10)/10).replace(".",","):"–";
   const PAUSE_OFFEN=4102444800000, pauseTxt=p=>p>=PAUSE_OFFEN?"bis «Automatik fortsetzen»":"bis "+fTime(p);
@@ -3728,14 +3731,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!erzwingen&&(bEdit||box.contains(document.activeElement))) return;
     box.innerHTML="";
     BOILER_PARAM.forEach(([titel,liste])=>{const h=document.createElement("div");h.className="thtrenn";h.textContent=titel;
-      const g=document.createElement("div");g.className="seinst"; liste.forEach(([k,n,e,step,tip])=>g.append(einstZeile(k,n,e,step,tip,"data-bp",c.p[k])));box.append(h,g)});
+      const g=document.createElement("div");g.className="seinst"; liste.forEach(([k,n,e,step,tip,f])=>g.append(einstZeile(k,n,e,step,tip,"data-bp",c.p[k],f)));box.append(h,g)});
     $("bSpeichern").disabled=true; $("bVerwerfen").hidden=true;
   }
   $("bParam").addEventListener("input",()=>{const c=STEU&&STEU.cfg; if(!c) return;
-    bEdit=[...document.querySelectorAll("#bParam input")].some(i=>i.value!==""&&+i.value!==c.p[i.dataset.bp]);
+    bEdit=[...document.querySelectorAll("#bParam input")].some(i=>i.value!==""&&einstWert(i)!==c.p[i.dataset.bp]);
     $("bSpeichern").disabled=!bEdit; $("bVerwerfen").hidden=!bEdit});
   $("bVerwerfen").addEventListener("click",()=>{bEdit=false;zeichneBoilerEinst(true)});
-  $("bSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#bParam input").forEach(i=>{if(i.value!=="")p[i.dataset.bp]=+i.value});
+  $("bSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#bParam input").forEach(i=>{if(i.value!=="")p[i.dataset.bp]=einstWert(i)});
     await knopfSenden($("bSpeichern"),"Wird gespeichert",{aktion:"einstellungen",p},"Boiler-Einstellungen gespeichert","bMeld",UI_U); if($("uePinBox").hidden) zeichneBoilerEinst(true)});
   let regelnEdit=false;
   function zeichneRegeln(erzwingen){
