@@ -281,6 +281,13 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .seg button{white-space:nowrap}
 @media (max-width:520px){.seg{width:100%}.seg button{flex:1 1 auto;padding:6px 6px}}
 .seg button+button{border-left:1px solid var(--line)}
+.thsoll{display:grid;grid-template-columns:auto auto;gap:8px 16px;align-items:center;margin:12px 0 4px;max-width:440px}
+.thsoll .n{font-size:.9rem}.thsoll .n small{display:block;color:var(--muted);font-size:.74rem}
+.thstep{display:flex;align-items:center;gap:6px;justify-self:end}
+.thstep button{width:34px;height:34px;padding:0;font-size:1.1rem;line-height:1}
+.thstep b{font-family:var(--f-display);font-size:1.35rem;min-width:4.2ch;text-align:center;font-variant-numeric:tabular-nums;color:var(--c-wp)}
+.thstat{font-size:.9rem;line-height:1.45;margin:6px 0 2px}.thstat b{font-variant-numeric:tabular-nums}
+.thbeob{font-size:.78rem;color:var(--muted);margin:4px 0 0}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--panel)}
 .zoomweg,.pzoom{padding:6px 11px;font-size:.82rem;margin-left:auto}
 .navb{padding:4px 12px;font-size:1.25rem;line-height:1.1;border:1px solid var(--line);border-radius:8px}
@@ -900,6 +907,15 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <form method="dialog"><button type="submit" value="ok" autofocus>OK</button></form>
       </dialog>
     </section>
+    <section class="panel" id="thPanel">
+      <div class="histhead"><h2 class="tc-wp" style="margin:0">Raumthermostat · Wärmepumpe</h2>
+        <div class="seg" role="group" aria-label="Regel für WP ABSENKEN"><button type="button" data-th="1" aria-pressed="false" title="WP ABSENKEN nach Raumtemperatur (Wetterstation innen) gegen den Sollwert">Raumthermostat</button><button type="button" data-th="0" aria-pressed="false" title="Bisherige Regel: frei im wärmsten Zeitfenster der Prognose">Wärmstes Fenster</button></div></div>
+      <p class="thstat" id="thStatus">–</p>
+      <p class="thbeob" id="thBeob"></p>
+      <div class="thsoll" id="thSoll"></div>
+      <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
+      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). Schaltabstand, Mindestzeiten und PV-Anhebung unter Wochenplan → Einstellungen. Nacht, Vorlauf vor dem Heimkommen und Auswärts kommen aus dem Wochenplan bzw. dem gewählten Szenario. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
+    </section>
     <section class="panel">
       <h2>Szenario wählen</h2>
       <div class="sform">
@@ -1033,7 +1049,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 31.10.26 19:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 13:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1706,7 +1722,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* Verlauf in drei Teilen gleichzeitig laden, nur was der offene Reiter braucht.
      Jeder Teil wird gezeichnet, sobald er da ist. Die letzte Antwort je Teil bleibt im Browser
      gespeichert und erscheint beim nächsten Öffnen sofort. */
-  const TEILE={uebersicht:["mess","fronius"],temperatur:["ma"],energie:["fronius","mess"],auto:["fronius"],sonne:[],prognose:[],steuerung:["mess"],geld:[]};   // Steuerung: Boiler-Leistung für „geladen“ bei Boiler mit Überschuss
+  const TEILE={uebersicht:["mess","fronius"],temperatur:["ma"],energie:["fronius","mess"],auto:["fronius"],sonne:[],prognose:[],steuerung:["mess","ma"],geld:[]};   // Steuerung: Boiler-Leistung für „geladen“ bei Boiler mit Überschuss
   const FELDER={mess:["temp","boiler","wp","k14","lm"],ma:["ma"],fronius:["fronius"]};
   const laedtTeil=new Set(), geladen={}, teilNr={}, laedtMit={}, teilZeit={};
   const FRISCH=3*6e4;   // so lange gelten geladene Daten als aktuell (Reiterwechsel lädt dann nicht neu)
@@ -1797,7 +1813,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
 
   function drawAll(){
-    try{if(reiter==="steuerung"&&STEU)zeichneUeb()}catch(e){}   // STEU wird weiter unten angelegt (beim ersten Aufruf evtl. noch nicht)
+    try{if(reiter==="steuerung"&&STEU){zeichneUeb();zeichneFahrplan()}}catch(e){}   // STEU wird weiter unten angelegt (beim ersten Aufruf evtl. noch nicht); Fahrplan mit gemessenem Raum
     const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"7 Tage",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
     document.querySelectorAll(".elab").forEach(e=>e.textContent=lab);
     document.querySelectorAll(".ebz").forEach(e=>e.textContent="· "+lab.replace("Energie ",""));   // Zeitraum der Kacheln
@@ -3277,12 +3293,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let STEU=null, steuZeit=0, steuNr=0, steuWartet=null;
   const SZ_FARBE={alltag:"var(--s5)",heim:"var(--accent)",aus:"var(--muted)"};
   const AUSG=["Boiler SPERREN","Boiler MANUELL 1h","WP ABSENKEN"];
-  const PARAM=[["komfort","Komfort (Heimkommen, zu Hause)","°C",0.1],["nacht","Nachts / niemand da","°C",0.1],["aus","Auswärts (Frostschutz)","°C",0.5],["hyst","Abstand bis wieder absenken","°C",0.1],
+  const PARAM=[["thHyst","Thermostat: Schaltabstand (0 = genau am Soll)","°C",0.1],["minAbs","Thermostat: einmal abgesenkt mindestens","min",5],["raumMax","Thermostat: ohne Raumwert nicht absenken nach","min",5],
+    ["pvPlus","PV-Überschuss: Soll höher um (0 = aus)","°C",0.1],["pvSchwelle","… ab Einspeisung","W",100],["pvMin","… während mindestens","min",5],["pvNach","… und noch danach","min",15],
+    ["komfort","Fenster-Regel: Komfort (Heimkommen, zu Hause)","°C",0.1],["nacht","Fenster-Regel: nachts / niemand da","°C",0.1],["aus","Fenster-Regel: auswärts (Frostschutz)","°C",0.5],["hyst","Fenster-Regel: Abstand bis wieder absenken","°C",0.1],
     ["vorlauf","Komfort schon vor Heimkommen","h",0.5],["nachtAb","Nacht ab","Uhr",1],["nachtBis","Nacht bis","Uhr",1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
     ["frost","Nicht absenken unter Tagesmittel","°C",1],["einspeisung","Auswärts: Boiler frei ab Einspeisung","W",100],["bezug","Wieder sperren ab Netzbezug","W",50],["bezugMin","… während","min",1],
-    ["boilerMin","Boiler bei Ankunft mindestens","°C",1],["boilerVorlauf","Boiler prüfen vor Rückkehr","min",15],["pause","Pause nach Handschaltung","h",0.5],["minFrei","WP nach Freigabe mindestens frei","min",15],["absSicher","Absenken endet ohne Google nach","h",0.5]];
+    ["boilerMin","Boiler bei Ankunft mindestens","°C",1],["boilerVorlauf","Boiler prüfen vor Rückkehr","min",15],["pause","Pause nach Handschaltung (0 = bis «fortsetzen»)","h",0.5],["minFrei","WP nach Freigabe mindestens frei","min",15],["absSicher","Absenken endet ohne Google nach","h",0.5]];
   const WTAGE=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
   const dez=v=>typeof v==="number"?String(Math.round(v*10)/10).replace(".",","):"–";
+  const PAUSE_OFFEN=4102444800000, pauseTxt=p=>p>=PAUSE_OFFEN?"bis «Automatik fortsetzen»":"bis "+fTime(p);
   async function ladeSteuerung(neu,hintergrund){
     if(!cfg.histurl||!cfg.histtok) return;
     if(hintergrund&&!neu&&STEU&&Date.now()-steuZeit<FRISCH) return;
@@ -3304,7 +3323,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!STEU) return;
     const c=STEU.cfg, st=STEU.status;
     document.querySelectorAll(".ssel button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===c.modus)));
-    $("sModusText").textContent={aus:"Die Automatik ist aus: es wird nur gerechnet und hier angezeigt.",anzeige:"Testbetrieb: Die Steuerung rechnet und schreibt ins Protokoll, was sie schalten würde – geschaltet wird nichts.",auto:"Die Steuerung schaltet WP ABSENKEN, Boiler SPERREN und Boiler MANUELL selbst. Von Hand geschaltet (hier oder in der Shelly-App) pausiert sie für "+dez(c.p.pause)+" h."}[c.modus]||"";
+    $("sModusText").textContent={aus:"Die Automatik ist aus: es wird nur gerechnet und hier angezeigt.",anzeige:"Testbetrieb: Die Steuerung rechnet und schreibt ins Protokoll, was sie schalten würde – geschaltet wird nichts.",auto:"Die Steuerung schaltet WP ABSENKEN, Boiler SPERREN und Boiler MANUELL selbst. "+(c.p.pause>0?"Von Hand geschaltet (hier oder in der Shelly-App) pausiert sie für "+dez(c.p.pause)+" h.":"Von Hand geschaltet (hier oder in der Shelly-App) hat die Handschaltung Vorrang, bis du «Automatik sofort fortsetzen» drückst.")}[c.modus]||"";
     $("sStand").textContent=st&&st.zeit?fStempel(st.zeit):"";
     if(!st){$("sSzen").textContent="–";$("sQuelle").textContent="Noch kein Lauf. Die Steuerung rechnet beim nächsten Messen (alle 2 Minuten).";$("sAusg").innerHTML="";}
     else{
@@ -3312,13 +3331,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       $("sQuelle").textContent=st.sz.quelle==="plan"?"laut Wochenplan":"einmalig"+(st.sz.art==="alltag"&&st.sz.bis?" bis "+fTime(st.sz.bis):"");
       $("sZurueck").hidden=st.sz.quelle==="plan";
       const w=st.werte||{}, f=st.fenster;
-      const teile=[["Raum",w.raum!=null?dez(w.raum)+"°C":"–","min. "+dez(st.mindest)+"°C"],["Aussen",w.aussen!=null?dez(w.aussen)+"°C":"–"],["Boiler",w.boiler!=null?dez(w.boiler)+"°C":"–"],
+      const teile=[["Raum",w.raum!=null?dez(w.raum)+"°C":"–",st.th&&st.th.aktiv?"Soll "+dez(st.th.soll)+"°C":"min. "+dez(st.mindest)+"°C"],["Aussen",w.aussen!=null?dez(w.aussen)+"°C":"–"],["Boiler",w.boiler!=null?dez(w.boiler)+"°C":"–"],
         ["Netz",w.netz!=null?(w.netz<0?"−"+de(-w.netz/1000,2)+" kW Einspeisung":de(w.netz/1000,2)+" kW Bezug"):"–"]];
       if(f) teile.push(["Warmes Fenster",f.frost?"ganzer Tag (Frost)":fTime(f.von)+"–"+fTime(f.bis),f.tm!=null?"Tagesmittel "+dez(f.tm)+"°C":"ohne Prognose"]);
       $("sWerte").innerHTML=teile.map(([n,v,z])=>`<span>${n} <b>${v}</b>${z?" ("+z+")":""}</span>`).join("");
       const zeile=i=>{const ch=st.ch[i], wp=i===2, an=wp?"abgesenkt":"ein", aus=wp?"frei":"aus";
         const diff=ch.soll!==null&&ch.ist!==null&&ch.soll!==ch.ist;
-        return `<tr><td>${AUSG[i]}</td><td class="w">${pill(ch.ist,an,aus)}</td><td class="w">${ch.soll===null?'<span class="spill">–</span>':pill(ch.soll,an,aus,diff)}</td><td class="g">${ch.grund||""}${ch.pause?" · <b>Handbetrieb bis "+fTime(ch.pause)+"</b>":""}</td></tr>`};
+        return `<tr><td>${AUSG[i]}</td><td class="w">${pill(ch.ist,an,aus)}</td><td class="w">${ch.soll===null?'<span class="spill">–</span>':pill(ch.soll,an,aus,diff)}</td><td class="g">${ch.grund||""}${ch.pause?" · <b>Handbetrieb "+pauseTxt(ch.pause)+"</b>":""}</td></tr>`};
       $("sAusg").innerHTML=`<thead><tr><th>Ausgang</th><th>Ist</th><th>Soll</th><th>Grund</th></tr></thead><tbody>${[2,0,1].map(zeile).join("")}</tbody>`;
       const pausen=st.ch.filter(x=>x.pause);
       $("sPause").hidden=!pausen.length;
@@ -3333,6 +3352,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       el.append(sp,b);li.append(el)});
     if(!$("sAusDatum").value){const d=new Date(Date.now()+2*864e5);$("sAusDatum").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
     if($("sWoche").dataset.dirty!=="1") zeichneWoche();
+    zeichneThermo();
     zeichneFahrplan();
     // Protokoll
     const pr=STEU.protokoll||[];
@@ -3454,6 +3474,42 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("ueSpeichern").addEventListener("click",()=>{const g=ueEingaben();steuerSenden({aktion:"ueberschuss",ueb:{soc:g.soc,frei:g.frei,maxT:g.maxT,dauer:g.dauer}},"Grenzwerte gespeichert.",undefined,undefined,UI_U)});
   $("ueVerwerfen").addEventListener("click",()=>{$("uePanel").dataset.dirty="";$("ueMeldung").textContent="";zeichneUeb()});
   const esc=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+  /* ---------- Raumthermostat (rechnet und schaltet im Google-Skript, steuern_) ---------- */
+  const TH_SOLL=[["sollTag","Tag","zu Hause, ab Vorlauf vor dem Heimkommen"],["sollNacht","Nacht","nachts und solange niemand da ist"],["sollAus","Auswärts","bis Vorlauf vor der Rückkehr"]];
+  let thEdit=null;
+  function zeichneThermo(){
+    if(!STEU) return;
+    const c=STEU.cfg, st=STEU.status, th=st&&st.th, aktiv=c.p.wpThermo===1;
+    document.querySelectorAll("#thPanel .seg button").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.th===(aktiv?1:0))));
+    if(thEdit&&!TH_SOLL.some(([k])=>thEdit[k]!==c.p[k])) thEdit=null;   // nichts geändert: immer die gespeicherten Werte zeigen
+    if(!thEdit) thEdit={sollTag:c.p.sollTag,sollNacht:c.p.sollNacht,sollAus:c.p.sollAus};
+    const box=$("thSoll"); box.innerHTML="";
+    TH_SOLL.forEach(([k,n,z])=>{
+      const l=document.createElement("div");l.className="n";l.innerHTML=`${n}<small>${z}</small>`;
+      const r=document.createElement("div");r.className="thstep";
+      const minus=document.createElement("button");minus.type="button";minus.className="knopfklein ghost";minus.textContent="−";minus.setAttribute("aria-label",n+": 0,1 °C tiefer");
+      const v=document.createElement("b");v.textContent=dez(thEdit[k]);v.setAttribute("aria-live","polite");
+      const plus=document.createElement("button");plus.type="button";plus.className="knopfklein ghost";plus.textContent="+";plus.setAttribute("aria-label",n+": 0,1 °C höher");
+      const set=d=>{thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); thDirty()};
+      minus.addEventListener("click",()=>set(-0.1)); plus.addEventListener("click",()=>set(0.1));
+      r.append(minus,v,document.createTextNode("°C"),plus); box.append(l,r)});
+    thDirty();
+    // Zustand
+    if(!th){$("thStatus").textContent="Noch kein Lauf mit dem Raumthermostat. Neues Google-Skript (Stand 01.11.2026) einspielen.";$("thBeob").textContent="";return}
+    const raum=th.raum!=null?`Raum <b>${dez(th.raum)} °C</b>`:"Raum <b>–</b>";
+    const soll=`Soll jetzt <b>${dez(th.soll)} °C</b>${th.pvAn?` (inkl. +${dez(c.p.pvPlus)} °C PV-Überschuss)`:""}`;
+    const regel=th.genau?`frei unter ${dez(th.soll)}, abgesenkt über ${dez(th.soll)} °C`:`frei bei ${dez(th.frei)} °C und tiefer, abgesenkt bei ${dez(th.abs)} °C und höher`;
+    const wp=st.ch&&st.ch[2], istT=wp&&wp.ist===1?"abgesenkt":wp&&wp.ist===0?"frei":"–";
+    $("thStatus").innerHTML=`${raum} · ${soll} · WP jetzt <b>${istT}</b><br><span class="sub" style="text-transform:none;letter-spacing:0">${regel}</span>`;
+    $("thBeob").textContent=aktiv?(th.fenster?"Zum Beobachten – Regel «wärmstes Fenster» würde: "+(th.fenster.soll?"absenken":"frei")+" ("+th.fenster.grund+")":""):"Aktiv ist die Regel «wärmstes Fenster». Das Raumthermostat würde: "+(th.zustand?"absenken":"frei")+" ("+th.grund+")";
+  }
+  function thDirty(){const c=STEU&&STEU.cfg; if(!c||!thEdit) return; const d=TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]); $("thSpeichern").disabled=!d; $("thVerwerfen").hidden=!d}
+  $("thSpeichern").addEventListener("click",()=>{if(!thEdit)return; const p={sollTag:thEdit.sollTag,sollNacht:thEdit.sollNacht,sollAus:thEdit.sollAus};
+    steuerSenden({aktion:"einstellungen",p},`Sollwerte gespeichert: Tag ${dez(p.sollTag)}, Nacht ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
+  $("thVerwerfen").addEventListener("click",()=>{thEdit=null;zeichneThermo()});
+  document.querySelectorAll("#thPanel .seg button").forEach(b=>b.addEventListener("click",()=>{
+    if(!STEU) return; const v=+b.dataset.th; if((STEU.cfg.p.wpThermo===1?1:0)===v) return;
+    steuerSenden({aktion:"einstellungen",p:{wpThermo:v}},v?"Regel: Raumthermostat":"Regel: wärmstes Fenster")}));
   function zeichneWoche(){
     const c=STEU.cfg, box=$("sWoche"); box.innerHTML="";
     WTAGE.forEach(([k,n])=>{const w=c.plan[k]||{art:"alltag"};
@@ -3475,7 +3531,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t0=P.t0, t1=t0+P.abs.length*P.schritt, X=t=>Lp+(t-t0)/(t1-t0)*(W-Lp-Rp);
     // Temperaturen: Prognose aussen + Mindesttemperatur Raum
     const temp=[]; if(STEU.temp) STEU.temp.v.forEach((v,i)=>{const t=STEU.temp.t0+i*3600e3; if(v!=null&&t>=t0-3600e3&&t<=t1+3600e3) temp.push([t,v])});
-    const alle=temp.map(x=>x[1]).concat(P.min); let lo=Math.min(...alle), hi=Math.max(...alle);
+    const thermo=!!(P.thermo&&P.soll&&P.soll.length), linie=thermo?P.soll:P.min;
+    const wsReihe=((ROH&&ROH.ma)||[]).find(x=>String(x.id).toUpperCase()==="074C399C4513");
+    const raumIst=wsReihe?(wsReihe.rows||[]).filter(r=>typeof r[1]==="number"&&r[0]>=t0&&r[0]<=t1).map(r=>[r[0],r[1]]):[];
+    const alle=temp.map(x=>x[1]).concat(linie,raumIst.map(x=>x[1])); let lo=Math.min(...alle), hi=Math.max(...alle);
     const step=niceStep(Math.max(4,hi-lo),4); lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step;
     const Y=v=>Tp+(hi-v)/(hi-lo)*Hc;
     let g="";
@@ -3487,13 +3546,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // warme Fenster als Hintergrund
     (STEU.fenster||[]).forEach(f=>{if(!f||f.frost)return;g+=`<rect x="${X(f.von).toFixed(1)}" y="${Tp}" width="${(X(f.bis)-X(f.von)).toFixed(1)}" height="${Hc}" fill="var(--warm)" opacity=".10"/>`});
     // Mindesttemperatur Raum (Stufenlinie, gestrichelt)
-    let d="";P.min.forEach((v,i)=>{const x=X(t0+i*P.schritt).toFixed(1),y=Y(v).toFixed(1);d+=(i?`H${x}V${y}`:`M${x},${y}`)});d+=`H${X(t1).toFixed(1)}`;
-    g+=`<path class="lp" data-hl="min" d="${d}" fill="none" stroke="var(--hot)" stroke-width="2" stroke-dasharray="5 4"/>`;
+    let d="";linie.forEach((v,i)=>{const x=X(t0+i*P.schritt).toFixed(1),y=Y(v).toFixed(1);d+=(i?`H${x}V${y}`:`M${x},${y}`)});d+=`H${X(t1).toFixed(1)}`;
+    g+=`<path class="lp" data-hl="min" d="${d}" fill="none" stroke="${thermo?"var(--c-wp)":"var(--hot)"}" stroke-width="2" stroke-dasharray="5 4"/>`;
+    if(raumIst.length>1) g+=`<path class="lp" data-hl="raum" d="${raumIst.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("")}" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-opacity=".85"/>`;
     if(temp.length) g+=`<path class="lp" data-hl="aussen" d="${temp.map((p,i)=>(i?"L":"M")+X(Math.max(t0,Math.min(t1,p[0]))).toFixed(1)+","+Y(p[1]).toFixed(1)).join("")}" fill="none" stroke="var(--cold)" stroke-width="2"/>`;
     // Spuren: Szenario, WP geplant, WP ist
     const yl=k=>Tp+Hc+24+k*(lane+gap);
     const spur=(k,name)=>{g+=`<text x="${Lp-6}" y="${(yl(k)+lane/2+4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${name}</text>`};
-    spur(0,"Szen."); spur(1,"Plan"); spur(2,"Ist");
+    spur(0,"Szen."); spur(1,thermo?"Fenster":"Plan"); spur(2,"Ist");
     let i0=0;
     for(let i=1;i<=P.sz.length;i++){if(i===P.sz.length||P.sz[i]!==P.sz[i0]){const a=P.arten[P.sz[i0]];g+=`<rect x="${X(t0+i0*P.schritt).toFixed(1)}" y="${yl(0)}" width="${Math.max(1,X(t0+i*P.schritt)-X(t0+i0*P.schritt)-1).toFixed(1)}" height="${lane}" rx="3" fill="${SZ_FARBE[a]}" opacity=".85" data-hl="sz-${a}"/>`;i0=i}}
     i0=0;
@@ -3506,13 +3566,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.innerHTML=g;
     const arten=[...new Set(P.arten)];
     giltSetzen("chartSt",spanTage(t0,t1-1)+(STEU.status&&STEU.status.zeit?" · Plan "+fStempel(STEU.status.zeit):""));
-    $("sLegend").innerHTML=`<span data-hl="aussen"><i style="width:18px;border-top:2px solid var(--cold);display:inline-block"></i>Aussen (Prognose)</span><span data-hl="min"><i style="width:18px;border-top:2px dashed var(--hot);display:inline-block"></i>Raum mindestens</span>`+
-      `<span data-hl="frei"><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>WP frei (heizt normal)</span><span data-hl="abs"><i style="width:10px;height:10px;border-radius:2px;background:var(--cold);opacity:.35;display:inline-block"></i>WP abgesenkt</span>`+
+    $("sLegend").innerHTML=`<span data-hl="aussen"><i style="width:18px;border-top:2px solid var(--cold);display:inline-block"></i>Aussen (Prognose)</span><span data-hl="min"><i style="width:18px;border-top:2px dashed ${thermo?"var(--c-wp)":"var(--hot)"};display:inline-block"></i>${thermo?"Raum Soll":"Raum mindestens"}</span>`+(raumIst.length>1?`<span data-hl="raum"><i style="width:18px;border-top:2px solid var(--fg);display:inline-block"></i>Raum gemessen</span>`:"")+
+      `<span data-hl="frei"><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>WP frei (heizt normal)${thermo?" · «Fenster» = alte Regel, nur beobachtet":""}</span><span data-hl="abs"><i style="width:10px;height:10px;border-radius:2px;background:var(--cold);opacity:.35;display:inline-block"></i>WP abgesenkt</span>`+
       arten.map(a=>`<span data-hl="sz-${a}"><i style="width:10px;height:10px;border-radius:2px;background:${SZ_FARBE[a]};display:inline-block"></i>${{alltag:"Alltag",heim:"Komme nach Hause",aus:"Auswärts"}[a]}</span>`).join("");
     hlVerbinden($("sLegend"),svg);
     const zeig=t=>{const i=Math.max(0,Math.min(P.abs.length-1,Math.floor((t-t0)/P.schritt)));const tt=t0+i*P.schritt;
       const tv=temp.length?temp.reduce((b,p)=>Math.abs(p[0]-tt)<Math.abs(b[0]-tt)?p:b)[1]:null;
-      $("readoutSt").textContent=`${fDay(tt)} ${fTime(tt)} · ${P.texte[P.sz[i]]} · WP ${P.abs[i]?"abgesenkt":"frei"} · Raum min. ${dez(P.min[i])}°C`+(tv!=null?` · aussen ${dez(tv)}°C`:"");
+      $("readoutSt").textContent=`${fDay(tt)} ${fTime(tt)} · ${P.texte[P.sz[i]]} · `+(thermo?`Raum Soll ${dez(P.soll[i])}°C · Fenster-Regel: WP ${P.abs[i]?"abgesenkt":"frei"}`:`WP ${P.abs[i]?"abgesenkt":"frei"} · Raum min. ${dez(P.min[i])}°C`)+(tv!=null?` · aussen ${dez(tv)}°C`:"");
       const c=$("sCross");c.setAttribute("x1",X(tt));c.setAttribute("x2",X(tt));c.setAttribute("visibility","visible")};
     const hit=$("sHit"), pos=ev=>{const r=svg.getBoundingClientRect();return t0+((ev.clientX-r.left)*W/r.width-Lp)/(W-Lp-Rp)*(t1-t0)};
     hit.addEventListener("mousemove",ev=>zeig(pos(ev)));hit.addEventListener("click",ev=>zeig(pos(ev)));
