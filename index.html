@@ -1079,7 +1079,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 16:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 16:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3580,7 +3580,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     const X=h=>Lb+h/24*(W-Lb-Rb), hm=x=>{const [a,b]=x.split(":").map(Number);return a+b/60};
     let g="";
-    for(let h=0;h<=24;h+=6){const x=X(h).toFixed(1);g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-16}" stroke="var(--line)"/><text x="${x}" y="${H-4}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${String(h).padStart(2,"0")}</text>`}
+    const labJede=W<420?3:2;   // Beschriftung alle 2 h (Handy: alle 3 h), feine Linie jede Stunde
+    for(let h=0;h<=24;h++){const x=X(h).toFixed(1), lab=h%labJede===0;
+      g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-16}" stroke="var(--line)" stroke-opacity="${h%6===0?1:lab?.7:.35}"/>`;
+      if(lab) g+=`<text x="${x}" y="${H-4}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${String(h).padStart(2,"0")}</text>`}
     const stueck=(row,a,b,col,op)=>{if(b<=a)return;g+=`<rect x="${X(a).toFixed(1)}" y="${row*(lane+gap)}" width="${(X(b)-X(a)).toFixed(1)}" height="${lane}" rx="3" fill="${col}" opacity="${op}"/>`};
     TH_TAGE.forEach(([k,n],row)=>{const w=planEdit.plan[k]; const y=row*(lane+gap);
       g+=`<rect x="${Lb}" y="${y}" width="${W-Lb-Rb}" height="${lane}" rx="3" fill="var(--accent)" opacity=".18"/><text x="${Lb-5}" y="${y+12}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}</text>`;
@@ -3589,6 +3592,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       stueck(row,Math.max(0,v),a,"var(--warm)",.35); if(v<0) stueck((row+6)%7,24+v,24,"var(--warm)",.35);
       stueck(row,a,Math.min(24,e),"var(--warm)",.9);
       if(e>24){const nr=(row+1)%7; stueck(nr,0,e-24,"var(--warm)",.9)}});
+    for(let h=1;h<24;h++){const x=X(h).toFixed(1);g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-18}" stroke="var(--bg)" stroke-opacity="${h%6===0?.55:.3}" stroke-width="1"/>`}   // Stundenlinien auch über den Balken
     svg.innerHTML=g;
   }
   function planDirty(){const d=!planGleich(); $("thPlanSpeichern").disabled=!d; $("thPlanVerwerfen").hidden=!d; zeichneWochenbalken()}
