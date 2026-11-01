@@ -299,7 +299,9 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thbetrieb{margin:10px 0 4px}
 .thknopf{font-weight:700;padding:7px 14px;font-size:.92rem}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
-.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}.tip{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(300px,80vw);padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:.8rem;line-height:1.35;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:normal}
+.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.bstat{display:flex;gap:8px;flex-wrap:wrap}.bstat span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.8rem;color:var(--muted)}
+.bstat span i{width:8px;height:8px;border-radius:50%;background:var(--muted)}.bstat span.an{color:var(--fg);border-color:var(--warm)}.bstat span.an i{background:var(--warm)}
+.thplanzu{margin-top:10px}.tip{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(300px,80vw);padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:.8rem;line-height:1.35;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:normal}
 .thregeln{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thregeln .thtrenn{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
@@ -1018,13 +1020,13 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <div id="tabBoiler" role="tabpanel" aria-labelledby="tabBtnBoiler" class="tabpanel" hidden>
     <section class="panel">
-      <details id="bEinst" class="h2box">
-        <summary><h2>Boiler auswärts</h2></summary>
-        <p class="hint" style="margin-top:0">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (10) eingespielt ist.</p>
+      <div id="bEinst">
+        <div class="uekopf"><h2 style="margin:0">Boiler auswärts</h2><div class="bstat" id="bStat"></div></div>
+        <p class="hint" style="margin-top:8px">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, frei nur bei Überschuss, und rechtzeitig vor der Rückkehr warm. Wirkt, sobald das Google-Skript Stand 01.11.2026 (10) eingespielt ist.</p>
         <div id="bParam"></div>
         <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
         <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
-      </details>
+      </div>
     </section>
     <section class="panel" id="uePanel">
       <details id="ueBox" class="h2box">
@@ -1123,7 +1125,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 19:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 20:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1287,7 +1289,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const kAgeZeigen=()=>{$("kAge").textContent=[kStand,kBereich&&"Verlauf "+kBereich].filter(Boolean).join(" · ")};
   function steuerModusAuto(){ let c=STEU; if(!c){try{c=JSON.parse(localStorage.getItem("tb.steuer")||"null")}catch(e){c=null}} return !!(c&&c.cfg&&c.cfg.modus==="auto") }
   function renderK14(k){
-    k14Jetzt=k||null; if(typeof zeichneRelais==="function"&&STEU) zeichneRelais();
+    k14Jetzt=k||null; if(typeof zeichneRelais==="function"&&STEU){ zeichneRelais(); zeichneBoilerStatus(); }
     const box=$("kChips"); box.innerHTML="";
     const namen=((k&&k.namen)||KNAMEN).map(kurz);
     document.querySelectorAll(".kzeit").forEach(e=>e.remove());
@@ -3405,6 +3407,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
       $("sHint").hidden=true;
       if(k14Jetzt) renderK14(k14Jetzt);   // Anzeige «Automatik» bei WP ABSENKEN nachführen
+      zeichneBoilerStatus();
     }catch(e){ if(!hintergrund){$("sHint").textContent=e.message;$("sHint").hidden=false} }
     finally{ if(nr===steuNr) $("sBusy").hidden=true }
     if(steuerReiter()) zeichneSteuerung();
@@ -3729,7 +3732,17 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       (hand?`<small style="color:var(--c-bezug)">von Hand geschaltet</small>`:"")+(zeit?`<small>Stand ${fTime(zeit)}</small>`:"");
   }
   let bEdit=false;
+  function zeichneBoilerStatus(){
+    const box=$("bStat"); if(!box) return; const c=STEU&&STEU.cfg, st=STEU&&STEU.status;
+    const aus=!!(c&&c.th&&c.th.betrieb==="aus");
+    let sp=st&&st.ch&&st.ch[0]?st.ch[0].ist:null, zeit=st&&st.zeit;
+    if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
+    const pill=(an,txt,tip)=>`<span class="${an?"an":""}" title="${tip}"><i aria-hidden="true"></i>${txt}</span>`;
+    box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(c.th.ausBis?" bis "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis):""):"Auswärts nicht aktiv","Betriebsart Raumthermostat"):"")+
+      (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"");
+  }
   function zeichneBoilerEinst(erzwingen){
+    zeichneBoilerStatus();
     const box=$("bParam"), c=STEU&&STEU.cfg; if(!box||!c) return;
     if(!erzwingen&&(bEdit||box.contains(document.activeElement))) return;
     box.innerHTML="";
