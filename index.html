@@ -282,7 +282,12 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 @media (max-width:520px){.seg{width:100%}.seg button{flex:1 1 auto;padding:6px 6px}}
 .seg button+button{border-left:1px solid var(--line)}
 .thsoll{display:grid;grid-template-columns:auto auto;gap:8px 16px;align-items:center;margin:12px 0 4px;max-width:440px}
-.thsoll .n{font-size:.9rem}.thsoll .n small{display:block;color:var(--muted);font-size:.74rem}
+.thmod{display:flex;align-items:center;flex-wrap:wrap;gap:0 8px;text-align:left;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.95rem;color:var(--fg);cursor:pointer;min-width:150px}
+.thmod small{flex-basis:100%;padding-left:18px;color:var(--muted);font-size:.72rem}
+.thmod .punkt{width:10px;height:10px;border-radius:50%;border:2px solid var(--muted)}
+.thmod.an{border-color:var(--c-wp);background:color-mix(in srgb,var(--c-wp) 10%,transparent);font-weight:600}
+.thmod.an .punkt{border-color:var(--c-wp);background:var(--c-wp)}.thmod.an small{color:var(--c-wp)}
+.spaeter{display:inline-block;font-size:.72rem;font-weight:600;color:var(--muted);border:1px dashed var(--muted);border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:middle;text-transform:none;letter-spacing:0}
 .thstep{display:flex;align-items:center;gap:6px;justify-self:end}
 .thstep button{width:34px;height:34px;padding:0;font-size:1.1rem;line-height:1}
 .thstep b{font-family:var(--f-display);font-size:1.35rem;min-width:4.2ch;text-align:center;font-variant-numeric:tabular-nums;color:var(--c-wp)}
@@ -917,10 +922,10 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <p class="thbeob" id="thBeob"></p>
       <div class="thsoll" id="thSoll"></div>
       <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
-      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). Schaltabstand, Mindestzeiten und PV-Anhebung unter Wochenplan → Einstellungen. Nacht, Vorlauf vor dem Heimkommen und Auswärts kommen aus dem Wochenplan bzw. dem gewählten Szenario. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
+      <p class="hint">Raum = Wetterstation innen. Unter dem Sollwert heizt die WP normal, darüber wird sie abgesenkt (WP ABSENKEN). Welcher Sollwert gilt, wählst du hier von Hand («Zu Hause», «Nacht», «Auswärts»); er gilt, bis du umstellst. PV-Anhebung nur bei «Zu Hause». Schaltabstand, Mindestzeiten und PV-Anhebung unter Wochenplan → Einstellungen. Der Sollwert muss unter der Tagtemperatur am WP-Regler liegen (heute 21,5 °C).</p>
     </section>
     <section class="panel">
-      <h2>Szenario wählen</h2>
+      <h2>Szenario wählen <span class="spaeter">für später – wirkt noch nicht aufs Raumthermostat</span></h2>
       <div class="sform">
         <div class="szeile"><span>Komme nach Hause um</span><input type="time" id="sHeimZeit" value="18:00" aria-label="Uhrzeit Heimkommen"><button type="button" class="knopfklein" id="sHeimOk">Übernehmen</button></div>
         <div class="szeile"><span>Bin auswärts bis</span><input type="date" id="sAusDatum" aria-label="Datum Rückkehr"><input type="time" id="sAusZeit" value="17:00" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="sAusOk">Übernehmen</button></div>
@@ -942,7 +947,8 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="readout" id="readoutSt"></div>
     </section>
     <section class="panel">
-      <h2>Wochenplan</h2>
+      <h2>Wochenplan <span class="spaeter">für später – wirkt noch nicht aufs Raumthermostat</span></h2>
+      <p class="hint" style="margin-top:0">Der Wochenplan und die Szenarien sind für später vorgesehen. Im Moment wählst du den Sollwert oben im Raumthermostat von Hand. Die Einstellungen unten gelten aber schon (Schaltabstand, Mindestzeiten, PV-Anhebung).</p>
       <div class="swoche" id="sWoche"></div>
       <details id="sEinst">
         <summary>Einstellungen</summary>
@@ -1052,7 +1058,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 14:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 14:40</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3480,7 +3486,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("ueVerwerfen").addEventListener("click",()=>{$("uePanel").dataset.dirty="";$("ueMeldung").textContent="";zeichneUeb()});
   const esc=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   /* ---------- Raumthermostat (rechnet und schaltet im Google-Skript, steuern_) ---------- */
-  const TH_SOLL=[["sollTag","Tag","zu Hause, ab Vorlauf vor dem Heimkommen"],["sollNacht","Nacht","nachts und solange niemand da ist"],["sollAus","Auswärts","bis Vorlauf vor der Rückkehr"]];
+  const TH_SOLL=[["sollTag","Zu Hause"],["sollNacht","Nacht"],["sollAus","Auswärts"]];
   let thEdit=null;
   function zeichneThermo(){
     if(!STEU) return;
@@ -3489,8 +3495,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(thEdit&&!TH_SOLL.some(([k])=>thEdit[k]!==c.p[k])) thEdit=null;   // nichts geändert: immer die gespeicherten Werte zeigen
     if(!thEdit) thEdit={sollTag:c.p.sollTag,sollNacht:c.p.sollNacht,sollAus:c.p.sollAus};
     const box=$("thSoll"); box.innerHTML="";
-    TH_SOLL.forEach(([k,n,z])=>{
-      const l=document.createElement("div");l.className="n";l.innerHTML=`${n}<small>${z}</small>`;
+    const mod=c.p.thMod===1||c.p.thMod===2?c.p.thMod:0;
+    TH_SOLL.forEach(([k,n],i)=>{
+      const l=document.createElement("button");l.type="button";l.className="thmod"+(i===mod?" an":"");l.setAttribute("aria-pressed",String(i===mod));
+      l.innerHTML=`<span class="punkt" aria-hidden="true"></span>${n}<small>${i===mod?"gilt jetzt":"antippen zum Wählen"}</small>`;
+      l.addEventListener("click",()=>{if(i!==mod) steuerSenden({aktion:"einstellungen",p:{thMod:i}},"Raumthermostat: "+n+" gewählt")});
       const r=document.createElement("div");r.className="thstep";
       const minus=document.createElement("button");minus.type="button";minus.className="knopfklein ghost";minus.textContent="−";minus.setAttribute("aria-label",n+": 0,1 °C tiefer");
       const v=document.createElement("b");v.textContent=dez(thEdit[k]);v.setAttribute("aria-live","polite");
