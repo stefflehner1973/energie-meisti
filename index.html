@@ -1125,7 +1125,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 20:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 20:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3385,7 +3385,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     ["Allgemein",[["pause","Pause nach Handschaltung","h",0.5,"0 = Handschaltung gilt, bis du «Automatik sofort fortsetzen» drückst."],["absSicher","Absenken endet ohne Google nach","h",0.5,"Sicherheit: Meldet sich Google nicht mehr, schaltet der Shelly das Absenken nach dieser Zeit selbst aus."]]]];
   const PARAM=PARAM_GR.flatMap(g=>g[1]);
   // 6. Feld = Anzeige-Faktor: angezeigt wird gespeichert / Faktor (z. B. W → kW, min → h)
-  const BOILER_PARAM=[["Auswärts",[["einspeisung","Frei ab Einspeisung","kW",0.5,"Auswärts ist der Boiler gesperrt und wird bei so viel Einspeisung ins Netz freigegeben.",1000],["auPv","oder frei ab PV-Produktion","kW",0.5,"Zusätzlich: Boiler auch frei, wenn die PV so viel produziert UND die Batterie mindestens so voll ist (Feld darunter). Solange das stimmt, wird nicht gesperrt. 0 = aus.",1000],["auSoc","… und Batterie mindestens","%",5],["bezug","Wieder sperren unter Einspeisung","W",50,"Fliesst weniger als so viel ins Netz (während der Zeit darunter), wird der Boiler wieder gesperrt. 0 = sperren, sobald Strom aus dem Netz bezogen wird."],["bezugMin","Einspeisung zu tief während","min",1]]],
+  const BOILER_PARAM=[["Auswärts: frei bei Einspeisung",[["einspeisung","Frei ab Einspeisung","kW",0.5,"Auswärts ist der Boiler gesperrt und wird bei so viel Einspeisung ins Netz freigegeben.",1000],["bezug","Wieder sperren unter Einspeisung","W",50,"Fliesst weniger als so viel ins Netz (während der Zeit daneben), wird der Boiler wieder gesperrt. 0 = sperren, sobald Strom aus dem Netz bezogen wird."],["bezugMin","Einspeisung zu tief während","min",1]]],
+    ["Auswärts: Sperre kurz aus bei PV und Batterie",[["auPv","PV-Produktion mindestens","kW",0.5,"Produziert die PV so viel UND ist die Batterie genug voll, wird «Boiler SPERREN» für die eingestellte Zeit ausgeschaltet. Dann kann das Fronius-Lastmanagement den Boiler einschalten (wie lange, stellst du am Fronius ein). 0 = aus.",1000],["auSoc","und Batterie mindestens","%",5],["auFreiMin","Sperre aus für","min",5,"So lange bleibt «Boiler SPERREN» aus. Danach wird neu geprüft."]]],
     ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
     const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
