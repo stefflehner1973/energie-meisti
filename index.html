@@ -1078,7 +1078,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 15:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 16:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3570,7 +3570,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const b=document.createElement("b");b.textContent=n;
       box.append(b,sel(TH_TAG_OPT,w.tag,v=>{w.tag=v},n+": Tag ab"),sel(TH_NACHT_OPT,w.nacht,v=>{w.nacht=v},n+": Nacht ab"))});
     $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h";
-    $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=6;
+    $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12;
     planDirty();
   }
   function zeichneWochenbalken(){
@@ -3592,7 +3592,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("thKopieWo").addEventListener("click",()=>{if(!planEdit)return;const m=planEdit.plan[1];[2,3,4,5].forEach(k=>planEdit.plan[k]={tag:m.tag,nacht:m.nacht});zeichnePlanNurEdit()});
   $("thKopieWe").addEventListener("click",()=>{if(!planEdit)return;const m=planEdit.plan[6];planEdit.plan[0]={tag:m.tag,nacht:m.nacht};zeichnePlanNurEdit()});
   function zeichnePlanNurEdit(){zeichnePlan(true)}
-  const vhSchritt=d=>{if(!planEdit)return; planEdit.vorheiz=Math.max(0,Math.min(6,Math.round(planEdit.vorheiz+d))); $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h"; $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=6; planDirty()};
+  const vhSchritt=d=>{if(!planEdit)return; planEdit.vorheiz=Math.max(0,Math.min(12,Math.round(planEdit.vorheiz+d))); $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h"; $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12; planDirty()};
   $("thVhMinus").addEventListener("click",()=>vhSchritt(-1)); $("thVhPlus").addEventListener("click",()=>vhSchritt(1));
   $("thPlanSpeichern").addEventListener("click",()=>{if(!planEdit)return; steuerSenden({aktion:"thermo",th:{plan:planEdit.plan},p:{vorheiz:planEdit.vorheiz}},"Zeitplan gespeichert")});
   $("thPlanVerwerfen").addEventListener("click",()=>{planEdit=null;zeichnePlan()});
