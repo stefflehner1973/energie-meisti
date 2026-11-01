@@ -288,7 +288,8 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thmod.an{border-color:var(--c-wp);background:color-mix(in srgb,var(--c-wp) 10%,transparent);font-weight:600}
 .thmod.an .punkt{border-color:var(--c-wp);background:var(--c-wp)}.thmod.an small{color:var(--c-wp)}
 .thmeld{font-size:.86rem;margin:4px 0;color:var(--fg)}.thmeld .spin,button .spin{display:inline-block;margin-right:6px;vertical-align:-2px}
-.thbetrieb{margin:10px 0 4px}.thaus{margin:6px 0}
+.thbetrieb{margin:10px 0 4px}
+.thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
 .thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanbox summary{cursor:pointer;font-weight:600}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
@@ -881,13 +882,13 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel" id="thPanel">
       <div class="histhead"><h2 class="tc-wp" style="margin:0">Raumthermostat · Wärmepumpe</h2>
         <div class="seg" role="group" aria-label="Regel für WP ABSENKEN"><button type="button" data-th="1" aria-pressed="false" title="WP ABSENKEN nach Raumtemperatur (Wetterstation innen) gegen den Sollwert">Raumthermostat</button><button type="button" data-th="0" aria-pressed="false" title="Bisherige Regel: frei im wärmsten Zeitfenster der Prognose">Wärmstes Fenster</button></div></div>
-      <div class="thbetrieb"><div class="seg" role="group" aria-label="Betriebsart Raumthermostat"><button type="button" data-tb="plan" aria-pressed="false" title="Zu Hause und Abgesenkt nach Zeitplan">Zeitplan</button><button type="button" data-tb="aus" aria-pressed="false" title="Auswärts-Sollwert, bis du zurückstellst oder bis zum Rückkehrdatum">Auswärts</button></div></div>
-      <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <p class="thstat" id="thStatus">–</p>
       <div class="krow" id="thAbw"></div>
       <p class="thmeld" id="thMeld" aria-live="polite" hidden></p>
       <p class="thhand" id="thHand" hidden></p>
-      <p class="thbeob" id="thBeob"></p>
+      <div class="thtrenn">Einstellungen</div>
+      <div class="thbetrieb"><div class="seg" role="group" aria-label="Betriebsart Raumthermostat"><button type="button" data-tb="plan" aria-pressed="false" title="Zu Hause und Abgesenkt nach Zeitplan">Zeitplan</button><button type="button" data-tb="aus" aria-pressed="false" title="Auswärts-Sollwert, bis du zurückstellst oder bis zum Rückkehrdatum">Auswärts</button></div></div>
+      <div class="szeile thaus" id="thAusForm" hidden><span>Zurück am</span><input type="date" id="thAusDatum" aria-label="Datum Rückkehr"><input type="time" id="thAusZeit" value="17:00" step="900" aria-label="Uhrzeit Rückkehr"><button type="button" class="knopfklein" id="thAusOk">Auswärts übernehmen</button><button type="button" class="knopfklein ghost" id="thAusOhne">ohne Datum</button></div>
       <div class="thsoll" id="thSoll"></div>
       <div class="krow"><button type="button" class="knopfklein" id="thSpeichern" disabled>Sollwerte speichern</button><button type="button" class="knopfklein ghost" id="thVerwerfen" hidden>Verwerfen</button></div>
       <details class="thplanbox" id="thPlanBox">
@@ -900,6 +901,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
         <div class="krow"><button type="button" class="knopfklein" id="thPlanSpeichern" disabled>Zeitplan speichern</button><button type="button" class="knopfklein ghost" id="thPlanVerwerfen" hidden>Verwerfen</button></div>
       </details>
+      <p class="thbeob" id="thBeob"></p>
       <form class="krow spinbox" id="sPinBox" hidden autocomplete="off">
         <input type="password" id="sPin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
         <label class="kmerk"><input type="checkbox" id="sMerk"> 30 Tage merken</label>
@@ -1082,7 +1084,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 16:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3528,7 +3530,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function zeichneThermo(){
     if(!STEU||thLaeuft) return;   // während eine Aktion läuft, Rückmeldung am Knopf stehen lassen
     const c=STEU.cfg, st=STEU.status, th=st&&st.th, aktiv=c.p.wpThermo===1;
-    document.querySelectorAll("#thPanel .seg button").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.th===(aktiv?1:0))));
+    document.querySelectorAll("#thPanel [data-th]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.th===(aktiv?1:0))));
     if(thEdit&&!TH_SOLL.some(([k])=>thEdit[k]!==c.p[k])) thEdit=null;   // nichts geändert: immer die gespeicherten Werte zeigen
     if(!thEdit) thEdit={sollTag:c.p.sollTag,sollNacht:c.p.sollNacht,sollAus:c.p.sollAus};
     const box=$("thSoll"); box.innerHTML="";
@@ -3649,7 +3651,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("thSpeichern").addEventListener("click",()=>{if(!thEdit)return; const p={sollTag:thEdit.sollTag,sollNacht:thEdit.sollNacht,sollAus:thEdit.sollAus};
     thSenden($("thSpeichern"),"Sollwerte werden gespeichert",{aktion:"einstellungen",p},`Sollwerte gespeichert: Zu Hause ${dez(p.sollTag)}, Abgesenkt ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
   $("thVerwerfen").addEventListener("click",()=>{thEdit=null;zeichneThermo()});
-  document.querySelectorAll("#thPanel .seg button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#thPanel [data-th]").forEach(b=>b.addEventListener("click",()=>{
     if(!STEU) return; const v=+b.dataset.th; if((STEU.cfg.p.wpThermo===1?1:0)===v) return;
     thSenden(b,v?"Raumthermostat wird gewählt":"Wärmstes Fenster wird gewählt",{aktion:"einstellungen",p:{wpThermo:v}},v?"Regel: Raumthermostat":"Regel: wärmstes Fenster")}));
   function zeichneWoche(){
