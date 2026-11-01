@@ -292,7 +292,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thbetrieb{margin:10px 0 4px}
 .thknopf{font-weight:700;padding:7px 14px;font-size:.92rem}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
-.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}.thplanzu .thplan{margin-top:8px}
+.thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.thplanzu{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
 .thplan .k{font-size:.74rem;color:var(--muted)}.thplan b{font-size:.92rem}.thplan select{font-size:.95rem;padding:4px 6px}
 .thvh{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.88rem;margin:8px 0}
@@ -906,7 +906,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
       </div>
       <details class="thplanzu" id="thPlanBox">
-        <summary>Zeiten einstellen</summary>
+        <summary>Zeiten einstellen · zuklappen</summary>
         <div class="thplan" id="thPlan"></div>
         <div class="krow"><button type="button" class="knopfklein ghost" id="thKopieWo">Mo → Mo–Fr kopieren</button><button type="button" class="knopfklein ghost" id="thKopieWe">Sa → Sa–So kopieren</button></div>
         <div class="thvh">Vorheizen: Zu-Hause-Sollwert gilt schon <span class="thstep thvhs"><button type="button" class="knopfklein ghost" id="thVhMinus" aria-label="Vorheizen 1 Stunde weniger">−</button><b id="thVorheiz" aria-live="polite">–</b><button type="button" class="knopfklein ghost" id="thVhPlus" aria-label="Vorheizen 1 Stunde mehr">+</button></span> vor «Zu Hause ab»</div>
@@ -1095,7 +1095,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 18:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 18:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3663,7 +3663,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(((STEU.cfg.th||{}).betrieb||"plan")!=="plan") thSenden(knopf,"Zeitplan wird eingeschaltet",{aktion:"thermo",th:{betrieb:"plan"}},"Raumthermostat: Zeitplan") }
   function ausFormZeigen(){ $("thAusForm").hidden=!$("thAusForm").hidden;
     if(!$("thAusDatum").value){const d=new Date(Date.now()+2*864e5);$("thAusDatum").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")} }
-  $("thPlanKnopf").addEventListener("click",()=>{ const box=$("thPlanBox"); box.open=true; zeichnePlan(true); box.scrollIntoView({block:"nearest",behavior:"smooth"}); planEin($("thPlanKnopf")) });
+  $("thPlanKnopf").addEventListener("click",()=>{ const box=$("thPlanBox"); if(box.open&&((STEU&&STEU.cfg.th||{}).betrieb||"plan")==="plan"){box.open=false;return} box.open=true; zeichnePlan(true); box.scrollIntoView({block:"nearest",behavior:"smooth"}); planEin($("thPlanKnopf")) });
   $("thAusOk").addEventListener("click",()=>{const d=$("thAusDatum").value, z=$("thAusZeit").value||"17:00"; if(!d){$("sMeldung").textContent="Bitte Datum der Rückkehr wählen.";return}
     const [y,mo,da]=d.split("-").map(Number),[h,mi]=z.split(":").map(Number), t=new Date(y,mo-1,da,h,mi||0).getTime();
     if(t<=Date.now()){$("sMeldung").textContent="Die Rückkehr muss in der Zukunft liegen.";return}
