@@ -282,12 +282,12 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 @media (max-width:520px){.seg{width:100%}.seg button{flex:1 1 auto;padding:6px 6px}}
 .seg button+button{border-left:1px solid var(--line)}
 .thsollzeile{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px}.thsollzeile>.thsoll{flex:0 1 440px;min-width:0}
-.threlais{border:1px solid var(--line);border-radius:10px;padding:10px 14px;flex:0 1 180px;min-width:150px;display:flex;flex-direction:column;gap:2px}
+.threlais{border:1px solid var(--line);border-radius:10px;padding:7px 12px;flex:0 0 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
 .threlais .k{font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.threlais .z{display:flex;align-items:center;gap:8px;font-size:1.15rem;font-weight:700}
-.threlais .z i{width:12px;height:12px;border-radius:50%;border:2px solid var(--muted)}
+.threlais .z{display:flex;align-items:center;gap:7px;font-size:1rem;font-weight:700}
+.threlais .z i{width:10px;height:10px;border-radius:50%;border:2px solid var(--muted)}
 .threlais.ein{border-color:var(--c-wp)}.threlais.ein .z i{background:var(--c-wp);border-color:var(--c-wp)}
-.threlais small{color:var(--muted);font-size:.78rem}
+.threlais small{color:var(--muted);font-size:.72rem}
 .thsoll{display:grid;grid-template-columns:auto auto;gap:8px 16px;align-items:center;margin:12px 0 4px;max-width:440px}
 .thmod{display:flex;align-items:center;flex-wrap:wrap;gap:0 8px;text-align:left;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.95rem;color:var(--fg);cursor:pointer;min-width:150px}
 .thmod small{flex-basis:100%;padding-left:18px;color:var(--muted);font-size:.72rem}
@@ -1112,7 +1112,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 18:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 18:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3695,8 +3695,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     let v=wp&&(wp.ist===0||wp.ist===1)?wp.ist:null, zeit=st&&st.zeit, hand=wp&&wp.pause;
     if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[2]===0||k14Jetzt.a[2]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)){v=k14Jetzt.a[2]; zeit=k14Jetzt.zeit||zeit; if(k14Jetzt.hand) hand=hand||k14Jetzt.hand[2]}
     box.className="threlais"+(v===1?" ein":"");
-    box.innerHTML=`<span class="k">Relais WP ABSENKEN (O3)</span><span class="z"><i aria-hidden="true"></i>${v===1?"EIN":v===0?"AUS":"–"}</span>`+
-      `<small>${v===1?"WP ist abgesenkt":v===0?"WP heizt normal (frei)":"Zustand unbekannt"}</small>`+
+    box.title="Relais WP ABSENKEN (O3): "+(v===1?"ein = WP abgesenkt":v===0?"aus = WP heizt normal":"unbekannt");
+    box.innerHTML=`<span class="k">Relais</span><span class="z"><i aria-hidden="true"></i>${v===1?"Abgesenkt":v===0?"Normal":"–"}</span>`+
       (hand?`<small style="color:var(--c-bezug)">von Hand geschaltet</small>`:"")+(zeit?`<small>Stand ${fTime(zeit)}</small>`:"");
   }
   let regelnEdit=false;
