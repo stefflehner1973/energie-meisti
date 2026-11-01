@@ -1078,7 +1078,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 15:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 15:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3555,7 +3555,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* Zeitplan Zu Hause / Nacht je Wochentag */
   const TH_TAGE=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
   const hmListe=(a,b)=>{const r=[];for(let m=a;m<=b;m+=15){const mm=((m%1440)+1440)%1440;r.push(String(Math.floor(mm/60)).padStart(2,"0")+":"+String(mm%60).padStart(2,"0"))}return r};
-  const TH_TAG_OPT=hmListe(4*60,11*60), TH_NACHT_OPT=hmListe(19*60,25*60);
+  const TH_TAG_OPT=hmListe(0,23*60+45), TH_NACHT_OPT=TH_TAG_OPT;   // ganzer Tag; „Nacht ab“ ≤ „Tag ab“ = nach Mitternacht
   let planEdit=null;
   function planGleich(){const c=STEU&&STEU.cfg; if(!c||!planEdit) return true; return JSON.stringify(planEdit.plan)===JSON.stringify((c.th||{}).plan)&&planEdit.vorheiz===c.p.vorheiz}
   function zeichnePlan(erzwingen){
@@ -3583,7 +3583,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const stueck=(row,a,b,col,op)=>{if(b<=a)return;g+=`<rect x="${X(a).toFixed(1)}" y="${row*(lane+gap)}" width="${(X(b)-X(a)).toFixed(1)}" height="${lane}" rx="3" fill="${col}" opacity="${op}"/>`};
     TH_TAGE.forEach(([k,n],row)=>{const w=planEdit.plan[k]; const y=row*(lane+gap);
       g+=`<rect x="${Lb}" y="${y}" width="${W-Lb-Rb}" height="${lane}" rx="3" fill="var(--accent)" opacity=".18"/><text x="${Lb-5}" y="${y+12}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}</text>`;
-      if(!w) return; const a=hm(w.tag), v=Math.max(0,a-(planEdit.vorheiz||0)); let e=hm(w.nacht); if(e<6) e+=24;
+      if(!w) return; const a=hm(w.tag), v=Math.max(0,a-(planEdit.vorheiz||0)); let e=hm(w.nacht); if(e<=a) e+=24;
       stueck(row,v,a,"var(--warm)",.35); stueck(row,a,Math.min(24,e),"var(--warm)",.9);
       if(e>24){const nr=(row+1)%7; stueck(nr,0,e-24,"var(--warm)",.9)}});
     svg.innerHTML=g;
