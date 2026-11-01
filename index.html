@@ -289,6 +289,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thmod.an .punkt{border-color:var(--c-wp);background:var(--c-wp)}.thmod.an small{color:var(--c-wp)}
 .thmeld{font-size:.86rem;margin:4px 0;color:var(--fg)}.thmeld .spin,button .spin{display:inline-block;margin-right:6px;vertical-align:-2px}
 .thbetrieb{margin:10px 0 4px}
+.thknopf{font-weight:700;padding:7px 14px;font-size:.92rem}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
 .thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanbox summary{cursor:pointer;font-weight:600}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
@@ -1085,7 +1086,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 17:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 01.11.26 17:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3561,8 +3562,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const ab=$("thAbw"); ab.innerHTML="";
     if((cth.betrieb||"plan")==="plan"&&typeof th.mod==="number"){
       if(th.quelle==="abweichung"){const t=document.createElement("span");t.className="sub";t.style.textTransform="none";t.textContent=`Abweichung vom Zeitplan bis ${fDay(th.wechsel)} ${fTime(th.wechsel)}`;
-        const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Abweichung aufheben";b.addEventListener("click",()=>thSenden(b,"Abweichung wird aufgehoben",{aktion:"thermo",th:{abw:null}},"Zurück zum Zeitplan"));ab.append(t,b)}
-      else{const z=th.mod===0?1:0, b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent=`Jetzt ${MN[z]} bis zum nächsten Wechsel`;
+        const b=document.createElement("button");b.type="button";b.className="knopfklein thknopf";b.textContent="Abweichung aufheben";b.addEventListener("click",()=>thSenden(b,"Abweichung wird aufgehoben",{aktion:"thermo",th:{abw:null}},"Zurück zum Zeitplan"));ab.append(t,b)}
+      else{const z=th.mod===0?1:0, b=document.createElement("button");b.type="button";b.className="knopfklein thknopf";b.textContent=`Jetzt ${MN[z]} bis zum nächsten Wechsel`;
         b.addEventListener("click",()=>thSenden(b,`Jetzt ${MN[z]} wird gesetzt`,{aktion:"thermo",th:{abw:{mod:z}}},`Jetzt ${MN[z]} bis zum nächsten Wechsel`));ab.append(b)}
     }
     const hb=$("thHand"), hp=wp&&wp.pause;
