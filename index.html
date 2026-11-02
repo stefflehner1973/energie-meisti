@@ -1131,7 +1131,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 12:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 12:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1484,7 +1484,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(t===null){z.textContent=z.dataset.jetzt||"";return}
     const s=(K14C.zp||[]).find(([a,b])=>t>=a&&t<b); if(!s){z.textContent=z.dataset.jetzt||"";return}
     const [a,b,m,v]=s, was=v?"Vorheizen, Sollwert Zu Hause (hell-orange)":ZP_TXT[m][1];
-    z.textContent=` · ${was} ${fTime(a)}–${b>=Date.now()-6e4?"jetzt":fTime(b)}`;
+    const heute=fDay(Date.now()), zt=x=>(fDay(x)===heute?"":fDay(x)+" ")+fTime(x);
+    z.textContent=` · ${was} ${zt(a)}–${b>=Date.now()-6e4?"jetzt":zt(b)}`;
   }
   function k14Linie(t){
     const svg=$("chartK"), g=K14C.geo, l=svg&&svg.querySelector(".hovl"); if(!g||!l||t<g.t0||t>g.t1) return;
