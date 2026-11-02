@@ -1152,7 +1152,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 13:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 13:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3491,7 +3491,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const BOILER_PARAM=[
     ["Auswärts: Boiler statt Batterie laden (zählt: Batterie laden + Einspeisung)",[["auPv","Sperre aus ab","kW",0.5,"Batterie laden + Einspeisung mindestens so viel (und Batterie voll genug) → «Boiler SPERREN» aus, das Fronius-Lastmanagement schaltet Stufe 1. 0 = aus.",1000],
       ["auAus","Wieder sperren unter","W",50,"Batterie laden + Einspeisung unter diesem Wert (während der Zeit unten) → wieder sperren. Läuft der Boiler, ist seine Leistung darin schon abgezogen. Darum muss dieser Wert kleiner sein als «Sperre aus ab» minus Leistung Stufe 1, sonst sperrt der Boiler sich selbst wieder."],
-      ["auSoc","Batterie mindestens","%",5],["auFreiMin","Wieder sperren nach","min",1,"So lange muss der Wert unter «Wieder sperren unter» liegen."]]],
+      ["auSoc","Batterie mindestens","%",5,"Erst ab diesem Ladestand geht der Überschuss in den Boiler statt in die Batterie."],["auFreiMin","Wieder sperren nach","min",1,"So lange muss der Wert unter «Wieder sperren unter» liegen."]]],
     ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
     const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
@@ -3886,20 +3886,23 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
     const pill=(an,txt,tip)=>`<span class="${an?"an":""}" title="${tip}"><i aria-hidden="true"></i>${txt}</span>`;
     box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(c.th.ausBis?" bis "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis):""):"Auswärts nicht aktiv","Betriebsart Raumthermostat"):"")+
-      (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"")+
-      (st?pill(false,"Batterie max "+(st.battMax?st.battMax.soc+" %":"100 %"),st.battMax?"Erkannt "+fDay(st.battMax.zeit)+" "+fTime(st.battMax.zeit)+": Ladestand blieb stehen, obwohl Strom ins Netz ging (Maximum am Fronius).":"Kein Ladestopp unter 99 % erkannt."):"");
+      (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"");
+    { // Batterie-Maximum in der Erklärung von «Batterie mindestens» (beim Darüberfahren)
+      const i=document.querySelector('#bParam input[data-bp=auSoc]'), tip=i&&i.closest("label").querySelector(".tip");
+      if(tip&&st){ tip.dataset.tip=(tip.dataset.basis||(tip.dataset.basis=tip.dataset.tip))+" "+(st.battMax
+        ?`Batterie max ${st.battMax.soc} % eingestellt beim Fronius (erkannt ${fDay(st.battMax.zeit)} ${fTime(st.battMax.zeit)}).`
+        :"Batterie max 100 % (kein tieferes Maximum beim Fronius erkannt)."); } }
     const bw=$("bMaxHinweis"); if(bw){ const bm=st&&st.battMax, so=c&&c.p&&c.p.auSoc;
       bw.hidden=!(bm&&typeof so==="number"&&bm.soc-1<so);
       if(!bw.hidden) bw.textContent=`Die Batterie lädt nur bis ${bm.soc} % (Maximum am Fronius, erkannt ${fDay(bm.zeit)} ${fTime(bm.zeit)}). «Batterie mindestens» ${so} % würde nie erreicht – es gilt darum ${bm.soc-1} %.`; }
   }
   function zeichneBoilerEinst(erzwingen){
-    zeichneBoilerStatus();
-    const box=$("bParam"), c=STEU&&STEU.cfg; if(!box||!c) return;
-    if(!erzwingen&&(bEdit||box.contains(document.activeElement))) return;
+    const box=$("bParam"), c=STEU&&STEU.cfg; if(!box||!c){zeichneBoilerStatus();return}
+    if(!erzwingen&&(bEdit||box.contains(document.activeElement))){zeichneBoilerStatus();return}
     box.innerHTML="";
     BOILER_PARAM.forEach(([titel,liste])=>{const h=document.createElement("div");h.className="thtrenn";h.textContent=titel;
       const g=document.createElement("div");g.className="seinst"; liste.forEach(([k,n,e,step,tip,f])=>g.append(einstZeile(k,n,e,step,tip,"data-bp",c.p[k],f)));box.append(h,g)});
-    bPruefen();
+    bPruefen(); zeichneBoilerStatus();
     $("bSpeichern").disabled=true; $("bVerwerfen").hidden=true;
   }
   function bPruefen(){const ein=document.querySelector('#bParam input[data-bp=auPv]'), aus=document.querySelector('#bParam input[data-bp=auAus]'), m=$("bWarn"); if(!ein||!aus||!m) return true;
