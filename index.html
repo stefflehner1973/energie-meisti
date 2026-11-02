@@ -1131,7 +1131,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 10:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 10:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3382,7 +3382,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let STEU=null, steuZeit=0, steuNr=0, steuWartet=null;
   const SZ_FARBE={alltag:"var(--s5)",heim:"var(--accent)",aus:"var(--muted)"};
   const AUSG=["Boiler SPERREN","Boiler MANUELL 1h","WP ABSENKEN"];
-  const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand","°C",0.1,"Abstand total zwischen den beiden Schaltpunkten, je die Hälfte über und unter dem Sollwert. Beispiel Sollwert 21,9 und 0,2: abgesenkt ab 22,0, wieder frei bei 21,8 °C. Dazwischen bleibt es, wie es ist. 0 = genau am Sollwert."],["minFrei","WP nach Freigabe mindestens frei","min",15,"Einmal freigegeben, bleibt die WP mindestens so lange frei, auch wenn der Raum schon warm genug ist (verhindert häufiges Schalten)."],["minAbs","WP einmal abgesenkt mindestens","min",5,"Einmal abgesenkt, bleibt die WP mindestens so lange abgesenkt."],["raumMax","Ohne Raumwert nicht absenken nach","min",10,"Meldet die Wetterstation so lange keine Raumtemperatur, wird die WP nicht mehr abgesenkt, und es kommt eine Meldung aufs Handy."]]],
+  const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand","°C",0.1,"Abstand total zwischen den beiden Schaltpunkten, je die Hälfte über und unter dem Sollwert. Beispiel Sollwert 21,9 und 0,2: abgesenkt ab 22,0, wieder frei bei 21,8 °C. Dazwischen bleibt es, wie es ist. 0 = genau am Sollwert."],["minFrei","WP nach Freigabe mindestens frei","min",15,"Einmal freigegeben, bleibt die WP mindestens so lange frei, auch wenn der Raum schon warm genug ist (verhindert häufiges Schalten)."],["minAbs","WP einmal abgesenkt mindestens","min",5,"Einmal abgesenkt, bleibt die WP mindestens so lange abgesenkt."],["raumMax","Ohne Raumwert seit","h",0.5,"Meldet die Wetterstation so lange keine Raumtemperatur, wird die WP abgesenkt, und es kommt eine Meldung aufs Handy (Telegram). Kommen wieder Werte, regelt das Thermostat normal weiter.",60]]],
     ["Solarüberschuss (gilt immer)",[["pvPlus","Sollwert höher um","°C",0.1,"Bei Solarüberschuss wird der gültige Sollwert (Zu Hause, Vorheizen, Abgesenkt oder Auswärts) um so viel angehoben, damit die WP mit eigenem Strom heizt. 0 = aus."],["pvSchwelle","Einspeisung ins Netz mindestens","W",100,"So viel Strom muss ins Netz fliessen, damit es als Überschuss zählt."],["pvMin","während mindestens","min",5,"So lange muss die Einspeisung ohne Unterbruch über der Schwelle liegen."],["pvSoc","Batterie mindestens","%",5,"Die Anhebung gilt erst, wenn die Batterie mindestens so voll ist."],["pvNach","gilt danach noch","min",15,"So lange bleibt die Anhebung nach dem letzten Überschuss bestehen."]]]];
   const PARAM_GR=[
     ["Regel «wärmstes Fenster»",[["komfort","Komfort","°C",0.1,"Sollwert der Fenster-Regel beim Heimkommen und zu Hause."],["nacht","Nachts / niemand da","°C",0.1],["aus","Auswärts (Frostschutz)","°C",0.5],
@@ -3649,7 +3649,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     hb.hidden=!hp; hb.innerHTML="";
     if(hp){const t=document.createElement("span");t.innerHTML=`<b>WP ABSENKEN von Hand geschaltet</b>${wp.handSeit?" (erkannt "+fStempel(wp.handSeit)+")":""} – die Automatik schaltet O3 nicht, ${hp>=PAUSE_OFFEN?"bis du fortsetzt.":"bis "+fTime(hp)+"."}`;
       const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Automatik sofort fortsetzen";b.addEventListener("click",()=>thSenden(b,"Automatik wird fortgesetzt",{aktion:"pauseWeg"},"Automatik fortgesetzt"));hb.append(t,b)}
-    if(th.raum==null&&th.raumZeit) $("thStatus").innerHTML+=`<br><b style="color:var(--c-bezug)">Wetterstation meldet seit ${fStempel(th.raumZeit)} nichts – WP wird nicht abgesenkt.</b>`;
+    if(th.raum==null&&th.raumZeit) $("thStatus").innerHTML+=`<br><b style="color:var(--c-bezug)">Wetterstation meldet seit ${fStempel(th.raumZeit)} nichts – WP wird abgesenkt.</b>`;
     $("thBeob").textContent=aktiv?(th.fenster?"Zum Beobachten – Regel «wärmstes Fenster» würde: "+(th.fenster.soll?"absenken":"frei")+" ("+th.fenster.grund+")":""):"Aktiv ist die Regel «wärmstes Fenster». Das Raumthermostat würde: "+(th.zustand?"absenken":"frei")+" ("+th.grund+")";
   }
   /* Zeitplan Zu Hause / Nacht je Wochentag */
@@ -3779,15 +3779,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     box.innerHTML="";
     TH_PARAM.forEach(([titel,liste])=>{const h=document.createElement("div");h.className="thtrenn";h.textContent=titel;
       const g=document.createElement("div");g.className="seinst";
-      liste.forEach(([k,n,e,step,tip])=>g.append(einstZeile(k,n,e,step,tip,"data-rp",c.p[k])));
+      liste.forEach(([k,n,e,step,tip,f])=>g.append(einstZeile(k,n,e,step,tip,"data-rp",c.p[k],f)));
       box.append(h,g)});
     $("thRegelnSpeichern").disabled=true; $("thRegelnVerwerfen").hidden=true;
   }
   $("thRegelnBox").addEventListener("input",()=>{const c=STEU&&STEU.cfg; if(!c) return;
-    regelnEdit=[...document.querySelectorAll("#thRegelnBox input")].some(i=>i.value!==""&&+i.value!==c.p[i.dataset.rp]);
+    regelnEdit=[...document.querySelectorAll("#thRegelnBox input")].some(i=>i.value!==""&&einstWert(i)!==c.p[i.dataset.rp]);
     $("thRegelnSpeichern").disabled=!regelnEdit; $("thRegelnVerwerfen").hidden=!regelnEdit});
   $("thRegelnVerwerfen").addEventListener("click",()=>{regelnEdit=false;zeichneRegeln(true)});
-  $("thRegelnSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#thRegelnBox input").forEach(i=>{if(i.value!=="")p[i.dataset.rp]=+i.value});
+  $("thRegelnSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#thRegelnBox input").forEach(i=>{if(i.value!=="")p[i.dataset.rp]=einstWert(i)});
     await thSenden($("thRegelnSpeichern"),"Regeln werden gespeichert",{aktion:"einstellungen",p},"Regeln gespeichert"); if($("sPinBox").hidden) zeichneRegeln(true)});
   function thDirty(){const c=STEU&&STEU.cfg; if(!c||!thEdit) return; const d=TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]); $("thSpeichern").disabled=!d; $("thVerwerfen").hidden=!d}
   $("thSpeichern").addEventListener("click",()=>{if(!thEdit)return; const p={sollTag:thEdit.sollTag,sollNacht:thEdit.sollNacht,sollAus:thEdit.sollAus};
