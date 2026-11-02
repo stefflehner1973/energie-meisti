@@ -301,6 +301,10 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thtrenn{margin:16px 0 2px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.thaus{margin:6px 0}
 .thplanbox{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thplanknopf{margin-bottom:8px;width:fit-content;max-width:100%}.bstat{display:flex;gap:8px;flex-wrap:wrap}.bstat span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.8rem;color:var(--muted)}
 .bstat span i{width:8px;height:8px;border-radius:50%;background:var(--muted)}.bstat span.an{color:var(--fg);border-color:var(--warm)}.bstat span.an i{background:var(--warm)}
+.mawarn{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,4.8em);gap:6px 10px;align-items:center;margin-top:10px;font-size:.88rem}
+.mawarn .k{font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.mawarn input{width:100%;box-sizing:border-box;text-align:right;font:inherit;font-family:var(--f-mono);padding:4px 6px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.mawarn .n small{display:block;color:var(--muted);font-size:.75rem}.mawarn .n small.aus{color:var(--c-bezug);font-weight:600}
 .thplanzu{margin-top:10px}.tip{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}.tip::after{pointer-events:none}.tip:hover::after,.tip:focus-visible::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(300px,80vw);padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:.8rem;line-height:1.35;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:normal}
 .thregeln{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.thregeln .thtrenn{margin-top:10px}#thPlanBox:not([open])>summary{display:none}.thplanzu .thplan{margin-top:8px}
 .thplan{display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;margin:10px 0;max-width:420px}
@@ -667,6 +671,20 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <svg id="chartM" viewBox="0 0 720 280" role="img" aria-label="Temperaturverlauf Mobile-Alerts-Sensoren"></svg>
       </div>
       <div class="readout" id="readoutM"></div>
+      <details id="maWarnBox" style="margin-top:14px">
+        <summary>Warnungen aufs Handy (Telegram)</summary>
+        <p class="hint" style="margin-top:6px">Liegt ein Wert länger als die eingestellte Dauer unter dem Minimum oder über dem Maximum, kommt eine Telegram-Meldung, und wieder eine, wenn er zurück im Bereich ist. Leer = keine Grenze. Geprüft wird bei jedem Durchgang der Steuerung (etwa alle 2 Minuten).</p>
+        <div class="mawarn" id="maWarn"></div>
+        <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="maWarnSpeichern" disabled>Warnungen speichern</button><button type="button" class="knopfklein ghost" id="maWarnVerwerfen" hidden>Verwerfen</button></div>
+        <p class="thmeld" id="tMeld" aria-live="polite" hidden></p>
+        <form class="krow spinbox" id="tPinBox" hidden autocomplete="off">
+          <input type="password" id="tPin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
+          <label class="kmerk"><input type="checkbox" id="tMerk"> 30 Tage merken</label>
+          <button type="submit" class="knopfklein">Senden</button>
+          <button type="button" class="knopfklein ghost">Abbrechen</button>
+        </form>
+        <p class="hint" id="tMeldung" aria-live="polite"></p>
+      </details>
     </section>
   </div>
   <div id="tabAuto" role="tabpanel" aria-labelledby="tabBtnAuto" class="tabpanel" hidden>
@@ -1131,7 +1149,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 12:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 12:40</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2582,7 +2600,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
 
   /* ---------- Reiter ---------- */
   const REITER={uebersicht:["tabBtnUeb","tabUeb"],energie:["tabBtnEnergie","tabEnergie"],auto:["tabBtnAuto","tabAuto"],temperatur:["tabBtnTemp","tabTemp"],sonne:["tabBtnSonne","tabSonne"],prognose:["tabBtnProg","tabProg"],steuerung:["tabBtnSteuer","tabSteuer"],geld:["tabBtnGeld","tabGeld"],boiler:["tabBtnBoiler","tabBoiler"]};
-  function steuerReiter(){return reiter==="steuerung"||reiter==="boiler"}   // beide Reiter brauchen die Daten der Steuerung
+  function steuerReiter(){return reiter==="steuerung"||reiter==="boiler"||reiter==="temperatur"}   // beide Reiter brauchen die Daten der Steuerung
   let reiter=store.get("tb.reiter","uebersicht"); if(!REITER[reiter]) reiter="uebersicht";
   function zeigeReiter(r,ohneLaden){
     reiter=r; store.set("tb.reiter",r);
@@ -2593,7 +2611,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Daten, die im Hintergrund schon aktuell geladen wurden, nur zeichnen; sonst zuerst Gespeichertes zeigen und neu laden
     const frisch=z=>Date.now()-z<FRISCH;
     if(r==="geld"){ if(GELD) zeichneGeld(); if(!ohneLaden&&!(GELD&&frisch(geldZeit))) ladeGeld(); }
-    else if(r==="steuerung"||r==="boiler"){ if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); }
+    else if(r==="steuerung"||r==="boiler"||r==="temperatur"){ if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); }
     else if(r==="sonne") zeichneSonne();
     else if(r==="prognose"){ if(prog) zeichnePrognose(); if(!ohneLaden&&!(prog&&frisch(progZeit))) ladePrognose(true); }
     else {drawAll(); if(!ohneLaden&&typeof loadHist==="function") loadHist(true); if(r==="energie"||r==="auto"){ if(GELD) (r==="auto"?zeichneAutoTage:zeichneEB)(); if(!(GELD&&frisch(geldZeit))) ladeGeld(false,true); }}
@@ -3490,6 +3508,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const pill=(v,an,aus,diff)=>v===null||v===undefined?`<span class="spill">–</span>`:`<span class="spill${v?" an":""}${diff?" diff":""}">${v?an:aus}</span>`;
   function zeichneSteuerung(){
     if(!STEU) return;
+    try{ zeichneMaWarn(); }catch(e){}
     const c=STEU.cfg, st=STEU.status;
     document.querySelectorAll(".ssel button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===c.modus)));
     $("sModusText").textContent={aus:"Die Automatik ist aus: es wird nur gerechnet und hier angezeigt.",anzeige:"Testbetrieb: Die Steuerung rechnet und schreibt ins Protokoll, was sie schalten würde – geschaltet wird nichts.",auto:"Die Steuerung schaltet WP ABSENKEN, Boiler SPERREN und Boiler MANUELL selbst. "+(c.p.pause>0?"Von Hand geschaltet (hier oder in der Shelly-App) pausiert sie für "+dez(c.p.pause)+" h.":"Von Hand geschaltet (hier oder in der Shelly-App) hat die Handschaltung Vorrang, bis du «Automatik sofort fortsetzen» drückst.")}[c.modus]||"";
@@ -3821,6 +3840,30 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     box.innerHTML=`<span class="k">Relais</span><span class="z"><i aria-hidden="true"></i>${v===1?"Abgesenkt":v===0?"Normal":"–"}</span>`+
       (hand?`<small style="color:var(--c-bezug)">von Hand geschaltet</small>`:"")+mindestTxt(wp&&wp.grund)+(zeit?`<small>Stand ${fTime(zeit)}</small>`:"");
   }
+  /* Warnungen Mobile Alerts (Reiter Temperatur): je Sensor und Kanal Min / Max / Dauer, gespeichert in Google (MA_WARN) */
+  let maEdit=false;
+  function zeichneMaWarn(erzwingen){
+    const box=$("maWarn"), d=STEU&&STEU.maWarn; if(!box) return;
+    if(!d){box.innerHTML=`<span class="hint" style="grid-column:1/-1">Neues Google-Skript (Stand 02.11.2026 (16)) einspielen, dann erscheinen hier die Sensoren.</span>`;return}
+    if(!erzwingen&&(maEdit||box.contains(document.activeElement))) return;
+    const cfg=d.cfg||{}, seit=d.seit||{};
+    let h=`<span class="k">Sensor</span><span class="k">Min °C</span><span class="k">Max °C</span><span class="k">Dauer min</span>`;
+    d.sensoren.forEach(x=>["t1","t2"].forEach(kan=>{
+      if(kan==="t2"&&x.t2===null) return;
+      const key=x.id+"_"+kan, c=cfg[key]||{}, wert=x[kan], hat=c.min!=null||c.max!=null;
+      const st=seit[key]?`<small class="aus">ausserhalb seit ${fTime(seit[key])}</small>`:`<small>${wert!==null?dez(wert)+" °C":"–"}${hat?" · im Bereich":""}</small>`;
+      const f=(feld,v,step)=>`<input type="number" step="${step}" min="-100000" data-mw="${key}" data-feld="${feld}" value="${v!=null?v:""}" aria-label="${esc(x.name)} ${feld}">`;
+      h+=`<span class="n">${esc(x.name)}${kan==="t2"?" · Kanal 2":""}${st}</span>${f("min",c.min,0.5)}${f("max",c.max,0.5)}${f("dauer",hat||c.dauer?c.dauer:"",5)}`;
+    }));
+    box.innerHTML=h; $("maWarnSpeichern").disabled=true; $("maWarnVerwerfen").hidden=true;
+  }
+  function maEingaben(){const o={}; document.querySelectorAll("#maWarn input").forEach(i=>{const k=i.dataset.mw; o[k]=o[k]||{}; o[k][i.dataset.feld]=i.value===""?null:+i.value}); return o}
+  $("maWarn").addEventListener("input",()=>{const d=STEU&&STEU.maWarn; if(!d) return; const cfg=d.cfg||{}, e=maEingaben();
+    maEdit=Object.keys(e).some(k=>{const c=cfg[k]||{}; return ["min","max"].some(f=>(e[k][f]??null)!==(c[f]??null))||((e[k].min!==null||e[k].max!==null)&&(e[k].dauer||0)!==(c.dauer||0))});
+    $("maWarnSpeichern").disabled=!maEdit; $("maWarnVerwerfen").hidden=!maEdit});
+  $("maWarnVerwerfen").addEventListener("click",()=>{maEdit=false;zeichneMaWarn(true)});
+  $("maWarnSpeichern").addEventListener("click",async()=>{const e=maEingaben();
+    await knopfSenden($("maWarnSpeichern"),"Wird gespeichert",{aktion:"maWarn",maWarn:e},"Warnungen gespeichert","tMeld",UI_T); if($("tPinBox").hidden){maEdit=false;zeichneMaWarn(true)}});
   let bEdit=false;
   function zeichneBoilerStatus(){
     const box=$("bStat"); if(!box) return; const c=STEU&&STEU.cfg, st=STEU&&STEU.status;
@@ -3950,7 +3993,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     zeig(jetzt);
   }
   // Änderungen senden (Zugriffsschlüssel + PIN, wie beim Schalten)
-  const UI_S={box:"sPinBox",pin:"sPin",merk:"sMerk",msg:"sMeldung"}, UI_U={box:"uePinBox",pin:"uePin",merk:"ueMerk",msg:"ueMeldung"};
+  const UI_S={box:"sPinBox",pin:"sPin",merk:"sMerk",msg:"sMeldung"}, UI_U={box:"uePinBox",pin:"uePin",merk:"ueMerk",msg:"ueMeldung"}, UI_T={box:"tPinBox",pin:"tPin",merk:"tMerk",msg:"tMeldung"};
   async function steuerSenden(daten,ok,pin,merken,ui){
     ui=ui||UI_S; pin=pin||pinGemerkt();
     if(!pin){steuWartet={daten,ok,ui};$(ui.box).hidden=false;$(ui.msg).textContent="Bitte Schalt-PIN eingeben.";$(ui.pin).focus();return}
@@ -3963,6 +4006,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
       $(ui.box).hidden=true; steuWartet=null; $(ui.msg).textContent=ok||"Gespeichert.";
       if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; bEdit=false; }
+      if(daten.aktion==="maWarn") maEdit=false;
       if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.soc!==undefined) $("uePanel").dataset.dirty="";
       zeichneSteuerung();
       if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.aktiv===true&&!ueWarnGezeigt&&j.ueb&&j.ueb.status&&j.ueb.status.zustand==="gesperrt") ueWarnen();
@@ -3971,7 +4015,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       $(ui.msg).textContent=(j&&j.error)||"Fehler";
     }
   }
-  [UI_S,UI_U].forEach(ui=>{
+  [UI_S,UI_U,UI_T].forEach(ui=>{
     $(ui.box).addEventListener("submit",async ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;
       const mm=$(meldAktiv), thm=!mm.hidden&&ui===uiAktiv; if(thm) mm.innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
       await steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui);
