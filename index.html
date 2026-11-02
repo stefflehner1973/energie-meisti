@@ -1131,7 +1131,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 01.11.26 21:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 10:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3603,7 +3603,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!STEU||thLaeuft) return;   // während eine Aktion läuft, Rückmeldung am Knopf stehen lassen
     const c=STEU.cfg, st=STEU.status, th=st&&st.th, aktiv=c.p.wpThermo===1;
     document.querySelectorAll("#thPanel [data-th]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.th===(aktiv?1:0))));
-    if(thEdit&&!TH_SOLL.some(([k])=>thEdit[k]!==c.p[k])) thEdit=null;   // nichts geändert: immer die gespeicherten Werte zeigen
+    if(thEdit&&(!thEdit.u||!TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]))) thEdit=null;   // nicht von Hand geändert: immer die gespeicherten Werte zeigen
     if(!thEdit) thEdit={sollTag:c.p.sollTag,sollNacht:c.p.sollNacht,sollAus:c.p.sollAus};
     const box=$("thSoll"); box.innerHTML="";
     const mod=th&&typeof th.mod==="number"?th.mod:-1, cth=c.th||{};
@@ -3625,7 +3625,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const minus=document.createElement("button");minus.type="button";minus.className="knopfklein ghost";minus.textContent="−";minus.setAttribute("aria-label",n+": 0,1 °C tiefer");
       const v=document.createElement("b");v.textContent=dez(thEdit[k]);v.setAttribute("aria-live","polite");
       const plus=document.createElement("button");plus.type="button";plus.className="knopfklein ghost";plus.textContent="+";plus.setAttribute("aria-label",n+": 0,1 °C höher");
-      const set=d=>{thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); thDirty()};
+      const set=d=>{if(typeof thEdit[k]!=="number") return; thEdit.u=true; thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); thDirty()};
       minus.addEventListener("click",()=>set(-0.1)); plus.addEventListener("click",()=>set(0.1));
       r.append(minus,v,document.createTextNode("°C"),plus); box.append(l,r)});
     thDirty(); zeichneRegeln(); zeichneRelais(); zeichneBoilerEinst();
@@ -3661,11 +3661,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function zeichnePlan(erzwingen){
     if(!STEU) return; const c=STEU.cfg, cth=c.th||{};
     if(!erzwingen&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#thPlanBox")&&planEdit) return;   // nicht neu aufbauen, während eine Auswahl offen ist
-    if(planEdit&&planGleich()) planEdit=null;
+    if(planEdit&&(!planEdit.u||planGleich())) planEdit=null;   // nur von Hand Geändertes behalten (sonst z. B. alte Werte aus dem Zwischenspeicher)
     if(!planEdit) planEdit={plan:JSON.parse(JSON.stringify(cth.plan||{})),vorheiz:c.p.vorheiz};
     const box=$("thPlan"); box.innerHTML=`<span class="k">Wochentag</span><span class="k">Zu Hause ab</span><span class="k">Abgesenkt ab</span>`;
     const sel=(opt,wert,fn,lab)=>{const s=document.createElement("select");s.setAttribute("aria-label",lab);const o=opt.includes(wert)?opt:opt.concat([wert]);
-      o.forEach(v=>{const e=document.createElement("option");e.value=v;e.textContent=v;s.append(e)});s.value=wert;s.addEventListener("change",()=>{fn(s.value);planDirty()});return s};
+      o.forEach(v=>{const e=document.createElement("option");e.value=v;e.textContent=v;s.append(e)});s.value=wert;s.addEventListener("change",()=>{fn(s.value);planEdit.u=true;planDirty()});return s};
     TH_TAGE.forEach(([k,n])=>{const w=planEdit.plan[k]||{tag:"06:00",nacht:"22:00"};planEdit.plan[k]=w;
       const b=document.createElement("b");b.textContent=n;
       box.append(b,sel(TH_TAG_OPT,w.tag,v=>{w.tag=v},n+": Zu Hause ab"),sel(TH_NACHT_OPT,w.nacht,v=>{w.nacht=v},n+": Abgesenkt ab"))});
@@ -3715,10 +3715,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.innerHTML=g;
   }
   function planDirty(){const d=!planGleich(); $("thPlanSpeichern").disabled=!d; $("thPlanVerwerfen").hidden=!d; zeichneWochenbalken()}
-  $("thKopieWo").addEventListener("click",()=>{if(!planEdit)return;const m=planEdit.plan[1];[2,3,4,5].forEach(k=>planEdit.plan[k]={tag:m.tag,nacht:m.nacht});zeichnePlanNurEdit()});
-  $("thKopieWe").addEventListener("click",()=>{if(!planEdit)return;const m=planEdit.plan[6];planEdit.plan[0]={tag:m.tag,nacht:m.nacht};zeichnePlanNurEdit()});
+  $("thKopieWo").addEventListener("click",()=>{if(!planEdit)return;planEdit.u=true;const m=planEdit.plan[1];[2,3,4,5].forEach(k=>planEdit.plan[k]={tag:m.tag,nacht:m.nacht});zeichnePlanNurEdit()});
+  $("thKopieWe").addEventListener("click",()=>{if(!planEdit)return;planEdit.u=true;const m=planEdit.plan[6];planEdit.plan[0]={tag:m.tag,nacht:m.nacht};zeichnePlanNurEdit()});
   function zeichnePlanNurEdit(){zeichnePlan(true)}
-  const vhSchritt=d=>{if(!planEdit)return; planEdit.vorheiz=Math.max(0,Math.min(12,Math.round(planEdit.vorheiz+d))); $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h"; $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12; planDirty()};
+  const vhSchritt=d=>{if(!planEdit)return; planEdit.u=true; planEdit.vorheiz=Math.max(0,Math.min(12,Math.round(planEdit.vorheiz+d))); $("thVorheiz").textContent=dez(planEdit.vorheiz)+" h"; $("thVhMinus").disabled=planEdit.vorheiz<=0; $("thVhPlus").disabled=planEdit.vorheiz>=12; planDirty()};
   $("thVhMinus").addEventListener("click",()=>vhSchritt(-1)); $("thVhPlus").addEventListener("click",()=>vhSchritt(1));
   $("thPlanSpeichern").addEventListener("click",()=>{if(!planEdit)return; thSenden($("thPlanSpeichern"),"Zeitplan wird gespeichert",{aktion:"thermo",th:{plan:planEdit.plan},p:{vorheiz:planEdit.vorheiz}},"Zeitplan gespeichert")});
   $("thPlanVerwerfen").addEventListener("click",()=>{planEdit=null;zeichnePlan()});
