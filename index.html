@@ -671,8 +671,10 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <svg id="chartM" viewBox="0 0 720 280" role="img" aria-label="Temperaturverlauf Mobile-Alerts-Sensoren"></svg>
       </div>
       <div class="readout" id="readoutM"></div>
-      <details id="maWarnBox" style="margin-top:14px">
-        <summary>Warnungen aufs Handy (Telegram)</summary>
+    </section>
+    <section class="panel">
+      <details id="maWarnBox">
+        <summary>Warnungen aufs Handy</summary>
         <p class="hint" style="margin-top:6px">Liegt ein Wert länger als die eingestellte Dauer unter dem Minimum oder über dem Maximum, kommt eine Telegram-Meldung, und wieder eine, wenn er zurück im Bereich ist. Leer = keine Grenze. Geprüft wird bei jedem Durchgang der Steuerung (etwa alle 2 Minuten).</p>
         <div class="mawarn" id="maWarn"></div>
         <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="maWarnSpeichern" disabled>Warnungen speichern</button><button type="button" class="knopfklein ghost" id="maWarnVerwerfen" hidden>Verwerfen</button></div>
@@ -1149,7 +1151,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 12:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 12:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
