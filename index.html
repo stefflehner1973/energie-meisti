@@ -1032,12 +1032,24 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <section class="panel">
       <details id="gPreise">
         <summary>Preise und Annahmen</summary>
-        <p class="sub" style="margin:8px 0 10px">Rp./kWh (Gebühren in CHF pro Monat: Grundpreis + Messtarif inkl. 6 % Konzessionsabgabe und MWST, minus Online-Rabatt; nur für die Spalte „Auszahlung“). Einspeisung bis 30.09.2026 nach Quartals-Referenzmarktpreis (Q2 Mindestvergütung 6,00, Q3 8,54 Rp.), ab 01.10.2026 Fixpreis aus der Tabelle. Bezug inkl. 8,1 % MWST; Einspeisung und Lokalstrom ohne MWST (nicht MWST-pflichtig). Bezugspreis = Energie + Netznutzung + Abgaben + Konzessionsabgabe (AEW Comfort, ohne Grundpreis und Messtarif, die bleiben gleich). Einspeisung laut AEW-Rechnung. Lokalstrom ab 01.11.2026: 80 % des All-In-Preises minus 2 Rp.; welcher Anteil der Einspeisung lokal verbraucht wird, rechnet nur die AEW aus – hier als Schätzung einstellbar.</p>
+        <p class="sub" style="margin:8px 0 10px">Rp./kWh (Gebühren in CHF pro Monat: Grundpreis + Messtarif inkl. 6 % Konzessionsabgabe und MWST, minus Online-Rabatt; nur für die Spalte „Auszahlung“). Einspeisung bis 30.09.2026 nach Quartals-Referenzmarktpreis (Q2 Mindestvergütung 6,00, Q3 8,54 Rp.), ab 01.10.2026 Fixpreis aus der Tabelle. Bezug inkl. 8,1 % MWST; Einspeisung und Lokalstrom ohne MWST (nicht MWST-pflichtig). Bezugspreis = Energie + Netznutzung + Abgaben + Konzessionsabgabe (AEW Comfort, ohne Grundpreis und Messtarif, die bleiben gleich). Einspeisung laut AEW-Rechnung. Lokalstrom ab 01.11.2026: 80 % des All-In-Preises minus 2 Rp.; welcher Anteil der Einspeisung lokal verbraucht wird, rechnet nur die AEW aus – hier geschätzt (siehe unten).</p>
         <div class="gtabwrap"><table class="gtab" id="gPreisTab"></table></div>
         <div class="krow" style="margin-top:10px">
-          <label class="kmerk">Lokalstrom-Anteil der Einspeisung (Schätzung) <input type="number" id="gLokAnteil" min="0" max="100" step="5" style="width:4.5em;font:inherit;padding:4px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"> %</label>
+          <label class="kmerk" title="Gilt nur für Tage, für die Google noch keine Schätzung je Viertelstunde hat">Lokalstrom-Anteil, falls keine Schätzung <input type="number" id="gLokAnteil" min="0" max="100" step="5" style="width:4.5em;font:inherit;padding:4px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"> %</label>
           <button type="button" class="knopfklein ghost" id="gReset">Standardwerte</button>
         </div>
+        <div class="thtrenn" style="margin-top:14px">Lokalstrom-Schätzung (Nachbarn)</div>
+        <p class="hint" style="margin-top:4px">Je Viertelstunde zählt als Lokalstrom der kleinere Wert von unserer Einspeisung und dem geschätzten Bedarf der Nachbarn: Haushalt nach Standard-Tagesprofil + Wärmepumpe nach Aussentemperatur (Wetterstation, Heizgradtage). Google rechnet es für jeden Tag ab 01.11.2026.</p>
+        <div class="seinst" id="gLokBox" style="max-width:420px;grid-template-columns:1fr"></div>
+        <div class="krow" style="margin-top:10px"><button type="button" class="knopfklein" id="gLokSpeichern" disabled>Speichern</button></div>
+        <p class="thmeld" id="gLokMeld" aria-live="polite" hidden></p>
+        <form class="krow spinbox" id="gPinBox" hidden autocomplete="off">
+          <input type="password" id="gPin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
+          <label class="kmerk"><input type="checkbox" id="gMerk"> 30 Tage merken</label>
+          <button type="submit" class="knopfklein">Senden</button>
+          <button type="button" class="knopfklein ghost">Abbrechen</button>
+        </form>
+        <p class="hint" id="gMeldung" aria-live="polite"></p>
       </details>
     </section>
   </div>
@@ -1152,7 +1164,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 15:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 19:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2416,7 +2428,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function heuteZeile(){
     const m=mitternacht(Date.now()), b=bilanzAb(m);
     if(b.von==null||b.von>m+15*6e4||Date.now()-b.bis>15*6e4) return GELD&&GELD.heute;
-    return [m,b.pv,b.last,b.bez,b.ein,b.lad,b.ent,(b.bis-m)/36e5];
+    const g=GELD&&GELD.heute, lokQ=g&&mitternacht(g[0])===m&&typeof g[12]==="number"&&g[4]>0?Math.min(1,g[12]/g[4]):null;
+    const z=[m,b.pv,b.last,b.bez,b.ein,b.lad,b.ent,(b.bis-m)/36e5]; if(lokQ!=null){z[12]=b.ein*lokQ} return z;
   }
   function energieBilanz(){
     const b=bilanzAb(-Infinity), pv=b.pv, last=b.last, ein=b.ein, bez=b.bez, lad=b.lad, ent=b.ent;
@@ -3136,9 +3149,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function preisFuer(t){const p=preise(), j=new Date(t).getFullYear(), jahre=Object.keys(p).map(Number).sort();let w=jahre[0];jahre.forEach(x=>{if(x<=j)w=x});const r=Object.assign({},(PREIS_STD[w]||PREIS_STD[2026]),p[w]||{});if(typeof r.grund!=="number"||!isFinite(r.grund))r.grund=(PREIS_STD[w]||PREIS_STD[2026]).grund;return r}
   // Tag [t, pv, haus, bezug, einsp, laden, entladen, dauer] → Franken
   function geldTag(r){
-    const p=preisFuer(r[0]), selbst=Math.max(0,r[2]-r[3]), ein=r[4], lokA=r[0]>=LOK_AB?lokAnteil()/100:0, pEin=einFuer(r[0],p);
-    return {t:r[0],pv:r[1],selbst,ein,bez:r[3],haus:r[2],
-      fSelbst:selbst*p.bez/100, fEin:ein*(1-lokA)*pEin/100, fLok:ein*lokA*p.lok/100, fBez:r[3]*p.bez/100, fGrund:p.grund*12/365};
+    const p=preisFuer(r[0]), selbst=Math.max(0,r[2]-r[3]), ein=r[4], pEin=einFuer(r[0],p);
+    // Lokalstrom: Schätzung je Viertelstunde aus Google (Spalte 13), sonst fester Anteil
+    const lok=r[0]<LOK_AB?0:(typeof r[12]==="number"?Math.min(ein,r[12]):ein*lokAnteil()/100);
+    return {t:r[0],pv:r[1],selbst,ein,bez:r[3],haus:r[2],lok,
+      fSelbst:selbst*p.bez/100, fEin:(ein-lok)*pEin/100, fLok:lok*p.lok/100, fBez:r[3]*p.bez/100, fGrund:p.grund*12/365};
   }
   function summe(liste){const s={pv:0,selbst:0,ein:0,bez:0,haus:0,fSelbst:0,fEin:0,fLok:0,fBez:0,fGrund:0};liste.forEach(d=>Object.keys(s).forEach(k=>s[k]+=(d[k]||0)));s.tot=s.fSelbst+s.fEin+s.fLok;s.netto=s.tot-s.fBez;s.aus=s.fEin+s.fLok-s.fBez-s.fGrund;return s}
   const chf=v=>"CHF "+(Math.round(v*100)/100).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -3151,7 +3166,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!hintergrund) $("gBusy").hidden=false;
     try{
       const j=await api({art:"tage"}); if(nr!==geldNr) return;
-      GELD={tage:j.tage||[],heute:j.heute||null,wbHist:j.wbHist||[]}; geldZeit=Date.now(); battVollZeigen();
+      GELD={tage:j.tage||[],heute:j.heute||null,wbHist:j.wbHist||[],lok:j.lok||null}; geldZeit=Date.now(); battVollZeigen();
       try{localStorage.setItem("tb.geld",JSON.stringify(GELD))}catch(e){}
       $("gHint").hidden=true;
     }catch(e){ if(!hintergrund){$("gHint").textContent=e.message;$("gHint").hidden=false} }
@@ -3308,8 +3323,17 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     t.querySelectorAll("input").forEach(i=>{if(eig[i.dataset.j]&&eig[i.dataset.j][i.dataset.k]!==undefined){i.title="selbst geändert (Standard: "+String((PREIS_STD[i.dataset.j]||{})[i.dataset.k]).replace(".",",")+")";i.style.fontWeight="700"}
       i.addEventListener("change",()=>{const e=preiseEigen(),j=i.dataset.j,k=i.dataset.k,v=+i.value||0,st=(PREIS_STD[j]||{})[k];
         e[j]=e[j]||{}; if(v===st)delete e[j][k]; else e[j][k]=v; if(!Object.keys(e[j]).length)delete e[j]; store.set("tb.preise2",e);zeichneGeld()})});
-    $("gLokAnteil").value=lokAnteil();
+    $("gLokAnteil").value=lokAnteil(); zeichneLokParam();
   }
+  const LOK_PARAM=[["lokHH","Haushalte","",1,"Anzahl Haushalte, die Lokalstrom beziehen (ohne uns)."],["lokKwh","Verbrauch je Haushalt","kWh/J",100,"Stromverbrauch pro Haushalt und Jahr, inklusive Wärmepumpe."],["lokWp","davon Wärmepumpe","kWh/J",100,"Anteil der Wärmepumpe am Jahresverbrauch. Wird nach Aussentemperatur verteilt: je kälter, desto mehr; im Sommer fast nichts."]];
+  let gLokEdit=false;
+  function zeichneLokParam(){ const box=$("gLokBox"), v=GELD&&GELD.lok; if(!box) return;
+    if(!v){box.innerHTML='<span class="hint">Neues Google-Skript (Stand 02.11.2026 (24)) einspielen.</span>';return}
+    if(gLokEdit||box.contains(document.activeElement)) return;
+    box.innerHTML=""; LOK_PARAM.forEach(([k,n,e,step,tip])=>box.append(einstZeile(k,n,e,step,tip,"data-gl",v[k]))); $("gLokSpeichern").disabled=true; }
+  $("gLokBox").addEventListener("input",()=>{const v=GELD&&GELD.lok; if(!v) return; gLokEdit=[...document.querySelectorAll("#gLokBox input")].some(i=>i.value!==""&&+i.value!==v[i.dataset.gl]); $("gLokSpeichern").disabled=!gLokEdit});
+  $("gLokSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#gLokBox input").forEach(i=>{if(i.value!=="")p[i.dataset.gl]=+i.value});
+    await knopfSenden($("gLokSpeichern"),"Wird gespeichert",{aktion:"einstellungen",p},"Gespeichert – Google schätzt die Tage ab 01.11. neu (innerhalb etwa einer Stunde)","gLokMeld",UI_G)});
   $("gLokAnteil").addEventListener("change",()=>{store.set("tb.lokanteil",Math.min(100,Math.max(0,+$("gLokAnteil").value||0)));zeichneGeld()});
   $("gReset").addEventListener("click",()=>{store.set("tb.preise2",{});store.set("tb.lokanteil",LOK_STD);$("gLokAnteil").value=LOK_STD;zeichneGeld()});
   document.querySelectorAll(".gsel button").forEach(b=>b.addEventListener("click",()=>{geldEinteilung=b.dataset.g;store.set("tb.geldein",geldEinteilung);
@@ -4031,7 +4055,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     zeig(jetzt);
   }
   // Änderungen senden (Zugriffsschlüssel + PIN, wie beim Schalten)
-  const UI_S={box:"sPinBox",pin:"sPin",merk:"sMerk",msg:"sMeldung"}, UI_U={box:"uePinBox",pin:"uePin",merk:"ueMerk",msg:"ueMeldung"}, UI_T={box:"tPinBox",pin:"tPin",merk:"tMerk",msg:"tMeldung"};
+  const UI_S={box:"sPinBox",pin:"sPin",merk:"sMerk",msg:"sMeldung"}, UI_U={box:"uePinBox",pin:"uePin",merk:"ueMerk",msg:"ueMeldung"}, UI_T={box:"tPinBox",pin:"tPin",merk:"tMerk",msg:"tMeldung"}, UI_G={box:"gPinBox",pin:"gPin",merk:"gMerk",msg:"gMeldung"};
   async function steuerSenden(daten,ok,pin,merken,ui){
     ui=ui||UI_S; pin=pin||pinGemerkt();
     if(!pin){steuWartet={daten,ok,ui};$(ui.box).hidden=false;$(ui.msg).textContent="Bitte Schalt-PIN eingeben.";$(ui.pin).focus();return}
@@ -4043,7 +4067,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
       STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
       $(ui.box).hidden=true; steuWartet=null; $(ui.msg).textContent=ok||"Gespeichert.";
-      if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; bEdit=false; }
+      if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; bEdit=false;
+        if(daten.p&&"lokKwh" in daten.p){ if(GELD&&GELD.lok) Object.assign(GELD.lok,daten.p); gLokEdit=false; zeichneLokParam(); } }
       if(daten.aktion==="maWarn") maEdit=false;
       if(daten.aktion==="ueberschuss"&&daten.ueb&&daten.ueb.soc!==undefined) $("uePanel").dataset.dirty="";
       zeichneSteuerung();
@@ -4053,7 +4078,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       $(ui.msg).textContent=(j&&j.error)||"Fehler";
     }
   }
-  [UI_S,UI_U,UI_T].forEach(ui=>{
+  [UI_S,UI_U,UI_T,UI_G].forEach(ui=>{
     $(ui.box).addEventListener("submit",async ev=>{ev.preventDefault();const pin=$(ui.pin).value.trim();if(!pin||!steuWartet)return;
       const mm=$(meldAktiv), thm=!mm.hidden&&ui===uiAktiv; if(thm) mm.innerHTML=`<i class="spin" aria-hidden="true"></i>wird ausgeführt …`;
       await steuerSenden(steuWartet.daten,steuWartet.ok,pin,$(ui.merk).checked,ui);
