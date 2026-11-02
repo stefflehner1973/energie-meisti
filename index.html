@@ -282,7 +282,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 @media (max-width:520px){.seg{width:100%}.seg button{flex:1 1 auto;padding:6px 6px}}
 .seg button+button{border-left:1px solid var(--line)}
 .thsollzeile{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px}.thsollzeile>.thsoll{flex:0 1 440px;min-width:0}
-.threlais{border:1px solid var(--line);border-radius:10px;padding:7px 12px;flex:0 0 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.threlais{border:1px solid var(--line);border-radius:10px;padding:7px 12px;flex:0 1 auto;min-width:0;max-width:170px;display:flex;flex-direction:column;gap:2px}
 .threlais .k{font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .threlais .z{display:flex;align-items:center;gap:7px;font-size:1rem;font-weight:700}
 .threlais .z i{width:10px;height:10px;border-radius:50%;border:2px solid var(--muted)}
@@ -1131,7 +1131,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 10:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 11:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3732,6 +3732,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(t<=Date.now()){$("sMeldung").textContent="Die Rückkehr muss in der Zukunft liegen.";return}
     $("thAusForm").hidden=true; thSenden(null,"Auswärts wird eingestellt",{aktion:"thermo",th:{betrieb:"aus",ausBis:t}},"Auswärts bis "+fDay(t)+" "+fTime(t))});
   $("thAusOhne").addEventListener("click",()=>{$("thAusForm").hidden=true; thSenden(null,"Auswärts wird eingestellt",{aktion:"thermo",th:{betrieb:"aus"}},"Auswärts, bis du zurückstellst")});
+  // «Mindestlaufzeit bis 11:13 (danach: … → abgesenkt …)» aus dem Grund der Steuerung → kurzer Hinweis im Relais-Kästchen
+  function mindestTxt(g){ const m=/^Mindest(?:laufzeit|zeit abgesenkt) bis (\d{1,2}:\d{2})/.exec(g||""); if(!m) return "";
+    const d=/danach:.*?→ (abgesenkt|frei)/.exec(g), dn=d?(d[1]==="abgesenkt"?"abgesenkt":"normal"):"";
+    return `<small style="color:var(--c-wp)" title="${esc(g)}">Mindestzeit bis ${m[1]}${dn?", danach "+dn:""}</small>` }
   function zeichneRelais(){
     const box=$("thRelais"); if(!box) return;
     const st=STEU&&STEU.status, wp=st&&st.ch&&st.ch[2];
@@ -3740,7 +3744,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     box.className="threlais"+(v===1?" ein":"");
     box.title="Relais WP ABSENKEN (O3): "+(v===1?"ein = WP abgesenkt":v===0?"aus = WP heizt normal":"unbekannt");
     box.innerHTML=`<span class="k">Relais</span><span class="z"><i aria-hidden="true"></i>${v===1?"Abgesenkt":v===0?"Normal":"–"}</span>`+
-      (hand?`<small style="color:var(--c-bezug)">von Hand geschaltet</small>`:"")+(zeit?`<small>Stand ${fTime(zeit)}</small>`:"");
+      (hand?`<small style="color:var(--c-bezug)">von Hand geschaltet</small>`:"")+mindestTxt(wp&&wp.grund)+(zeit?`<small>Stand ${fTime(zeit)}</small>`:"");
   }
   let bEdit=false;
   function zeichneBoilerStatus(){
