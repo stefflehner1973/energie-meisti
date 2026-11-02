@@ -1152,7 +1152,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 15:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 15:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2876,7 +2876,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       $("pHint").hidden=true;
     }catch(e){
       if(nr!==progNr) return;
-      $("pHint").textContent="Wetterprognose nicht erreichbar: "+e.message+". Internetverbindung prüfen.";$("pHint").hidden=false;
+      $("pHint").textContent="Wetterprognose nicht erreichbar: "+e.message+". Gezeigt wird die letzte gespeicherte Prognose; die gemessenen Werte von heute sind aktuell.";$("pHint").hidden=false;
+      ladeProgIst();   // Messwerte bis jetzt trotzdem holen und zeichnen
     }
     if(reiter==="prognose") zeichnePrognose();
   }
