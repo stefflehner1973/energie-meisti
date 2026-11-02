@@ -1131,7 +1131,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 12:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 12:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1462,11 +1462,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     });
     if(zp){   // 4. Zeile: Zeitplan Raumthermostat (Zu Hause / Vorheizen / Abgesenkt / Auswärts bzw. Abweichung)
       const y=oben+3*lane, yb=y+16, hb=16, ZF=["var(--warm)","var(--accent)","var(--muted)"], ZO=[.9,.3,.55];
-      let bars="", jetztMod=null;
-      zp(t0,t1).forEach(([a,b,mod,vh])=>{const xa=X(a),xb=X(b); if(xb-xa<.2) return; if(a<=Date.now()&&b>=Date.now()-6e4) jetztMod=vh?"Vorheizen":["Zu Hause","Abgesenkt","Auswärts"][mod];
+      let bars="", jetztMod=null; const stk=zp(t0,t1); K14C.zp=stk;
+      stk.forEach(([a,b,mod,vh])=>{const xa=X(a),xb=X(b); if(xb-xa<.2) return; if(a<=Date.now()&&b>=Date.now()-6e4) jetztMod=vh?"Vorheizen":["Zu Hause","Abgesenkt","Auswärts"][mod];
         bars+=`<rect x="${xa.toFixed(1)}" y="${yb}" width="${(xb-xa).toFixed(1)}" height="${hb}" rx="2" fill="${ZF[mod]}" opacity="${vh?.35:ZO[mod]}"/>`});
       g+=`<rect x="${Lr}" y="${yb}" width="${W-Lr-Rr}" height="${hb}" rx="3" fill="var(--line)" opacity=".45"/>`+bars;
-      g+=`<text x="${Lr}" y="${y+11}" font-size="11.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">Zeitplan Zu Hause / Abgesenkt${jetztMod?`<tspan fill="var(--fg)" font-weight="600"> · jetzt ${jetztMod}</tspan>`:""}</text>`;
+      g+=`<text x="${Lr}" y="${y+11}" font-size="11.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">Zeitplan Zu Hause / Abgesenkt<tspan class="zptxt" fill="var(--fg)" font-weight="600" data-jetzt="${jetztMod?" · jetzt "+jetztMod:""}">${jetztMod?" · jetzt "+jetztMod:""}</tspan></text>`;
     }
     const yA=oben+nL*lane;
     K14C.geo={t0,t1,X,W,Lr,Rr};
@@ -1478,8 +1478,17 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     hit.addEventListener("pointermove",hv); hit.addEventListener("pointerdown",hv); hit.addEventListener("pointerleave",()=>hoverWeg(K14C));
   }
   // senkrechter Strich in den Schaltzuständen zur gleichen Zeit wie in den Diagrammen darüber
+  const ZP_TXT=[["Zu Hause","Zu Hause (orange)"],["Abgesenkt","Abgesenkt (hellblau)"],["Auswärts","Auswärts (grau)"]];
+  function zpErklaeren(t){   // Text in der Zeile «Zeitplan» zur Zeit t: was die Farbe dort bedeutet
+    const svg=$("chartK"), z=svg&&svg.querySelector(".zptxt"); if(!z) return;
+    if(t===null){z.textContent=z.dataset.jetzt||"";return}
+    const s=(K14C.zp||[]).find(([a,b])=>t>=a&&t<b); if(!s){z.textContent=z.dataset.jetzt||"";return}
+    const [a,b,m,v]=s, was=v?"Vorheizen, Sollwert Zu Hause (hell-orange)":ZP_TXT[m][1];
+    z.textContent=` · ${was} ${fTime(a)}–${b>=Date.now()-6e4?"jetzt":fTime(b)}`;
+  }
   function k14Linie(t){
     const svg=$("chartK"), g=K14C.geo, l=svg&&svg.querySelector(".hovl"); if(!g||!l||t<g.t0||t>g.t1) return;
+    zpErklaeren(t);
     const x=g.X(t).toFixed(1); l.setAttribute("x1",x); l.setAttribute("x2",x); svg.querySelector(".hov").setAttribute("visibility","visible");
   }
 
@@ -2168,7 +2177,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t=g.t0+(x-L)/(g.W-L-R)*(g.t1-g.t0);
     einzelGruppe(c).forEach(k=>zeigeBei(k,t));
   }
-  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null)})}
+  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C)zpErklaeren(null)})}
   function zeigeBei(c,t){
     if(c.lines) return zeigeMultiBei(c,t);
     if(c===K14C) return k14Linie(t);
