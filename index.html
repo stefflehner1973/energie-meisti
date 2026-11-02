@@ -381,7 +381,7 @@ details>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px
 .matile .tv small{font-size:1rem;color:inherit;margin-left:2px}
 .matile .mi{font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
 .matile .lb{color:var(--hot)}
-.matile{position:relative}
+.matile{position:relative}.matile.ausser{background:color-mix(in srgb,var(--c-bezug) 12%,transparent);border-color:color-mix(in srgb,var(--c-bezug) 45%,var(--line))}
 .matile .ico{position:absolute;top:8px;right:9px;width:22px;height:22px;color:var(--muted);opacity:.9}
 .matile .nm{padding-right:24px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;margin:0 0 8px}
@@ -1151,7 +1151,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 12:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 13:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1679,6 +1679,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(typeof x.t2==="number") kacheln.push({id:x.id+":2",name:"Aussen",t1:x.t2,h:x.h2,zeit:x.zeit,lowbat:x.lowbat})});
     kacheln.forEach((x,i)=>{
       const d=document.createElement("div"); d.className="matile";
+      { const roh=String(x.id||""), zwei=/:2$/.test(roh); d.dataset.mwk=roh.replace(/:2$/,"").toUpperCase()+(zwei?"_t2":"_t1"); if(typeof x.t1==="number") d.dataset.wert=x.t1; }
       const nm=document.createElement("div"); nm.className="nm";
       const dot=document.createElement("span"); dot.className="dot"; dot.style.background=sCol(i);
       nm.append(dot,document.createTextNode(x.name||x.id));
@@ -1697,6 +1698,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(x.zeit&&Date.now()-x.zeit>30*6e4){const o=document.createElement("div");o.className="mi lb";o.textContent="Kein neuer Wert seit über 30 min";d.append(o)}
       grid.append(d);
     });
+    maKachelnMarkieren();
+  }
+  // Kachel leicht rot, sobald der Wert ausserhalb Min/Max der Warnungen liegt (sofort, ohne Dauer)
+  function maKachelnMarkieren(){
+    let S=STEU; if(!S){try{S=JSON.parse(localStorage.getItem("tb.steuer")||"null")}catch(e){S=null}}
+    const cfg=(S&&S.maWarn&&S.maWarn.cfg)||{};
+    document.querySelectorAll(".matile[data-mwk]").forEach(d=>{const c=cfg[d.dataset.mwk], w=d.dataset.wert===undefined?null:+d.dataset.wert;
+      const aus=!!c&&w!==null&&((c.min!=null&&w<c.min)||(c.max!=null&&w>c.max));
+      d.classList.toggle("ausser",aus); d.title=aus?`Ausserhalb des Bereichs (${c.min!=null?"min "+dez(c.min):""}${c.min!=null&&c.max!=null?" / ":""}${c.max!=null?"max "+dez(c.max):""} °C)`:""});
   }
 
   async function update(){
@@ -3510,7 +3520,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const pill=(v,an,aus,diff)=>v===null||v===undefined?`<span class="spill">–</span>`:`<span class="spill${v?" an":""}${diff?" diff":""}">${v?an:aus}</span>`;
   function zeichneSteuerung(){
     if(!STEU) return;
-    try{ zeichneMaWarn(); }catch(e){}
+    try{ zeichneMaWarn(); maKachelnMarkieren(); }catch(e){}
     const c=STEU.cfg, st=STEU.status;
     document.querySelectorAll(".ssel button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===c.modus)));
     $("sModusText").textContent={aus:"Die Automatik ist aus: es wird nur gerechnet und hier angezeigt.",anzeige:"Testbetrieb: Die Steuerung rechnet und schreibt ins Protokoll, was sie schalten würde – geschaltet wird nichts.",auto:"Die Steuerung schaltet WP ABSENKEN, Boiler SPERREN und Boiler MANUELL selbst. "+(c.p.pause>0?"Von Hand geschaltet (hier oder in der Shelly-App) pausiert sie für "+dez(c.p.pause)+" h.":"Von Hand geschaltet (hier oder in der Shelly-App) hat die Handschaltung Vorrang, bis du «Automatik sofort fortsetzen» drückst.")}[c.modus]||"";
