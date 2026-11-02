@@ -1152,7 +1152,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 15:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 15:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2110,6 +2110,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       g+=`</g>`;
     });
     g+=`</g>`;
+    if(c.jetztLinie){const tj=Date.now(); if(tj>t0&&tj<t1){const xj=X(tj).toFixed(1); g+=`<line x1="${xj}" x2="${xj}" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" opacity=".8"/><text x="${xj}" y="${T-3}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono, monospace">jetzt</text>`}}   // feine Linie «jetzt»
     g+=`<g class="hov" visibility="hidden"><line class="hovl" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3"/>`+lines.map(l=>`<circle class="hovc" r="4" fill="var(--panel)" stroke="${l.col}" stroke-width="2"/>`).join("")+`</g>`;
     g+=`<rect class="hit" x="${L}" y="${T}" width="${W-L}" height="${H-T-B}" fill="transparent"/>`;
     svg.innerHTML=g;
@@ -3067,7 +3068,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     zeichneTage(progIst.length>1?ist:null);
     const gt=gueteText(); $("pGuete").textContent=gt; $("pGuete").hidden=!gt;
   }
-  const PROG={farbig:true,fett:true,eigenerZoom:true,zoom:null,neuZeichnen:()=>zeichnePrognose(),ohnePunkt:true,teil:"prognose",svg:"chartProg",ro:"readoutProg",legend:"pLegend",lines:[],geo:null,null0:true,
+  const PROG={jetztLinie:true,farbig:true,fett:true,eigenerZoom:true,zoom:null,neuZeichnen:()=>zeichnePrognose(),ohnePunkt:true,teil:"prognose",svg:"chartProg",ro:"readoutProg",legend:"pLegend",lines:[],geo:null,null0:true,
     fmt:v=>fW(Math.max(0,v)), axis:v=>Math.abs(v)>=1000?(v/1000).toLocaleString("de-CH",{maximumFractionDigits:1})+" kW":v+" W",spanne:false,leer:"Noch keine Prognose"};
 
   function zeichneTage(istHeute_kwh){
