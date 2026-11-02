@@ -1152,7 +1152,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 13:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 15:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1189,6 +1189,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
   <section class="panel klein">
     <details id="diagbox">
       <summary>Diagnose</summary>
+      <p class="hint" id="wacheInfo" style="margin-top:6px;text-transform:none;letter-spacing:0;font-size:.85rem">Wache K14: –</p>
       <p class="hint">Zeigt die letzten Antworten der Web-App. Der Zugriffsschlüssel ist durch *** ersetzt. Bei Problemen diesen Text kopieren und an Claude schicken.</p>
       <div class="row" style="margin:10px 0"><button type="button" class="ghost" id="copydiag">Diagnose kopieren</button></div>
       <pre id="diag" class="diag">Noch keine Abfrage.</pre>
@@ -3525,7 +3526,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const pill=(v,an,aus,diff)=>v===null||v===undefined?`<span class="spill">–</span>`:`<span class="spill${v?" an":""}${diff?" diff":""}">${v?an:aus}</span>`;
   function zeichneSteuerung(){
     if(!STEU) return;
-    try{ zeichneMaWarn(); maKachelnMarkieren(); }catch(e){}
+    try{ zeichneMaWarn(); maKachelnMarkieren(); wacheAnzeigen(); }catch(e){}
     const c=STEU.cfg, st=STEU.status;
     document.querySelectorAll(".ssel button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===c.modus)));
     $("sModusText").textContent={aus:"Die Automatik ist aus: es wird nur gerechnet und hier angezeigt.",anzeige:"Testbetrieb: Die Steuerung rechnet und schreibt ins Protokoll, was sie schalten würde – geschaltet wird nichts.",auto:"Die Steuerung schaltet WP ABSENKEN, Boiler SPERREN und Boiler MANUELL selbst. "+(c.p.pause>0?"Von Hand geschaltet (hier oder in der Shelly-App) pausiert sie für "+dez(c.p.pause)+" h.":"Von Hand geschaltet (hier oder in der Shelly-App) hat die Handschaltung Vorrang, bis du «Automatik sofort fortsetzen» drückst.")}[c.modus]||"";
@@ -3857,6 +3858,16 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     box.innerHTML=`<span class="k">Relais</span><span class="z"><i aria-hidden="true"></i>${v===1?"Abgesenkt":v===0?"Normal":"–"}</span>`+
       (hand?`<small style="color:var(--c-bezug)">von Hand geschaltet</small>`:"")+mindestTxt(wp&&wp.grund)+(zeit?`<small>Stand ${fTime(zeit)}</small>`:"");
   }
+  // Diagnose: wann sich die Wache auf dem Shelly K14 zuletzt bei Google gemeldet hat
+  function wacheAnzeigen(){
+    const el=$("wacheInfo"); if(!el) return; let S=STEU; if(!S){try{S=JSON.parse(localStorage.getItem("tb.steuer")||"null")}catch(e){S=null}}
+    if(!S||!("wacheZeit" in S)){el.textContent="Wache K14: – (neues Google-Skript Stand 02.11.2026 (23) nötig)";el.style.color="";return}
+    const z=S.wacheZeit; if(!z){el.textContent="Wache K14: hat sich noch nie gemeldet";el.style.color="var(--c-bezug)";return}
+    const min=Math.round((Date.now()-z)/6e4), alt=min>40;
+    el.textContent=`Wache K14: zuletzt gemeldet ${fStempel(z)} (vor ${min<1?"weniger als 1":min} min)${alt?" – meldet sich nicht mehr!":" – läuft"}`;
+    el.style.color=alt?"var(--c-bezug)":"";
+  }
+  setInterval(wacheAnzeigen,60000);
   /* Warnungen Mobile Alerts (Reiter Temperatur): je Sensor und Kanal Min / Max / Dauer, gespeichert in Google (MA_WARN) */
   let maEdit=false;
   function zeichneMaWarn(erzwingen){
