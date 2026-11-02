@@ -1152,7 +1152,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 13:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 13:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3480,7 +3480,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const SZ_FARBE={alltag:"var(--s5)",heim:"var(--accent)",aus:"var(--muted)"};
   const AUSG=["Boiler SPERREN","Boiler MANUELL 1h","WP ABSENKEN"];
   const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand","°C",0.1,"Abstand total zwischen den beiden Schaltpunkten, je die Hälfte über und unter dem Sollwert. Beispiel Sollwert 21,9 und 0,2: abgesenkt ab 22,0, wieder frei bei 21,8 °C. Dazwischen bleibt es, wie es ist. 0 = genau am Sollwert."],["minFrei","WP nach Freigabe mindestens frei","min",15,"Einmal freigegeben, bleibt die WP mindestens so lange frei, auch wenn der Raum schon warm genug ist (verhindert häufiges Schalten)."],["minAbs","WP einmal abgesenkt mindestens","min",5,"Einmal abgesenkt, bleibt die WP mindestens so lange abgesenkt."],["raumMax","Ohne Raumwert seit","h",0.5,"Meldet die Wetterstation so lange keine Raumtemperatur, wird die WP abgesenkt, und es kommt eine Meldung aufs Handy (Telegram). Kommen wieder Werte, regelt das Thermostat normal weiter.",60]]],
-    ["Solarüberschuss (gilt immer)",[["pvPlus","Sollwert höher um","°C",0.1,"Bei Solarüberschuss wird der gültige Sollwert (Zu Hause, Vorheizen, Abgesenkt oder Auswärts) um so viel angehoben, damit die WP mit eigenem Strom heizt. 0 = aus."],["pvSchwelle","Einspeisung ins Netz mindestens","W",100,"So viel Strom muss ins Netz fliessen, damit es als Überschuss zählt."],["pvMin","während mindestens","min",5,"So lange muss die Einspeisung ohne Unterbruch über der Schwelle liegen."],["pvSoc","Batterie mindestens","%",5,"Die Anhebung gilt erst, wenn die Batterie mindestens so voll ist."],["pvNach","gilt danach noch","min",15,"So lange bleibt die Anhebung nach dem letzten Überschuss bestehen."]]]];
+    ["Solarüberschuss (gilt immer)",[["pvPlus","Sollwert höher um","°C",0.1,"Bei Solarüberschuss wird der gültige Sollwert (Zu Hause, Vorheizen, Abgesenkt oder Auswärts) um so viel angehoben, damit die WP mit eigenem Strom heizt. 0 = aus."],["pvSchwelle","Einspeisung ins Netz mindestens","W",100,"So viel Strom muss ins Netz fliessen, damit es als Überschuss zählt."],["pvMin","während mindestens","min",5,"So lange muss die Einspeisung ohne Unterbruch über der Schwelle liegen."],["pvSoc","Batterie mindestens","%",5,"Die Anhebung gilt erst, wenn die Batterie mindestens so voll ist."],["pvNach","gilt danach noch","min",5,"Überbrückt kurze Wolken: so lange bleibt die Anhebung nach dem letzten Überschuss. Danach wird eine Freigabe wegen Solarüberschuss sofort beendet (ohne Mindestzeit «frei»), damit die WP nicht aus der Batterie läuft."],["reglerTag","Tagtemperatur am WP-Regler","°C",0.1,"Ist der Raum schon so warm, heizt die WP ohnehin nicht – dann keine Anhebung bei Solarüberschuss. Gleicher Wert wie am WP-Regler einstellen (heute 21,5 °C). 0 = aus."]]]];
   const PARAM_GR=[
     ["Regel «wärmstes Fenster»",[["komfort","Komfort","°C",0.1,"Sollwert der Fenster-Regel beim Heimkommen und zu Hause."],["nacht","Nachts / niemand da","°C",0.1],["aus","Auswärts (Frostschutz)","°C",0.5],
       ["hyst","Abstand bis wieder absenken","°C",0.1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
@@ -3734,7 +3734,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Zustand
     if(!th){$("thStatus").textContent="Noch kein Lauf mit dem Raumthermostat. Neues Google-Skript (Stand 01.11.2026) einspielen.";$("thBeob").textContent="";return}
     const raum=th.raum!=null?`Raum <b>${dez(th.raum)} °C</b>`:"Raum <b>–</b>";
-    const soll=`Soll jetzt <b>${dez(th.soll)} °C</b>${th.pvAn?` (inkl. +${dez(c.p.pvPlus)} °C PV-Überschuss)`:""}`;
+    const soll=`Soll jetzt <b>${dez(th.soll)} °C</b>${th.pvAn?` (inkl. +${dez(c.p.pvPlus)} °C PV-Überschuss)`:th.pvGrenze?" (Solarüberschuss: keine Anhebung, Raum schon über der Tagtemperatur am WP-Regler)":""}`;
     const regel=th.genau?`frei unter ${dez(th.soll)}, abgesenkt über ${dez(th.soll)} °C`:`frei bei ${dez(th.frei)} °C und tiefer, abgesenkt bei ${dez(th.abs)} °C und höher`;
     const wp=st.ch&&st.ch[2], istT=wp&&wp.ist===1?"abgesenkt":wp&&wp.ist===0?"frei":"–";
     const MN=["Zu Hause","Abgesenkt","Auswärts"], q={zeitplan:"Zeitplan",vorheizen:"Vorheizen nach Zeitplan",abweichung:"Abweichung",auswärts:cth.ausBis?"bis "+fDay(cth.ausBis)+" "+fTime(cth.ausBis):"bis du zurückstellst"}[th.quelle]||"";
