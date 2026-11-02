@@ -1048,6 +1048,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <div class="uekopf"><h2 style="margin:0">Boiler auswärts</h2><div class="bstat" id="bStat"></div></div>
         <p class="hint" style="margin-top:8px">Gilt, wenn das Raumthermostat auf «Auswärts» steht: Boiler gesperrt, bei Überschuss und voller Batterie kurz frei für das Lastmanagement, und rechtzeitig vor der Rückkehr warm.</p>
         <div id="bParam"></div>
+        <p class="hint" id="bMaxHinweis" style="color:var(--c-boiler);font-weight:600" hidden></p>
         <p class="hint" id="bWarn" style="color:var(--c-bezug)" hidden></p>
         <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="bSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="bVerwerfen" hidden>Verwerfen</button></div>
         <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
@@ -1151,7 +1152,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 13:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 13:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3885,7 +3886,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
     const pill=(an,txt,tip)=>`<span class="${an?"an":""}" title="${tip}"><i aria-hidden="true"></i>${txt}</span>`;
     box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(c.th.ausBis?" bis "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis):""):"Auswärts nicht aktiv","Betriebsart Raumthermostat"):"")+
-      (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"");
+      (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"")+
+      (st?pill(false,"Batterie max "+(st.battMax?st.battMax.soc+" %":"100 %"),st.battMax?"Erkannt "+fDay(st.battMax.zeit)+" "+fTime(st.battMax.zeit)+": Ladestand blieb stehen, obwohl Strom ins Netz ging (Maximum am Fronius).":"Kein Ladestopp unter 99 % erkannt."):"");
+    const bw=$("bMaxHinweis"); if(bw){ const bm=st&&st.battMax, so=c&&c.p&&c.p.auSoc;
+      bw.hidden=!(bm&&typeof so==="number"&&bm.soc-1<so);
+      if(!bw.hidden) bw.textContent=`Die Batterie lädt nur bis ${bm.soc} % (Maximum am Fronius, erkannt ${fDay(bm.zeit)} ${fTime(bm.zeit)}). «Batterie mindestens» ${so} % würde nie erreicht – es gilt darum ${bm.soc-1} %.`; }
   }
   function zeichneBoilerEinst(erzwingen){
     zeichneBoilerStatus();
