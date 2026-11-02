@@ -1131,7 +1131,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 10:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 10:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3398,7 +3398,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
     const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
-    l.innerHTML=`<span class="n">${tip?`<span class="tip" tabindex="0" data-tip="${esc(tip)}">${n}</span>`:n}</span><input type="number" step="${step}" ${attr}="${k}" data-f="${f}" value="${anz}" aria-label="${esc(n)}"><span class="e">${e}</span>`;return l};
+    l.innerHTML=`<span class="n">${tip?`<span class="tip" tabindex="0" data-tip="${esc(tip)}">${n}</span>`:n}</span><input type="number" step="${step}" min="-100000" ${attr}="${k}" data-f="${f}" value="${anz}" aria-label="${esc(n)}"><span class="e">${e}</span>`;return l};
   const einstWert=i=>Math.round(+i.value*(+i.dataset.f||1)*1000)/1000;   // Eingabe → gespeicherter Wert
   const WTAGE=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
   const dez=v=>typeof v==="number"?String(Math.round(v*10)/10).replace(".",","):"–";
