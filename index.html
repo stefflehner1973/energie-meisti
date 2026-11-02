@@ -1151,7 +1151,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 12:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 02.11.26 12:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3855,7 +3855,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const key=x.id+"_"+kan, c=cfg[key]||{}, wert=x[kan], hat=c.min!=null||c.max!=null;
       const st=seit[key]?`<small class="aus">ausserhalb seit ${fTime(seit[key])}</small>`:`<small>${wert!==null?dez(wert)+" °C":"–"}${hat?" · im Bereich":""}</small>`;
       const f=(feld,v,step)=>`<input type="number" step="${step}" min="-100000" data-mw="${key}" data-feld="${feld}" value="${v!=null?v:""}" aria-label="${esc(x.name)} ${feld}">`;
-      h+=`<span class="n">${esc(x.name)}${kan==="t2"?" · Kanal 2":""}${st}</span>${f("min",c.min,0.5)}${f("max",c.max,0.5)}${f("dauer",hat||c.dauer?c.dauer:"",5)}`;
+      h+=`<span class="n">${kan==="t2"?"Aussen":esc(x.name)}${st}</span>${f("min",c.min,0.5)}${f("max",c.max,0.5)}${f("dauer",hat||c.dauer?c.dauer:"",5)}`;
     }));
     box.innerHTML=h; $("maWarnSpeichern").disabled=true; $("maWarnVerwerfen").hidden=true;
   }
