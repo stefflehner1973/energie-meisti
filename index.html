@@ -1165,7 +1165,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 12:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 12:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3815,7 +3815,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   setInterval(()=>{if(STEU&&$("thWoche")&&$("thWoche").clientWidth) zeichneWochenbalken()},60000);   // Zeit-Strich mitlaufen lassen
   function zeichneWochenbalken(){
     const svg=$("thWoche"); if(!svg||!planEdit) return;
-    const W=Math.round(Math.max(300,Math.min(700,svg.clientWidth||600))), Lb=30, Rb=6, lane=16, gap=4, H=7*(lane+gap)+18;
+    // 8 Zeilen nach Datum: gestern, heute (fett), 6 Tage voraus (Stephan 03.11.2026)
+    const NR=8, W=Math.round(Math.max(300,Math.min(700,svg.clientWidth||600))), Lb=58, Rb=6, lane=16, gap=4, H=NR*(lane+gap)+18;
+    const jetzt0=Date.now(), d00=mitternacht(mitternacht(jetzt0)-12*36e5), tagDm=r=>mitternacht(d00+r*864e5+12*36e5), zeileVon=t=>Math.round((mitternacht(t)-d00)/864e5);
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     const X=h=>Lb+h/24*(W-Lb-Rb), hm=x=>{const [a,b]=x.split(":").map(Number);return a+b/60};
     let g="";
@@ -3823,22 +3825,23 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     for(let h=0;h<=24;h++){const x=X(h).toFixed(1), lab=h%labJede===0;
       g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-16}" stroke="var(--line)" stroke-opacity="${h%6===0?1:lab?.7:.35}"/>`;
       if(lab) g+=`<text x="${x}" y="${H-4}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${String(h).padStart(2,"0")}</text>`}
-    const stueck=(row,a,b,col,op)=>{if(b<=a)return;g+=`<rect x="${X(a).toFixed(1)}" y="${row*(lane+gap)}" width="${(X(b)-X(a)).toFixed(1)}" height="${lane}" rx="3" fill="${col}" opacity="${op}"/>`};
-    TH_TAGE.forEach(([k,n],row)=>{const w=planEdit.plan[k]; const y=row*(lane+gap);
-      g+=`<rect x="${Lb}" y="${y}" width="${W-Lb-Rb}" height="${lane}" rx="3" fill="var(--accent)" opacity=".18"/><text x="${Lb-5}" y="${y+12}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}</text>`;
-      if(!w) return; const a=hm(w.tag), v=a-(planEdit.vorheiz||0); let e=hm(w.nacht); if(e<=a) e+=24;
-      // Vorheizen: beginnt es am Vorabend, auch dort zeigen (Zeile des Vortags)
-      stueck(row,Math.max(0,v),a,"var(--warm)",.35); if(v<0) stueck((row+6)%7,24+v,24,"var(--warm)",.35);
+    const stueck=(row,a,b,col,op)=>{if(b<=a||row<0||row>=NR)return;g+=`<rect x="${X(a).toFixed(1)}" y="${row*(lane+gap)}" width="${(X(b)-X(a)).toFixed(1)}" height="${lane}" rx="3" fill="${col}" opacity="${op}"/>`};
+    for(let row=0;row<NR;row++){const dm=new Date(tagDm(row)), y=row*(lane+gap), heute=row===1, n=TH_TAGE.find(([k])=>k===dm.getDay())[1];
+      g+=`<rect x="${Lb}" y="${y}" width="${W-Lb-Rb}" height="${lane}" rx="3" fill="var(--accent)" opacity=".18"/><text x="${Lb-5}" y="${y+12}" text-anchor="end" font-size="10.5" fill="${heute?"var(--fg)":"var(--muted)"}" font-weight="${heute?700:400}" font-family="IBM Plex Sans, sans-serif">${n} ${String(dm.getDate()).padStart(2,"0")}.${String(dm.getMonth()+1).padStart(2,"0")}.</text>`}
+    for(let row=-1;row<=NR;row++){const w=planEdit.plan[new Date(tagDm(row)).getDay()]; if(!w) continue;
+      const a=hm(w.tag), v=a-(planEdit.vorheiz||0); let e=hm(w.nacht); if(e<=a) e+=24;
+      // Vorheizen: beginnt es am Vorabend, auch dort zeigen (Zeile des Vortags); Nacht nach Mitternacht in der Folgezeile
+      stueck(row,Math.max(0,v),a,"var(--warm)",.35); if(v<0) stueck(row-1,24+v,24,"var(--warm)",.35);
       stueck(row,a,Math.min(24,e),"var(--warm)",.9);
-      if(e>24){const nr=(row+1)%7; stueck(nr,0,e-24,"var(--warm)",.9)}});
+      if(e>24) stueck(row+1,0,e-24,"var(--warm)",.9)}
     // Laufende Abweichung / Auswärts: oben (dick) was tatsächlich gilt, unten (dünn) bleibt der Zeitplan sichtbar
     const cth=(STEU&&STEU.cfg&&STEU.cfg.th)||{}, jetzt=Date.now(); let ab=null;
     if(cth.abw&&cth.abw.bis>jetzt) ab={von:jetzt,bis:cth.abw.bis,mod:cth.abw.mod};
     else if(cth.betrieb==="aus") ab={von:jetzt,bis:cth.ausBis?cth.ausBis-(STEU.cfg.p.vorheiz||0)*3600e3:jetzt+7*864e5,mod:2};
     const dick=(von,bis,f,op)=>{ const hoch=Math.round(lane*.62);
-      for(let d0=mitternacht(von);d0<Math.min(bis,von+7*864e5);d0+=864e5){
-        const dm=mitternacht(d0+36e5*12), row=TH_TAGE.findIndex(([k])=>k===new Date(dm).getDay()), a=Math.max(von,dm), b=Math.min(bis,dm+864e5);
-        if(row<0||b<=a) continue; const ha=(a-dm)/36e5, hb=(b-dm)/36e5, y=row*(lane+gap);
+      for(let d0=mitternacht(von);d0<Math.min(bis,d00+NR*864e5);d0=mitternacht(d0+36e5*30)){
+        const dm=mitternacht(d0), row=zeileVon(dm), a=Math.max(von,dm), b=Math.min(bis,mitternacht(dm+36e5*30));
+        if(row<0||row>=NR||b<=a) continue; const ha=(a-dm)/36e5, hb=(b-dm)/36e5, y=row*(lane+gap);
         g+=`<rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" fill="var(--panel)"/><rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" rx="2" fill="${f}" opacity="${op}"/>`;
         g+=`<line x1="${X(ha).toFixed(1)}" x2="${X(hb).toFixed(1)}" y1="${y+hoch+.5}" y2="${y+hoch+.5}" stroke="var(--fg)" stroke-opacity=".5" stroke-dasharray="2 2"/>`;
       } };
@@ -3853,26 +3856,26 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const klein=t=>`<span style="font-size:.82em">${t}</span>`;
     if(abAkt) $("thWocheAbw").innerHTML=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][abAkt.mod]} bis ${abAkt.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(abAkt.bis)+" "+fTime(abAkt.bis)}${klein((abAkt.mod===2?rueck:"")+": oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.")}`;
     else if(nachAus.length) $("thWocheAbw").innerHTML=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}${klein(", danach normaler Zeitplan: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.")}`;
-    { // vergangener Teil dieser Woche: tatsächlicher Verlauf (mitgeschrieben), nicht neu gerechnet
-      const mo=mitternacht(jetzt-((new Date(jetzt).getDay()+6)%7)*864e5);
+    { // gestern und heute bis jetzt: tatsächlicher Verlauf (mitgeschrieben), nicht neu gerechnet
+      const mo=d00;
       const hs=thHistStuecke(STEU&&STEU.thHist,jetzt).map(([a,b,m,v])=>[Math.max(a,mo),Math.min(b,jetzt),m,v]).filter(x=>x[1]>x[0]);
       const HF=["var(--warm)","var(--accent)","var(--muted)"], HO=[.9,0,.55];   // Abgesenkt = nur Hintergrund wie im Plan
       hs.forEach(([a,b,m,v])=>{for(let d0=mitternacht(a);d0<b;d0=mitternacht(d0+36e5*30)){
-        const row=TH_TAGE.findIndex(([k])=>k===new Date(d0).getDay()), xa=Math.max(a,d0), xb=Math.min(b,d0+864e5); if(row<0||xb<=xa) continue;
+        const row=zeileVon(d0), xa=Math.max(a,d0), xb=Math.min(b,mitternacht(d0+36e5*30)); if(row<0||row>=NR||xb<=xa) continue;
         const ha=(xa-d0)/36e5, hb=(xb-d0)/36e5, y=row*(lane+gap), w=(X(hb)-X(ha)).toFixed(1);
         g+=`<rect x="${X(ha).toFixed(1)}" y="${y}" width="${w}" height="${lane}" fill="var(--panel)"/><rect x="${X(ha).toFixed(1)}" y="${y}" width="${w}" height="${lane}" fill="var(--accent)" opacity=".18"/><rect x="${X(ha).toFixed(1)}" y="${y}" width="${w}" height="${lane}" rx="2" fill="${HF[m]}" opacity="${v?.35:HO[m]}"/>`}});
     }
     for(let h=1;h<24;h++){const x=X(h).toFixed(1);g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-18}" stroke="var(--bg)" stroke-opacity="${h%6===0?.55:.3}" stroke-width="1"/>`}   // Stundenlinien auch über den Balken
     { // aktuelle Zeit: roter Strich nur beim heutigen Tag
-      const dmj=mitternacht(jetzt), rj=TH_TAGE.findIndex(([k])=>k===new Date(dmj).getDay()), xj=X((jetzt-dmj)/36e5).toFixed(1), rot="#e5484d";
+      const dmj=mitternacht(jetzt), rj=zeileVon(dmj), xj=X((jetzt-dmj)/36e5).toFixed(1), rot="#e5484d";
       if(rj>=0){const y=rj*(lane+gap); g+=`<line x1="${xj}" x2="${xj}" y1="${y-3}" y2="${y+lane+3}" stroke="${rot}" stroke-width="2.5" stroke-linecap="round"></line>`}
     }
     g+=`<line class="wohov" x1="0" x2="0" y1="0" y2="0" stroke="var(--fg)" stroke-width="1.2" visibility="hidden"/>`;
     svg.innerHTML=g;
-    WOGEO={X,Lb,Rb,W,lane,gap,mo:mitternacht(jetzt-((new Date(jetzt).getDay()+6)%7)*864e5)};
+    WOGEO={X,Lb,Rb,W,lane,gap,NR,mo:d00};
     if(!svg.dataset.hov){ svg.dataset.hov="1";
       const hv=e=>{const G=WOGEO; if(!G) return; const r=svg.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*G.W, y=(e.clientY-r.top)/r.height*Number(svg.getAttribute("viewBox").split(" ")[3]);
-        const row=Math.floor(y/(G.lane+G.gap)), h=(x-G.Lb)/(G.W-G.Lb-G.Rb)*24; if(row<0||row>6||h<0||h>24){woWeg();return}
+        const row=Math.floor(y/(G.lane+G.gap)), h=(x-G.Lb)/(G.W-G.Lb-G.Rb)*24; if(row<0||row>=G.NR||h<0||h>24){woWeg();return}
         const d0=mitternacht(G.mo+row*864e5+12*36e5), t=d0+h*36e5; woZeigen(t,row,x)};
       svg.addEventListener("pointermove",hv); svg.addEventListener("pointerdown",hv); svg.addEventListener("pointerleave",woWeg);
     }
@@ -3880,14 +3883,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // Wochenbalken: beim Darüberfahren zeigen, was zu dieser Zeit gilt (vergangene Tage: aufgezeichnet, sonst Zeitplan inkl. Abweichung/Auswärts)
   let WOGEO=null;
   function woStuecke(){ const G=WOGEO, f=zeitplanStuecke(); if(!G||!f) return [];
-    const t0=G.mo, t1=G.mo+7*864e5, jetzt=Date.now();
+    const t0=G.mo, t1=G.mo+G.NR*864e5+36e5*2, jetzt=Date.now();
     const hs=thHistStuecke(STEU&&STEU.thHist,jetzt).map(([a,b,m,v])=>[Math.max(a,t0),Math.min(b,jetzt),m,v]).filter(x=>x[1]>x[0]);
     return stueckeErsetzen(f(t0,t1),hs); }
   function woZeigen(t,row,x){ const G=WOGEO, s=woStuecke().find(([a,b])=>t>=a&&t<b), info=$("thWocheInfo"), l=$("thWoche").querySelector(".wohov");
     if(!s){woWeg();return}
     const [a,b,m,v]=s, jetzt=Date.now(), was=v?"Vorheizen (Sollwert Zu Hause)":ZP_TXT[m][0], zt=x=>(mitternacht(x)===mitternacht(t)?"":fDay(x)+" ")+fTime(x);
     const lauf=a<=jetzt&&b>jetzt, von=lauf&&t>=jetzt?"jetzt":zt(a), bis=lauf&&t<jetzt?"jetzt":zt(b);
-    info.textContent=`${TH_TAGE[row][1]} ${fDay(t)} ${fTime(t)}: ${was} ${von}–${bis}${t>=jetzt?" (geplant)":" (war so)"}`;
+    info.textContent=`${TH_TAGE.find(([k])=>k===new Date(t).getDay())[1]} ${fDay(t)} ${fTime(t)}: ${was} ${von}–${bis}`;
     if(l){const y=row*(G.lane+G.gap); l.setAttribute("x1",x.toFixed(1)); l.setAttribute("x2",x.toFixed(1)); l.setAttribute("y1",y-2); l.setAttribute("y2",y+G.lane+2); l.setAttribute("visibility","visible")} }
   function woWeg(){ const info=$("thWocheInfo"), l=$("thWoche")&&$("thWoche").querySelector(".wohov"); if(info) info.innerHTML="&nbsp;"; if(l) l.setAttribute("visibility","hidden") }
   function planDirty(){const d=!planGleich(); $("thPlanSpeichern").disabled=!d; $("thPlanVerwerfen").hidden=!d; zeichneWochenbalken()}
