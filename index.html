@@ -1165,7 +1165,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 12:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 22:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1432,6 +1432,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     a.forEach(([x,y,m,v])=>{if(y<=von||x>=bis){res.push([x,y,m,v]);return} if(x<von) res.push([x,von,m,v]); if(y>bis) res.push([bis,y,m,v])});
     return res.concat(b).sort((p,q)=>p[0]-q[0]);
   }
+  // Vorheizzeit nach «auswärts»: von Google berechnet (Raum, Aussen, gelernte Raten; Stand 03.11.2026 (28)), sonst die feste
+  function vhAus(c){ const th=c&&c.th, l=c&&c.lern, std=(c&&c.p&&c.p.vorheiz)||0;
+    return th&&th.betrieb==="aus"&&th.ausBis&&l&&l.vhAus&&l.vhAus.bis===th.ausBis&&l.vhAus.h>0?l.vhAus.h:std }
   // Nach «auswärts»: bis zur Rückkehr vorheizen, danach normaler Zeitplan (wie Google, Stand 03.11.2026 (25))
   function thNachAus(th,vh){
     if(!th||th.betrieb!=="aus"||!th.ausBis) return [];
@@ -1457,7 +1460,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(pos<t1) voll.push([pos,t1,1,false]);
       // laufende Abweichung / Auswärts darüberlegen
       const jetzt=Date.now(); let ab=null;
-      if(th.betrieb==="aus"){const v=setzZeit(/Raumthermostat: auswärts/i); ab={von:v||jetzt,bis:th.ausBis?th.ausBis-vh*36e5:Infinity,mod:2}}
+      if(th.betrieb==="aus"){const v=setzZeit(/Raumthermostat: auswärts/i); ab={von:v||jetzt,bis:th.ausBis?th.ausBis-vhAus(c)*36e5:Infinity,mod:2}}
       else if(th.abw&&th.abw.bis>jetzt){const v=setzZeit(/Seite: Jetzt (zu Hause|abgesenkt)/i); ab={von:v||jetzt,bis:th.abw.bis,mod:th.abw.mod}}
       if(!ab) return voll;
       const res=[]; voll.forEach(([a,b,m,v])=>{ if(b<=ab.von||a>=ab.bis){res.push([a,b,m,v]);return}
@@ -1465,7 +1468,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       res.push([Math.max(t0,ab.von),Math.min(t1,ab.bis),ab.mod,false]);
       // nach «auswärts» vorheizen / zu Hause ab Rückkehr darüberlegen
       let erg=res.filter(x=>x[1]>x[0]);
-      thNachAus(th,vh).forEach(([a,b,m,v])=>{a=Math.max(a,t0); b=Math.min(b,t1); if(b<=a) return;
+      thNachAus(th,vhAus(c)).forEach(([a,b,m,v])=>{a=Math.max(a,t0); b=Math.min(b,t1); if(b<=a) return;
         const n=[]; erg.forEach(([x,y,mm,vv])=>{ if(y<=a||x>=b){n.push([x,y,mm,vv]);return} if(x<a) n.push([x,a,mm,vv]); if(y>b) n.push([b,y,mm,vv]) }); n.push([a,b,m,v]); erg=n});
       return erg.sort((x,y)=>x[0]-y[0]);
     };
@@ -3837,7 +3840,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Laufende Abweichung / Auswärts: oben (dick) was tatsächlich gilt, unten (dünn) bleibt der Zeitplan sichtbar
     const cth=(STEU&&STEU.cfg&&STEU.cfg.th)||{}, jetzt=Date.now(); let ab=null;
     if(cth.abw&&cth.abw.bis>jetzt) ab={von:jetzt,bis:cth.abw.bis,mod:cth.abw.mod};
-    else if(cth.betrieb==="aus") ab={von:jetzt,bis:cth.ausBis?cth.ausBis-(STEU.cfg.p.vorheiz||0)*3600e3:jetzt+7*864e5,mod:2};
+    else if(cth.betrieb==="aus") ab={von:jetzt,bis:cth.ausBis?cth.ausBis-vhAus(STEU.cfg)*3600e3:jetzt+7*864e5,mod:2};
     const dick=(von,bis,f,op)=>{ const hoch=Math.round(lane*.62);
       for(let d0=mitternacht(von);d0<Math.min(bis,d00+NR*864e5);d0=mitternacht(d0+36e5*30)){
         const dm=mitternacht(d0), row=zeileVon(dm), a=Math.max(von,dm), b=Math.min(bis,mitternacht(dm+36e5*30));
@@ -3849,13 +3852,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const AB_F=["var(--warm)","var(--accent)","var(--muted)"], AB_O=[.95,.75,.75];
       dick(ab.von,ab.bis,AB_F[ab.mod],AB_O[ab.mod]);
     }
-    const nachAus=cth.abw&&cth.abw.bis>jetzt?[]:thNachAus(cth,(STEU&&STEU.cfg.p.vorheiz)||0).filter(([a,b])=>b>jetzt);
+    const nachAus=cth.abw&&cth.abw.bis>jetzt?[]:thNachAus(cth,STEU?vhAus(STEU.cfg):0).filter(([a,b])=>b>jetzt);
     nachAus.forEach(([a,b,m,v])=>{a=Math.max(a,jetzt); if(b>a) dick(a,b,"var(--warm)",v?.45:.9)});
-    const abAkt=ab&&ab.bis>ab.von?ab:null, rueck=nachAus.length?` (Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, vorher vorheizen)`:"";
+    const abAkt=ab&&ab.bis>ab.von?ab:null, vhInfo=(()=>{const l=STEU&&STEU.cfg.lern, v=l&&l.vhAus&&l.vhAus.bis===cth.ausBis?l.vhAus:null; return v?`, Vorheizen ${dez(v.h)} h berechnet (Raum ${dez(v.raum)} °C, aussen Ø ${dez(v.ta)} °C)`:""})(), rueck=nachAus.length?` (Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}${vhInfo||", vorher vorheizen"})`:"";
     $("thWocheAbw").hidden=!abAkt&&!nachAus.length;
     const klein=t=>`<span style="font-size:.82em">${t}</span>`;
     if(abAkt) $("thWocheAbw").innerHTML=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][abAkt.mod]} bis ${abAkt.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(abAkt.bis)+" "+fTime(abAkt.bis)}${klein((abAkt.mod===2?rueck:"")+": oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.")}`;
-    else if(nachAus.length) $("thWocheAbw").innerHTML=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}${klein(", danach normaler Zeitplan: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.")}`;
+    else if(nachAus.length) $("thWocheAbw").innerHTML=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}${klein(vhInfo+", danach normaler Zeitplan: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.")}`;
     { // gestern und heute bis jetzt: tatsächlicher Verlauf (mitgeschrieben), nicht neu gerechnet
       const mo=d00;
       const hs=thHistStuecke(STEU&&STEU.thHist,jetzt).map(([a,b,m,v])=>[Math.max(a,mo),Math.min(b,jetzt),m,v]).filter(x=>x[1]>x[0]);
@@ -3963,7 +3966,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let bEdit=false;
   function zeichneBoilerStatus(){
     const box=$("bStat"); if(!box) return; const c=STEU&&STEU.cfg, st=STEU&&STEU.status;
-    const ende=c&&c.th&&c.th.ausBis?c.th.ausBis-((c.p&&c.p.vorheiz)||0)*36e5:null;   // auswärts endet mit dem Vorheizen (Google Stand (26))
+    const ende=c&&c.th&&c.th.ausBis?c.th.ausBis-vhAus(c)*36e5:null;   // auswärts endet mit dem Vorheizen (Google Stand (26))
     const aus=!!(c&&c.th&&c.th.betrieb==="aus")&&!(ende&&Date.now()>=ende);
     let sp=st&&st.ch&&st.ch[0]?st.ch[0].ist:null, zeit=st&&st.zeit;
     if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
