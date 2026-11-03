@@ -1164,7 +1164,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 02.11.26 19:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 11:40</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1431,6 +1431,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     a.forEach(([x,y,m,v])=>{if(y<=von||x>=bis){res.push([x,y,m,v]);return} if(x<von) res.push([x,von,m,v]); if(y>bis) res.push([bis,y,m,v])});
     return res.concat(b).sort((p,q)=>p[0]-q[0]);
   }
+  // Nach «auswärts»: bis zur Rückkehr vorheizen, ab Rückkehr «Zu Hause» bis der Zeitplan selbst «Zu Hause» hat (wie Google, Stand 03.11.2026 (25))
+  function thNachAus(th,vh){
+    if(!th||th.betrieb!=="aus"||!th.ausBis) return [];
+    const hm=x=>{const [a,b]=String(x||"0:0").split(":").map(Number);return (a||0)+(b||0)/60}, r=th.ausBis, out=[[r-vh*36e5,r,0,true]];
+    for(let d=mitternacht(r)-864e5; d<=r; d=mitternacht(d+36e5*30)){const w=th.plan&&th.plan[new Date(d).getDay()]; if(!w) continue;
+      const a=d+hm(w.tag)*36e5; if(r>=a-vh*36e5&&r<a) out.push([r,a,0,false])}
+    return out;
+  }
   function zeitplanStuecke(){
     let S=STEU; if(!S){try{S=JSON.parse(localStorage.getItem("tb.steuer")||"null")}catch(e){S=null}}
     const c=S&&S.cfg, th=c&&c.th; if(!th||!th.plan||!c.p) return null;
@@ -1457,7 +1465,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const res=[]; voll.forEach(([a,b,m,v])=>{ if(b<=ab.von||a>=ab.bis){res.push([a,b,m,v]);return}
         if(a<ab.von) res.push([a,ab.von,m,v]); if(b>ab.bis) res.push([ab.bis,b,m,v]) });
       res.push([Math.max(t0,ab.von),Math.min(t1,ab.bis),ab.mod,false]);
-      return res.filter(x=>x[1]>x[0]);
+      // nach «auswärts» vorheizen / zu Hause ab Rückkehr darüberlegen
+      let erg=res.filter(x=>x[1]>x[0]);
+      thNachAus(th,vh).forEach(([a,b,m,v])=>{a=Math.max(a,t0); b=Math.min(b,t1); if(b<=a) return;
+        const n=[]; erg.forEach(([x,y,mm,vv])=>{ if(y<=a||x>=b){n.push([x,y,mm,vv]);return} if(x<a) n.push([x,a,mm,vv]); if(y>b) n.push([b,y,mm,vv]) }); n.push([a,b,m,v]); erg=n});
+      return erg.sort((x,y)=>x[0]-y[0]);
     };
     const mitHist=(t0,t1)=>{ const plan=berechnet(t0,t1), h=thHistStuecke(ROH&&ROH.th&&ROH.th.rows,Math.min(t1,Date.now()))
         .map(([a,b,m,v])=>[Math.max(a,t0),Math.min(b,t1),m,v]).filter(x=>x[1]>x[0]);
@@ -3825,17 +3837,23 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const cth=(STEU&&STEU.cfg&&STEU.cfg.th)||{}, jetzt=Date.now(); let ab=null;
     if(cth.abw&&cth.abw.bis>jetzt) ab={von:jetzt,bis:cth.abw.bis,mod:cth.abw.mod};
     else if(cth.betrieb==="aus") ab={von:jetzt,bis:cth.ausBis?cth.ausBis-(STEU.cfg.p.vorheiz||0)*3600e3:jetzt+7*864e5,mod:2};
-    if(ab&&ab.bis>ab.von){
-      const AB_F=["var(--warm)","var(--accent)","var(--muted)"], AB_O=[.95,.75,.75], hoch=Math.round(lane*.62);
-      for(let d0=mitternacht(ab.von);d0<Math.min(ab.bis,ab.von+7*864e5);d0+=864e5){
-        const dm=mitternacht(d0+36e5*12), row=TH_TAGE.findIndex(([k])=>k===new Date(dm).getDay()), a=Math.max(ab.von,dm), b=Math.min(ab.bis,dm+864e5);
+    const dick=(von,bis,f,op)=>{ const hoch=Math.round(lane*.62);
+      for(let d0=mitternacht(von);d0<Math.min(bis,von+7*864e5);d0+=864e5){
+        const dm=mitternacht(d0+36e5*12), row=TH_TAGE.findIndex(([k])=>k===new Date(dm).getDay()), a=Math.max(von,dm), b=Math.min(bis,dm+864e5);
         if(row<0||b<=a) continue; const ha=(a-dm)/36e5, hb=(b-dm)/36e5, y=row*(lane+gap);
-        g+=`<rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" fill="var(--panel)"/><rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" rx="2" fill="${AB_F[ab.mod]}" opacity="${AB_O[ab.mod]}"/>`;
+        g+=`<rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" fill="var(--panel)"/><rect x="${X(ha).toFixed(1)}" y="${y}" width="${(X(hb)-X(ha)).toFixed(1)}" height="${hoch}" rx="2" fill="${f}" opacity="${op}"/>`;
         g+=`<line x1="${X(ha).toFixed(1)}" x2="${X(hb).toFixed(1)}" y1="${y+hoch+.5}" y2="${y+hoch+.5}" stroke="var(--fg)" stroke-opacity=".5" stroke-dasharray="2 2"/>`;
-      }
+      } };
+    if(ab&&ab.bis>ab.von){
+      const AB_F=["var(--warm)","var(--accent)","var(--muted)"], AB_O=[.95,.75,.75];
+      dick(ab.von,ab.bis,AB_F[ab.mod],AB_O[ab.mod]);
     }
-    $("thWocheAbw").hidden=!ab;
-    if(ab) $("thWocheAbw").textContent=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][ab.mod]} bis ${ab.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(ab.bis)+" "+fTime(ab.bis)}: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
+    const nachAus=cth.abw&&cth.abw.bis>jetzt?[]:thNachAus(cth,(STEU&&STEU.cfg.p.vorheiz)||0).filter(([a,b])=>b>jetzt);
+    nachAus.forEach(([a,b,m,v])=>{a=Math.max(a,jetzt); if(b>a) dick(a,b,"var(--warm)",v?.45:.9)});
+    const abAkt=ab&&ab.bis>ab.von?ab:null, rueck=nachAus.length?` (Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, vorher vorheizen)`:"";
+    $("thWocheAbw").hidden=!abAkt&&!nachAus.length;
+    if(abAkt) $("thWocheAbw").textContent=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][abAkt.mod]} bis ${abAkt.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(abAkt.bis)+" "+fTime(abAkt.bis)}${abAkt.mod===2?rueck:""}: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
+    else if(nachAus.length) $("thWocheAbw").textContent=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, danach Zu Hause: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
     { // vergangener Teil dieser Woche: tatsächlicher Verlauf (mitgeschrieben), nicht neu gerechnet
       const mo=mitternacht(jetzt-((new Date(jetzt).getDay()+6)%7)*864e5);
       const hs=thHistStuecke(STEU&&STEU.thHist,jetzt).map(([a,b,m,v])=>[Math.max(a,mo),Math.min(b,jetzt),m,v]).filter(x=>x[1]>x[0]);
