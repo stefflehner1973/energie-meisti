@@ -938,6 +938,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="thplanbox">
         <button type="button" class="thmod klick thplanknopf" id="thPlanKnopf"><span class="punkt" aria-hidden="true"></span>Zeitplan Zu Hause / Abgesenkt<small id="thPlanKnopfTxt">&nbsp;</small></button>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Abgesenkt"></svg>
+        <p class="hint" id="thWocheInfo" style="margin:2px 0 0;min-height:1.4em" aria-live="polite">&nbsp;</p>
         <p class="hint" id="thWocheAbw" style="margin:4px 0 0" hidden></p>
         <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
       </div>
@@ -1164,7 +1165,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 11:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 12:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3863,10 +3864,31 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     for(let h=1;h<24;h++){const x=X(h).toFixed(1);g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-18}" stroke="var(--bg)" stroke-opacity="${h%6===0?.55:.3}" stroke-width="1"/>`}   // Stundenlinien auch über den Balken
     { // aktuelle Zeit: roter Strich nur beim heutigen Tag
       const dmj=mitternacht(jetzt), rj=TH_TAGE.findIndex(([k])=>k===new Date(dmj).getDay()), xj=X((jetzt-dmj)/36e5).toFixed(1), rot="#e5484d";
-      if(rj>=0){const y=rj*(lane+gap); g+=`<line x1="${xj}" x2="${xj}" y1="${y-3}" y2="${y+lane+3}" stroke="${rot}" stroke-width="2.5" stroke-linecap="round"><title>jetzt ${fTime(jetzt)}</title></line>`}
+      if(rj>=0){const y=rj*(lane+gap); g+=`<line x1="${xj}" x2="${xj}" y1="${y-3}" y2="${y+lane+3}" stroke="${rot}" stroke-width="2.5" stroke-linecap="round"></line>`}
     }
+    g+=`<line class="wohov" x1="0" x2="0" y1="0" y2="0" stroke="var(--fg)" stroke-width="1.2" visibility="hidden"/>`;
     svg.innerHTML=g;
+    WOGEO={X,Lb,Rb,W,lane,gap,mo:mitternacht(jetzt-((new Date(jetzt).getDay()+6)%7)*864e5)};
+    if(!svg.dataset.hov){ svg.dataset.hov="1";
+      const hv=e=>{const G=WOGEO; if(!G) return; const r=svg.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*G.W, y=(e.clientY-r.top)/r.height*Number(svg.getAttribute("viewBox").split(" ")[3]);
+        const row=Math.floor(y/(G.lane+G.gap)), h=(x-G.Lb)/(G.W-G.Lb-G.Rb)*24; if(row<0||row>6||h<0||h>24){woWeg();return}
+        const d0=mitternacht(G.mo+row*864e5+12*36e5), t=d0+h*36e5; woZeigen(t,row,x)};
+      svg.addEventListener("pointermove",hv); svg.addEventListener("pointerdown",hv); svg.addEventListener("pointerleave",woWeg);
+    }
   }
+  // Wochenbalken: beim Darüberfahren zeigen, was zu dieser Zeit gilt (vergangene Tage: aufgezeichnet, sonst Zeitplan inkl. Abweichung/Auswärts)
+  let WOGEO=null;
+  function woStuecke(){ const G=WOGEO, f=zeitplanStuecke(); if(!G||!f) return [];
+    const t0=G.mo, t1=G.mo+7*864e5, jetzt=Date.now();
+    const hs=thHistStuecke(STEU&&STEU.thHist,jetzt).map(([a,b,m,v])=>[Math.max(a,t0),Math.min(b,jetzt),m,v]).filter(x=>x[1]>x[0]);
+    return stueckeErsetzen(f(t0,t1),hs); }
+  function woZeigen(t,row,x){ const G=WOGEO, s=woStuecke().find(([a,b])=>t>=a&&t<b), info=$("thWocheInfo"), l=$("thWoche").querySelector(".wohov");
+    if(!s){woWeg();return}
+    const [a,b,m,v]=s, jetzt=Date.now(), was=v?"Vorheizen (Sollwert Zu Hause)":ZP_TXT[m][0], zt=x=>(mitternacht(x)===mitternacht(t)?"":fDay(x)+" ")+fTime(x);
+    const lauf=a<=jetzt&&b>jetzt, von=lauf&&t>=jetzt?"jetzt":zt(a), bis=lauf&&t<jetzt?"jetzt":zt(b);
+    info.textContent=`${TH_TAGE[row][1]} ${fDay(t)} ${fTime(t)}: ${was} ${von}–${bis}${t>=jetzt?" (geplant)":" (war so)"}`;
+    if(l){const y=row*(G.lane+G.gap); l.setAttribute("x1",x.toFixed(1)); l.setAttribute("x2",x.toFixed(1)); l.setAttribute("y1",y-2); l.setAttribute("y2",y+G.lane+2); l.setAttribute("visibility","visible")} }
+  function woWeg(){ const info=$("thWocheInfo"), l=$("thWoche")&&$("thWoche").querySelector(".wohov"); if(info) info.innerHTML="&nbsp;"; if(l) l.setAttribute("visibility","hidden") }
   function planDirty(){const d=!planGleich(); $("thPlanSpeichern").disabled=!d; $("thPlanVerwerfen").hidden=!d; zeichneWochenbalken()}
   $("thKopieWo").addEventListener("click",()=>{if(!planEdit)return;planEdit.u=true;const m=planEdit.plan[1];[2,3,4,5].forEach(k=>planEdit.plan[k]={tag:m.tag,nacht:m.nacht});zeichnePlanNurEdit()});
   $("thKopieWe").addEventListener("click",()=>{if(!planEdit)return;planEdit.u=true;const m=planEdit.plan[6];planEdit.plan[0]={tag:m.tag,nacht:m.nacht};zeichnePlanNurEdit()});
