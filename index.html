@@ -1164,7 +1164,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 11:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 11:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1431,13 +1431,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     a.forEach(([x,y,m,v])=>{if(y<=von||x>=bis){res.push([x,y,m,v]);return} if(x<von) res.push([x,von,m,v]); if(y>bis) res.push([bis,y,m,v])});
     return res.concat(b).sort((p,q)=>p[0]-q[0]);
   }
-  // Nach «auswärts»: bis zur Rückkehr vorheizen, ab Rückkehr «Zu Hause» bis der Zeitplan selbst «Zu Hause» hat (wie Google, Stand 03.11.2026 (25))
+  // Nach «auswärts»: bis zur Rückkehr vorheizen, danach normaler Zeitplan (wie Google, Stand 03.11.2026 (25))
   function thNachAus(th,vh){
     if(!th||th.betrieb!=="aus"||!th.ausBis) return [];
-    const hm=x=>{const [a,b]=String(x||"0:0").split(":").map(Number);return (a||0)+(b||0)/60}, r=th.ausBis, out=[[r-vh*36e5,r,0,true]];
-    for(let d=mitternacht(r)-864e5; d<=r; d=mitternacht(d+36e5*30)){const w=th.plan&&th.plan[new Date(d).getDay()]; if(!w) continue;
-      const a=d+hm(w.tag)*36e5; if(r>=a-vh*36e5&&r<a) out.push([r,a,0,false])}
-    return out;
+    return [[th.ausBis-vh*36e5,th.ausBis,0,true]];
   }
   function zeitplanStuecke(){
     let S=STEU; if(!S){try{S=JSON.parse(localStorage.getItem("tb.steuer")||"null")}catch(e){S=null}}
@@ -3853,7 +3850,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const abAkt=ab&&ab.bis>ab.von?ab:null, rueck=nachAus.length?` (Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, vorher vorheizen)`:"";
     $("thWocheAbw").hidden=!abAkt&&!nachAus.length;
     if(abAkt) $("thWocheAbw").textContent=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][abAkt.mod]} bis ${abAkt.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(abAkt.bis)+" "+fTime(abAkt.bis)}${abAkt.mod===2?rueck:""}: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
-    else if(nachAus.length) $("thWocheAbw").textContent=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, danach Zu Hause: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
+    else if(nachAus.length) $("thWocheAbw").textContent=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, danach normaler Zeitplan: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
     { // vergangener Teil dieser Woche: tatsächlicher Verlauf (mitgeschrieben), nicht neu gerechnet
       const mo=mitternacht(jetzt-((new Date(jetzt).getDay()+6)%7)*864e5);
       const hs=thHistStuecke(STEU&&STEU.thHist,jetzt).map(([a,b,m,v])=>[Math.max(a,mo),Math.min(b,jetzt),m,v]).filter(x=>x[1]>x[0]);
