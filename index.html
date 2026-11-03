@@ -1164,7 +1164,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 11:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 11:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3937,11 +3937,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let bEdit=false;
   function zeichneBoilerStatus(){
     const box=$("bStat"); if(!box) return; const c=STEU&&STEU.cfg, st=STEU&&STEU.status;
-    const aus=!!(c&&c.th&&c.th.betrieb==="aus");
+    const ende=c&&c.th&&c.th.ausBis?c.th.ausBis-((c.p&&c.p.vorheiz)||0)*36e5:null;   // auswärts endet mit dem Vorheizen (Google Stand (26))
+    const aus=!!(c&&c.th&&c.th.betrieb==="aus")&&!(ende&&Date.now()>=ende);
     let sp=st&&st.ch&&st.ch[0]?st.ch[0].ist:null, zeit=st&&st.zeit;
     if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
     const pill=(an,txt,tip)=>`<span class="${an?"an":""}" title="${tip}"><i aria-hidden="true"></i>${txt}</span>`;
-    box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(c.th.ausBis?" bis "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis):""):"Auswärts nicht aktiv","Betriebsart Raumthermostat"):"")+
+    box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(ende?" bis "+fDay(ende)+" "+fTime(ende):""):"Auswärts nicht aktiv",aus&&ende?"Rückkehr "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis)+"; ab "+fTime(ende)+" vorheizen und Boiler SPERREN wie vorher":"Betriebsart Raumthermostat"):"")+
       (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"");
     { // Batterie-Maximum in der Erklärung von «Batterie mindestens» (beim Darüberfahren)
       const i=document.querySelector('#bParam input[data-bp=auSoc]'), tip=i&&i.closest("label").querySelector(".tip");
