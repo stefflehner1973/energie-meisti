@@ -938,7 +938,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
       <div class="thplanbox">
         <button type="button" class="thmod klick thplanknopf" id="thPlanKnopf"><span class="punkt" aria-hidden="true"></span>Zeitplan Zu Hause / Abgesenkt<small id="thPlanKnopfTxt">&nbsp;</small></button>
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Zu Hause und Abgesenkt"></svg>
-        <p class="hint" id="thWocheInfo" style="margin:2px 0 0;min-height:1.4em" aria-live="polite">&nbsp;</p>
+        <p class="hint" id="thWocheInfo" style="margin:2px 0 0;min-height:1.4em;font-weight:600;color:var(--fg)" aria-live="polite">&nbsp;</p>
         <p class="hint" id="thWocheAbw" style="margin:4px 0 0" hidden></p>
         <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Zu Hause</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span></div>
       </div>
@@ -1165,7 +1165,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 12:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 12:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3850,8 +3850,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     nachAus.forEach(([a,b,m,v])=>{a=Math.max(a,jetzt); if(b>a) dick(a,b,"var(--warm)",v?.45:.9)});
     const abAkt=ab&&ab.bis>ab.von?ab:null, rueck=nachAus.length?` (Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, vorher vorheizen)`:"";
     $("thWocheAbw").hidden=!abAkt&&!nachAus.length;
-    if(abAkt) $("thWocheAbw").textContent=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][abAkt.mod]} bis ${abAkt.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(abAkt.bis)+" "+fTime(abAkt.bis)}${abAkt.mod===2?rueck:""}: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
-    else if(nachAus.length) $("thWocheAbw").textContent=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}, danach normaler Zeitplan: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.`;
+    const klein=t=>`<span style="font-size:.82em">${t}</span>`;
+    if(abAkt) $("thWocheAbw").innerHTML=`${["Jetzt Zu Hause","Jetzt Abgesenkt","Auswärts"][abAkt.mod]} bis ${abAkt.bis-jetzt>6*864e5&&!cth.ausBis?"du zurückstellst":fDay(abAkt.bis)+" "+fTime(abAkt.bis)}${klein((abAkt.mod===2?rueck:"")+": oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.")}`;
+    else if(nachAus.length) $("thWocheAbw").innerHTML=`Vorheizen bis zur Rückkehr ${fDay(cth.ausBis)} ${fTime(cth.ausBis)}${klein(", danach normaler Zeitplan: oben (dick) gilt jetzt, unten (dünn) wäre der Zeitplan.")}`;
     { // vergangener Teil dieser Woche: tatsächlicher Verlauf (mitgeschrieben), nicht neu gerechnet
       const mo=mitternacht(jetzt-((new Date(jetzt).getDay()+6)%7)*864e5);
       const hs=thHistStuecke(STEU&&STEU.thHist,jetzt).map(([a,b,m,v])=>[Math.max(a,mo),Math.min(b,jetzt),m,v]).filter(x=>x[1]>x[0]);
