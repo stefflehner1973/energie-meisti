@@ -1165,7 +1165,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 22:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 03.11.26 22:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1490,6 +1490,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     kBereich=spanneText(t0,fensterEnde(t1,Date.now())); kAgeZeigen();
     const namen=((k&&k.namen)||KNAMEN).map(kurz), liste=rows.slice();
     if(k14Jetzt&&k14Jetzt.a&&(!liste.length||liste[liste.length-1][0]<k14Jetzt.zeit)) liste.push([k14Jetzt.zeit].concat(k14Jetzt.a));
+    K14C.liste=liste;
     let g="";
     namen.forEach((n,i)=>{
       const y=oben+i*lane, yb=y+16, hb=16; let ein=0, bars="";
@@ -1526,13 +1527,28 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   // senkrechter Strich in den Schaltzuständen zur gleichen Zeit wie in den Diagrammen darüber
   const ZP_TXT=[["Zu Hause","Zu Hause (orange)"],["Abgesenkt","Abgesenkt (hellblau)"],["Auswärts","Auswärts (grau)"]];
+  // Relais WP ABSENKEN anders als der Zeitplan? Dann den Grund nennen (Google ab Stand 03.11.2026 (29) schreibt ihn mit)
+  function relaisGrund(t,m,v){
+    const erw=v||m===0?0:1, jetzt=Date.now();
+    const k=((K14C.liste&&K14C.liste.length?K14C.liste:(STEU&&STEU.ist))||[]).filter(r=>r[0]<=t), kr=k.length?k[k.length-1]:null;
+    let rel=kr&&(kr[3]===0||kr[3]===1)?kr[3]:null;
+    const ch=STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[2], aktuell=t>=jetzt-3*6e4;
+    if(aktuell&&ch&&(ch.ist===0||ch.ist===1)) rel=ch.ist;
+    if(rel===null||rel===erw) return "";
+    let gr=null;
+    const h=((ROH&&ROH.th&&ROH.th.rows)||[]).concat((STEU&&STEU.thHist)||[]).filter(r=>r[0]<=t).sort((a,b)=>a[0]-b[0]), hr=h.length?h[h.length-1]:null;
+    if(hr&&hr[4]&&hr[3]===rel) gr=hr[4];
+    if(!gr&&ch&&ch.ist===rel&&(aktuell||!k.some(r=>r[0]>t))) gr=ch.pause?"von Hand geschaltet, Automatik pausiert":ch.grund;
+    if(gr){gr=String(gr).split(" (danach")[0].split(" → ")[0]}   // kurz: «Mindestlaufzeit bis 22:39», «Raum 21.6 °C, Soll 21.4 °C (zu Hause)»
+    return ` · Relais ${rel?"abgesenkt":"frei"}: ${gr||"Grund nicht aufgezeichnet"}`;
+  }
   function zpErklaeren(t){   // Text in der Zeile «Zeitplan» zur Zeit t: was die Farbe dort bedeutet
     const svg=$("chartK"), z=svg&&svg.querySelector(".zptxt"); if(!z) return;
     if(t===null){z.textContent=z.dataset.jetzt||"";return}
     const s=(K14C.zp||[]).find(([a,b])=>t>=a&&t<b); if(!s){z.textContent=z.dataset.jetzt||"";return}
     const [a,b,m,v]=s, was=v?"Vorheizen, Sollwert Zu Hause (hell-orange)":ZP_TXT[m][1];
     const heute=fDay(Date.now()), zt=x=>(fDay(x)===heute?"":fDay(x)+" ")+fTime(x);
-    z.textContent=` · ${was} ${zt(a)}–${b>=Date.now()-6e4?"jetzt":zt(b)}`;
+    z.textContent=` · ${was} ${zt(a)}–${b>=Date.now()-6e4?"jetzt":zt(b)}${relaisGrund(t,m,v)}`;
   }
   function k14Linie(t){
     const svg=$("chartK"), g=K14C.geo, l=svg&&svg.querySelector(".hovl"); if(!g||!l||t<g.t0||t>g.t1) return;
@@ -3893,7 +3909,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!s){woWeg();return}
     const [a,b,m,v]=s, jetzt=Date.now(), was=v?"Vorheizen (Sollwert Zu Hause)":ZP_TXT[m][0], zt=x=>(mitternacht(x)===mitternacht(t)?"":fDay(x)+" ")+fTime(x);
     const lauf=a<=jetzt&&b>jetzt, von=lauf&&t>=jetzt?"jetzt":zt(a), bis=lauf&&t<jetzt?"jetzt":zt(b);
-    info.textContent=`${TH_TAGE.find(([k])=>k===new Date(t).getDay())[1]} ${fDay(t)} ${fTime(t)}: ${was} ${von}–${bis}`;
+    info.textContent=`${TH_TAGE.find(([k])=>k===new Date(t).getDay())[1]} ${fDay(t)} ${fTime(t)}: ${was} ${von}–${bis}${t<=jetzt+6e4?relaisGrund(Math.min(t,jetzt),m,v):""}`;
     if(l){const y=row*(G.lane+G.gap); l.setAttribute("x1",x.toFixed(1)); l.setAttribute("x2",x.toFixed(1)); l.setAttribute("y1",y-2); l.setAttribute("y2",y+G.lane+2); l.setAttribute("visibility","visible")} }
   function woWeg(){ const info=$("thWocheInfo"), l=$("thWoche")&&$("thWoche").querySelector(".wohov"); if(info) info.innerHTML="&nbsp;"; if(l) l.setAttribute("visibility","hidden") }
   function planDirty(){const d=!planGleich(); $("thPlanSpeichern").disabled=!d; $("thPlanVerwerfen").hidden=!d; zeichneWochenbalken()}
