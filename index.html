@@ -344,7 +344,7 @@ svg.hl .hlon .lp,svg.hl path.lp.hlon{stroke-width:3.2px;stroke-opacity:1}
 .legend [data-hl]{cursor:pointer;border-radius:4px}
 .legend [data-hl].hlon{background:color-mix(in srgb,var(--muted) 14%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--muted) 14%,transparent)}
 /* Zeile unter der Energiebilanz als Tabelle: gleiche Angaben untereinander, Verluste unter Haus */
-.ebtab{display:grid;grid-template-columns:auto auto auto auto auto auto;justify-content:start;column-gap:16px;row-gap:2px;white-space:nowrap}
+.ebtab{display:grid;grid-template-columns:auto auto auto auto auto auto;justify-content:start;column-gap:10px;row-gap:2px;white-space:nowrap}
 .ebtab .pf{color:var(--muted)}
 .ebtab .c1{grid-column:1}.ebtab .lb{grid-column:2}.ebtab .pf{grid-column:3}.ebtab .a{grid-column:4}.ebtab .b{grid-column:5}.ebtab .a3{grid-column:6}.ebtab .vl{grid-column:4/span 3}
 @media (max-width:760px){.ebtab{grid-template-columns:auto auto auto}.ebtab .pf{display:none}
@@ -1166,7 +1166,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 04.11.26 22:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 04.11.26 22:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3359,11 +3359,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       g+=`<rect class="ebhit" data-i="${i}" x="${(Lb+sp*i).toFixed(1)}" y="${Tb}" width="${sp.toFixed(1)}" height="${H-Tb-Bb}" fill="transparent"/>`});
     g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
     svg.innerHTML=g; hlVerbinden($("ebLegend"),svg);
-    const k=v=>de(v,1);
+    const k=v=>de(v,Math.abs(v)>=100?0:1);   // grosse Summen ohne Kommastelle, damit die Zeile nicht über den Rand geht
     // Verluste in %: Anteil an der Energie durch den Wechselrichter (PV + Batterie entladen); unter 2 kWh PV nicht aussagekräftig
     // gewählten Tag hervorheben: Beschriftung fett und dunkel (auch wenn sonst ausgeblendet), leichter Hintergrund
     const markiere=i=>saeuleMarkieren(svg,i);
-    const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":""),vl=d.vl,vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Netzeinspeisung "+k(d.ein),"a3")}`+
+    const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":""),vl=d.vl,vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Einspeisung "+k(d.ein),"a3")}`+
       `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(vl)}${vp}</span>`+
       `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.ent),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
     svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>zeig(d));h.addEventListener("click",()=>zeig(d))});
