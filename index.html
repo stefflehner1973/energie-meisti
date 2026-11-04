@@ -1165,7 +1165,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 03.11.26 23:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 04.11.26 10:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2088,10 +2088,18 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const dt=rows.length>1?(rows[rows.length-1][0]-rows[0][0])/(rows.length-1):6e4, tol=Math.max(3*6e4,dt*0.75);
     const bo=wertBei(CH.boiler.series,tol), wp=wertBei(CH.wp.series,tol);
     const L={boiler:[],wp:[],ueb:[]};
-    rows.forEach(r=>{const t=r[0], b=bo(t), w=wp(t), wb=z(r[8]), haus=z(r[4]);
+    const W=rows.map(r=>{const t=r[0];return {t,b:bo(t),w:wp(t),wb:z(r[8]),haus:z(r[4])}});
+    // Fronius und Shellys messen nicht in derselben Sekunde: springt WP oder Boiler gerade (> 800 W zum Nachbarpunkt),
+    // gibt «Übriges» eine falsche Spitze → dort den vorherigen Wert halten (Stephan 04.11.2026)
+    const sprung=(i,k)=>{const a=W[i][k], v=i>0?W[i-1][k]:null, n=i+1<W.length?W[i+1][k]:null; return a!==null&&((v!==null&&Math.abs(a-v)>800)||(n!==null&&Math.abs(n-a)>800))};
+    let uebVor=null;
+    W.forEach(({t,b,w,wb,haus},i)=>{
       if(b!==null) L.boiler.push(pkt(t,Math.max(0,b)));
       if(w!==null) L.wp.push(pkt(t,Math.max(0,w)));
-      if(haus!==null&&b!==null&&w!==null) L.ueb.push(pkt(t,Math.max(0,Math.abs(haus)-Math.max(0,b)-Math.max(0,w)-Math.max(0,wb||0))));
+      if(haus!==null&&b!==null&&w!==null){
+        if(sprung(i,"w")||sprung(i,"b")){ if(uebVor!==null) L.ueb.push(pkt(t,uebVor)); }
+        else { uebVor=Math.max(0,Math.abs(haus)-Math.max(0,b)-Math.max(0,w)-Math.max(0,wb||0)); L.ueb.push(pkt(t,uebVor)); }
+      }
     });
     return [{name:"Boiler",col:"var(--c-boiler)",series:L.boiler,breite:1.6,deckkraft:.9},{name:"Wärmepumpe",col:"var(--c-wp)",series:L.wp,breite:1.7,deckkraft:.95},
       {name:"Übriges",col:"var(--c-ueb)",series:L.ueb,breite:1.6,deckkraft:.9}];
