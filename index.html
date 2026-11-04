@@ -1166,7 +1166,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 04.11.26 22:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 04.11.26 22:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2670,6 +2670,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function steuerReiter(){return reiter==="steuerung"||reiter==="boiler"||reiter==="temperatur"}   // beide Reiter brauchen die Daten der Steuerung
   let reiter=store.get("tb.reiter","uebersicht"); if(!REITER[reiter]) reiter="uebersicht";
   function zeigeReiter(r,ohneLaden){
+    if(reiter!==r){   // beim Reiterwechsel alle aufgeklappten Bereiche wieder schliessen (Stephan 04.11.2026)
+      document.querySelectorAll("details[open]").forEach(d=>{d.open=false});
+      if($("kSchalt")&&!$("kSchalt").hidden){$("kSchalt").hidden=true;$("kPfeil").setAttribute("aria-expanded","false");$("kPfeil").textContent="▾ PIN"}
+    }
     reiter=r; store.set("tb.reiter",r);
     Object.entries(REITER).forEach(([k,[btn,panel]])=>{
       const an=k===r; $(panel).hidden=!an; $(btn).setAttribute("aria-selected",String(an)); $(btn).tabIndex=an?0:-1;
