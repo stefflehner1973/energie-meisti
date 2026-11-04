@@ -1166,7 +1166,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 04.11.26 22:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 04.11.26 22:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3363,7 +3363,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Verluste in %: Anteil an der Energie durch den Wechselrichter (PV + Batterie entladen); unter 2 kWh PV nicht aussagekräftig
     // gewählten Tag hervorheben: Beschriftung fett und dunkel (auch wenn sonst ausgeblendet), leichter Hintergrund
     const markiere=i=>saeuleMarkieren(svg,i);
-    const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.lauf?" (bis heute)":d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":""),vl=d.vl,vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Netzeinspeisung "+k(d.ein),"a3")}`+
+    const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":""),vl=d.vl,vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Netzeinspeisung "+k(d.ein),"a3")}`+
       `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(vl)}${vp}</span>`+
       `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.ent),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
     svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>zeig(d));h.addEventListener("click",()=>zeig(d))});
