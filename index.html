@@ -815,7 +815,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
     <section class="panel">
       <div class="histhead"><h2 style="margin:0"><span class="gilt" data-gilt="chartEB" hidden></span><span id="ebTitel">Energiebilanz pro Tag</span></h2>
-        <div class="seg" role="group" aria-label="Zeitraum Energiebilanz" id="ebSeg"><button type="button" data-eb="14" aria-pressed="true" title="Letzte 14 Tage, eine Säule pro Tag">14 Tage</button><button type="button" data-eb="monat" aria-pressed="false" title="Dieser Monat ab dem 1., eine Säule pro Tag">Monat</button><button type="button" data-eb="jahr" aria-pressed="false" title="Dieses Jahr ab Januar, eine Säule pro Monat">Jahr</button></div></div>
+        <div class="seg" role="group" aria-label="Zeitraum Energiebilanz" id="ebSeg"><button type="button" data-eb="14" aria-pressed="true" title="Letzte 14 Tage, eine Säule pro Tag">14 Tage</button><button type="button" data-eb="monate" aria-pressed="false" title="Dieses Jahr ab Januar, eine Säule pro Monat">Monate</button><button type="button" data-eb="jahre" aria-pressed="false" title="Alle Jahre, eine Säule pro Jahr">Jahre</button></div></div>
       <p class="sub" style="font-size:.74rem;line-height:1.4;margin:6px 0 10px"><span id="ebJe">Je Tag</span> zwei Säulen: P = Produktion (wohin der PV-Strom ging), V = Verbrauch (woher der Strom fürs Haus kam) · <span id="ebSpanne">letzte 14 Tage</span></p>
       <div class="legend" id="ebLegend"></div>
       <div class="chartbox"><svg id="chartEB" viewBox="0 0 720 280" role="img" aria-label="Energiebilanz pro Tag: PV-Verwendung und Herkunft des Hausverbrauchs"></svg></div>
@@ -1166,7 +1166,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 04.11.26 22:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 04.11.26 22:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3312,25 +3312,25 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const svg=$("chartEB"); if(!svg||!GELD) return;
     const hz=heuteZeile(), alle=GELD.tage.filter(r=>!(r[7]<1)).concat(hz?[hz]:[]);   // Tage ohne Messung weglassen
     // Zeitraum (Stephan 04.11.2026): 14 Tage | dieser Monat (Tage) | dieses Jahr (Monate)
-    const art=(()=>{try{return localStorage.getItem("tb.ebZeit")||"14"}catch(e){return "14"}})(), jetzt0=new Date();
+    const art=(()=>{let a="14";try{a=localStorage.getItem("tb.ebZeit")||"14"}catch(e){} return {jahr:"monate",monat:"14"}[a]||a})(), jetzt0=new Date();
     $("ebSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.eb===art)));
-    const monate=art==="jahr";
-    $("ebTitel").textContent=monate?"Energiebilanz pro Monat":"Energiebilanz pro Tag";
-    $("ebJe").textContent=monate?"Je Monat":"Je Tag";
-    $("ebSpanne").textContent=art==="jahr"?"dieses Jahr":art==="monat"?"dieser Monat":"letzte 14 Tage";
+    const monate=art==="monate", jahre=art==="jahre", sum=monate||jahre;
+    $("ebTitel").textContent=jahre?"Energiebilanz pro Jahr":monate?"Energiebilanz pro Monat":"Energiebilanz pro Tag";
+    $("ebJe").textContent=jahre?"Je Jahr":monate?"Je Monat":"Je Tag";
+    $("ebSpanne").textContent=jahre?"alle Jahre":monate?"dieses Jahr":"letzte 14 Tage";
     let roh;
-    if(art==="monat"){const m0=new Date(jetzt0.getFullYear(),jetzt0.getMonth(),1).getTime(); roh=alle.filter(r=>r[0]>=m0)}
-    else if(monate){const j0=new Date(jetzt0.getFullYear(),0,1).getTime(), M={};
-      alle.filter(r=>r[0]>=j0).forEach(r=>{const d=new Date(r[0]), k=d.getMonth(); const z=M[k]||(M[k]=[new Date(d.getFullYear(),k,1).getTime(),0,0,0,0,0,0,0]); for(let i=1;i<=6;i++) z[i]+=r[i]||0; z[7]+=r[7]||0; z.n=(z.n||0)+1});
+    if(sum){const j0=monate?new Date(jetzt0.getFullYear(),0,1).getTime():0, M={};
+      alle.filter(r=>r[0]>=j0).forEach(r=>{const d=new Date(r[0]), k=jahre?d.getFullYear():d.getMonth(); const z=M[k]||(M[k]=[jahre?new Date(k,0,1).getTime():new Date(d.getFullYear(),k,1).getTime(),0,0,0,0,0,0,0]); for(let i=1;i<=6;i++) z[i]+=r[i]||0; z[7]+=r[7]||0; z.n=(z.n||0)+1});
       roh=Object.keys(M).sort((a,b)=>a-b).map(k=>M[k])}
     else roh=alle.slice(-14);
     const tage=roh.map(r=>{const pv=r[1]||0, haus=r[2]||0, bez=r[3]||0, ein=r[4]||0, lad=r[5]||0, ent=r[6]||0;
       const direkt=Math.max(0,Math.min(pv-lad-ein,haus-ent-bez));
       const vl=Math.max(0,pv-direkt-lad-ein);
-      const tm=monate?new Date(new Date(r[0]).getFullYear(),new Date(r[0]).getMonth()+1,0).getDate():0;
-      return {t:r[0],pv,haus,bez,ein,lad,ent,direkt,vl,dauer:r[7],n:r.n,teil:monate?(r.n<tm&&new Date(r[0]).getMonth()!==jetzt0.getMonth()):(r!==hz&&typeof r[7]==="number"&&r[7]<20)}});
+      const dt=new Date(r[0]), lauf=jahre?dt.getFullYear()===jetzt0.getFullYear():dt.getMonth()===jetzt0.getMonth()&&dt.getFullYear()===jetzt0.getFullYear();
+      const tm=jahre?((dt.getFullYear()%4===0)?366:365):monate?new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate():0;
+      return {t:r[0],pv,haus,bez,ein,lad,ent,direkt,vl,dauer:r[7],n:r.n,lauf,teil:sum?(r.n<tm&&!lauf):(r!==hz&&typeof r[7]==="number"&&r[7]<20)}});
     const MON=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
-    const lab=d=>monate?MON[new Date(d.t).getMonth()]+(d.teil?"*":""):mitternacht(d.t)===mitternacht(Date.now())?"heute":fDay(d.t)+(d.teil?"*":"");
+    const lab=d=>jahre?new Date(d.t).getFullYear()+(d.teil?"*":""):monate?MON[new Date(d.t).getMonth()]+(d.teil?"*":""):mitternacht(d.t)===mitternacht(Date.now())?"heute":fDay(d.t)+(d.teil?"*":"");
     const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=290, Lb=40, Rb=10, Tb=22, Bb=40;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     const C={direkt:"var(--c-pv)",batt:"var(--c-batt)",ein:"var(--c-einsp)",netz:"var(--c-bezug)"};
@@ -3338,7 +3338,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const f=(c,x,kl)=>`<span${kl?` class="${kl}"`:""} style="color:${c};font-weight:600">${x}</span>`;
     $("ebLegend").innerHTML=`<span><b style="color:var(--fg);font-family:inherit;font-weight:700">P</b>&nbsp;Produktion (PV)</span><span><b style="color:var(--fg);font-family:inherit;font-weight:700">V</b>&nbsp;Verbrauch (Haus)</span>`+[["PV direkt im Haus",T.direkt,"direkt"],["Batterie (laden / entladen)",T.batt,"batt"],["Einspeisung",T.ein,"ein"],["Netzbezug",T.netz,"netz"]].map(([n,c,k])=>`<span data-hl="${k}" style="color:${c};font-weight:600">${n}</span>`).join("")+`<span data-hl="vl" style="color:${T.vl};font-weight:600" title="Alles, was hineinkommt (PV, Batterie entladen, Netzbezug), minus alles, was herausgeht (Haus, Batterie laden, Einspeisung): Umwandlung im Wechselrichter und Eigenverbrauch von Wechselrichter und Batterie. Prozent bezogen auf PV + Batterie entladen.">Verluste (Wechselrichter, Batterie)</span>`;
     if(!tage.length){svg.innerHTML="";$("readoutEB").textContent="Noch keine Tageswerte.";giltSetzen("chartEB","");return}
-    giltSetzen("chartEB",monate?MON[new Date(tage[0].t).getMonth()]+"–"+MON[jetzt0.getMonth()]+" "+jetzt0.getFullYear():spanTage(tage[0].t,tage[tage.length-1].t));
+    giltSetzen("chartEB",jahre?new Date(tage[0].t).getFullYear()+(tage.length>1?"–"+jetzt0.getFullYear():""):monate?MON[new Date(tage[0].t).getMonth()]+"–"+MON[jetzt0.getMonth()]+" "+jetzt0.getFullYear():spanTage(tage[0].t,tage[tage.length-1].t));
     const max=Math.max(1,...tage.map(d=>Math.max(d.pv,d.haus))), step=niceStep(max,4), top=Math.ceil(max/step)*step;
     const Y=v=>Tb+(top-v)/top*(H-Tb-Bb), n=tage.length, sp=(W-Lb-Rb)/n, bw=Math.max(3,Math.min(18,sp*0.34)), gap=Math.max(1,Math.min(3,sp*0.04));
     let g=`<defs><pattern id="ebVerl" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="var(--muted)" fill-opacity=".22"/><line x1="0" y1="0" x2="0" y2="4" stroke="var(--muted)" stroke-width="1.4" stroke-opacity=".75"/></pattern></defs>`;
@@ -3354,7 +3354,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       // Kennbuchstaben unter jeder Säule: P = Produktion, V = Verbrauch
       const fs=bw>=11?10:8.5;
       g+=`<text x="${(cx-gap/2-bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">P</text><text x="${(cx+gap/2+bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">V</text>`;
-      {const sicht=monate||i%jede===0||i===n-1, akt=monate?i===n-1:mitternacht(d.t)===heute, f=akt?"var(--fg)":"var(--muted)";
+      {const sicht=sum||i%jede===0||i===n-1, akt=sum?d.lauf:mitternacht(d.t)===heute, f=akt?"var(--fg)":"var(--muted)";
        g+=`<text class="ebl" data-i="${i}" data-sicht="${sicht?1:0}" data-f="${f}" x="${cx.toFixed(1)}" y="${H-Bb+27}" text-anchor="middle" font-size="11" fill="${f}" visibility="${sicht?"visible":"hidden"}" font-family="IBM Plex Mono, monospace">${lab(d)}</text>`}
       g+=`<rect class="ebhit" data-i="${i}" x="${(Lb+sp*i).toFixed(1)}" y="${Tb}" width="${sp.toFixed(1)}" height="${H-Tb-Bb}" fill="transparent"/>`});
     g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
@@ -3363,9 +3363,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Verluste in %: Anteil an der Energie durch den Wechselrichter (PV + Batterie entladen); unter 2 kWh PV nicht aussagekräftig
     // gewählten Tag hervorheben: Beschriftung fett und dunkel (auch wenn sonst ausgeblendet), leichter Hintergrund
     const markiere=i=>saeuleMarkieren(svg,i);
-    const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=monate?MON[new Date(d.t).getMonth()]+" "+new Date(d.t).getFullYear()+(new Date(d.t).getMonth()===jetzt0.getMonth()?" (bis heute)":d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":""),vl=d.vl,vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Netzeinspeisung "+k(d.ein),"a3")}`+
+    const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.lauf?" (bis heute)":d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":""),vl=d.vl,vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Netzeinspeisung "+k(d.ein),"a3")}`+
       `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(vl)}${vp}</span>`+
-      `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.ent),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${monate?`* unvollständiger Monat (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
+      `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.ent),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
     svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>zeig(d));h.addEventListener("click",()=>zeig(d))});
     zeig(tage[tage.length-1],false);
     svg.onmouseleave=()=>zeig(tage[tage.length-1],false);   // Maus weg: wieder heute, ohne Markierung
