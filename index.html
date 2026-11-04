@@ -1165,7 +1165,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 04.11.26 10:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 04.11.26 21:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3557,7 +3557,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     ["Auswärts: Boiler statt Batterie laden (zählt: Batterie laden + Einspeisung)",[["auPv","Sperre aus ab","kW",0.5,"Batterie laden + Einspeisung mindestens so viel (und Batterie voll genug) → «Boiler SPERREN» aus, das Fronius-Lastmanagement schaltet Stufe 1. 0 = aus.",1000],
       ["auAus","Wieder sperren unter","W",50,"Batterie laden + Einspeisung unter diesem Wert (während der Zeit unten) → wieder sperren. Läuft der Boiler, ist seine Leistung darin schon abgezogen. Darum muss dieser Wert kleiner sein als «Sperre aus ab» minus Leistung Stufe 1, sonst sperrt der Boiler sich selbst wieder."],
       ["auSoc","Batterie mindestens","%",5,"Erst ab diesem Ladestand geht der Überschuss in den Boiler statt in die Batterie."],["auFreiMin","Wieder sperren nach","min",1,"So lange muss der Wert unter «Wieder sperren unter» liegen."]]],
-    ["Vor der Rückkehr",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr kälter, wird er rechtzeitig freigegeben (Boiler MANUELL)."],["boilerVorlauf","Prüfen vor Rückkehr","h",0.5,"So lange vor der Rückkehr wird die Boilertemperatur geprüft.",60]]]];
+    ["Vor Ankunft (Rückkehr oder «Zu Hause»)",[["boilerMin","Boiler bei Ankunft mindestens","°C",1,"Ist der Boiler vor der Rückkehr nach «auswärts» oder vor «Zu Hause» im Zeitplan kälter, schaltet die Steuerung «Boiler MANUELL» ein – nur bis diese Temperatur erreicht ist, dann wieder aus."],["boilerVorlauf","Prüfen vor Ankunft","h",0.5,"So lange vor der Rückkehr bzw. vor «Zu Hause» wird die Boilertemperatur geprüft und notfalls nachgeheizt.",60]]]];
   const einstZeile=(k,n,e,step,tip,attr,wert,f)=>{const l=document.createElement("label"); f=f||1;
     const anz=wert!=null?Math.round(wert/f*1000)/1000:"";
     l.innerHTML=`<span class="n">${tip?`<span class="tip" tabindex="0" data-tip="${esc(tip)}">${n}</span>`:n}</span><input type="number" step="${step}" ${e==="%"?'min="0" max="100"':'min="-100000"'} ${attr}="${k}" data-f="${f}" value="${anz}" aria-label="${esc(n)}"><span class="e">${e}</span>`;return l};
