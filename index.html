@@ -1166,7 +1166,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 05.11.26 09:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 05.11.26 15:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1341,6 +1341,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const dot=document.createElement("i"); if(v===1) dot.style.background=KFARBE[i];
       const sp=document.createElement("span"); sp.textContent=n;
       if(k&&k.hand&&k.hand[i]){const h=document.createElement("em");h.className="khand";h.textContent="von Hand · Automatik pausiert";h.title=typeof k.hand[i]==="number"?"Handschaltung erkannt "+fStempel(k.hand[i])+". Fortsetzen im Reiter Steuerung.":"Fortsetzen im Reiter Steuerung.";sp.append(h)}
+      // Boiler MANUELL von der Automatik eingeschaltet? Dann Grund vermerken (Stephan 05.11.2026)
+      if(i===1&&v===1&&!(k&&k.hand&&k.hand[1])){const ch=STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[1], gr=ch&&ch.grund?String(ch.grund):"";
+        if(ch&&ch.ist===1&&gr&&!/^nur bei Bedarf|^nicht gesteuert/.test(gr)){
+          const m=gr.match(/vor (Rückkehr|«Zu Hause») (\d{1,2}:\d\d)/), bt=gr.match(/heizt bis ([\d.]+) °C/), jt=gr.match(/(?:jetzt |^Boiler )([\d.]+) °C/);
+          const h=document.createElement("em");h.className="khand";h.style.color="var(--accent)";
+          h.textContent="Automatik: "+(m&&bt?`${jt?dez(+jt[1])+" °C → ":""}bis ${dez(+bt[1])} °C vor ${m[1]} ${m[2]}`:gr.length>60?gr.slice(0,58)+"…":gr);
+          h.title="Von der Steuerung eingeschaltet: "+gr; sp.append(h)}}
       d.append(dot,sp);
       // ein Knopf: zeigt den Zustand (EIN/AUS), Klick schaltet um; aktiv = blauer Rahmen
       const kb=document.createElement("button");kb.type="button";kb.className="kbtn"+(v===1?" an":"");
