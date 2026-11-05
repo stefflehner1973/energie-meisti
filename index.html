@@ -1166,7 +1166,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 05.11.26 15:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 05.11.26 15:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1514,7 +1514,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         const xa=X(a),xb=X(b); ein+=b-Math.max(a,t0);
         bars+=`<rect x="${xa.toFixed(1)}" y="${yb}" width="${Math.max(1.5,xb-xa).toFixed(1)}" height="${hb}" rx="3" fill="${KFARBE[i]}"/>`});
       g+=`<rect x="${Lr}" y="${yb}" width="${W-Lr-Rr}" height="${hb}" rx="3" fill="var(--line)" opacity=".45"/>`+bars;
-      labs+=`<text class="klab" x="${Lr}" y="${y+11}" font-size="11.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}<tspan fill="var(--fg)" font-weight="600"> · ${ein>0?de(ein/36e5,1)+" h ein":"aus"}</tspan></text>`;
+      (K14C.st||(K14C.st=[]))[i]=stuecke;
+      const std=` · ${ein>0?de(ein/36e5,1)+" h ein":"aus"}`;
+      labs+=`<text class="klab" x="${Lr}" y="${y+11}" font-size="11.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}<tspan class="k14txt" data-i="${i}" data-std="${std}" fill="var(--fg)" font-weight="600">${std}</tspan></text>`;
     });
     if(zp){   // 4. Zeile: Zeitplan Raumthermostat (Zu Hause / Vorheizen / Abgesenkt / Auswärts bzw. Abweichung)
       const y=oben+3*lane, yb=y+16, hb=16, ZF=["var(--warm)","var(--accent)","var(--muted)"], ZO=[.9,.3,.55];
@@ -1564,9 +1566,29 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const heute=fDay(Date.now()), zt=x=>(fDay(x)===heute?"":fDay(x)+" ")+fTime(x);
     z.textContent=` · ${was} ${zt(a)}–${b>=Date.now()-6e4?"jetzt":zt(b)}${relaisGrund(t,m,v)}`;
   }
+  // Beim Darüberfahren: Ausgang ein/aus zur Zeit t und – wenn bekannt – weshalb eingeschaltet (Protokoll der Steuerung; Stephan 05.11.2026)
+  const K14_NAMEN=["Boiler SPERREN","Boiler MANUELL","WP ABSENKEN"];
+  function k14Erklaeren(t){
+    const svg=$("chartK"); if(!svg) return;
+    svg.querySelectorAll(".k14txt").forEach(z=>{const i=+z.dataset.i;
+      if(t===null){z.textContent=z.dataset.std;return}
+      const s=((K14C.st&&K14C.st[i])||[]).find(([a,e])=>t>=a&&t<e), jetzt=Date.now();
+      const heute=fDay(jetzt), zt=x=>(fDay(x)===heute?"":fDay(x)+" ")+fTime(x);
+      if(!s){z.textContent=" · aus";return}
+      const [a,e]=s, bis=e>=jetzt-3*6e4?"jetzt":zt(e);
+      const pr=((STEU&&STEU.protokoll)||[]).filter(r=>r&&r[0]&&String(r[2]||"").startsWith(K14_NAMEN[i])&&Math.abs(r[0]-a)<=4*6e4&&/geschaltet|würde/.test(String(r[5]||"")));
+      let gr=pr.length?String(pr[0][6]||""):"";
+      const ch=STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[i];
+      if(!gr&&ch&&ch.handSeit&&Math.abs(ch.handSeit-a)<=10*6e4) gr="von Hand geschaltet";
+      if(!gr&&ch&&ch.ist===1&&bis==="jetzt"&&ch.grund&&!/^nur bei Bedarf|^nicht gesteuert/.test(ch.grund)) gr=String(ch.grund);
+      if(gr) gr=gr.split(" (danach")[0]; if(gr&&i===2) gr=gr.split(" → ")[0];
+      z.textContent=` · ein ${zt(a)}–${bis}${gr?" · "+(i===0||i===1?"Automatik: ":"")+gr:" · Grund nicht aufgezeichnet"}`;
+      if(/^von Hand/.test(gr)) z.textContent=` · ein ${zt(a)}–${bis} · von Hand geschaltet`;
+    });
+  }
   function k14Linie(t){
     const svg=$("chartK"), g=K14C.geo, l=svg&&svg.querySelector(".hovl"); if(!g||!l||t<g.t0||t>g.t1) return;
-    zpErklaeren(t);
+    zpErklaeren(t); k14Erklaeren(t);
     const x=g.X(t).toFixed(1); l.setAttribute("x1",x); l.setAttribute("x2",x); svg.querySelector(".hov").setAttribute("visibility","visible");
   }
 
@@ -2274,7 +2296,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t=g.t0+(x-L)/(g.W-L-R)*(g.t1-g.t0);
     einzelGruppe(c).forEach(k=>zeigeBei(k,t));
   }
-  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C)zpErklaeren(null)})}
+  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C){zpErklaeren(null);k14Erklaeren(null)}})}
   function zeigeBei(c,t){
     if(c.lines) return zeigeMultiBei(c,t);
     if(c===K14C) return k14Linie(t);
