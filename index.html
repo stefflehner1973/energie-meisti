@@ -1168,7 +1168,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 06.11.26 13:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 17:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3320,8 +3320,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const zeilen=[...mm.entries()].sort((a,b)=>b[0]-a[0]).map(([k,l])=>Object.assign({k},summe(l))), tot=summe(tage);
     // Einheit klein und grau direkt an der Zahl (kWh/MWh hinten, CHF vorne)
     const ke=t=>{const m=/^(.*\S) (kWh|MWh)$/.exec(t);return m?`${m[1]}<span class="einh">${m[2]}</span>`:t}, kc=t=>t.replace(/^CHF /,'<span class="einh vor">CHF</span>');
-    const kw=v=>ke(kwhK(v)), kf=v=>kc(chf(v));
-    const zr=(n,s,cl)=>`<tr${cl?` class="${cl}"`:""}><td>${n}</td><td>${kw(s.pv)}</td><td>${kw(s.selbst)}</td><td>${kw(s.ein)}</td><td>${kw(s.bez)}</td><td>${kf(s.fSelbst)}</td><td>${kf(s.fEin+s.fLok)}</td><td>${kf(s.tot)}</td><td>${kf(-s.fBez)}</td><td><b>${kf(s.netto)}</b></td><td title="Vergütung − Kosten Netzbezug − feste Gebühren (Grundpreis, Messtarif) – geschätzt">${kf(s.aus)}</td></tr>`;
+    const kwz=v=>ke(kwhK(v)), kf=v=>kc(chf(v));
+    const zr=(n,s,cl)=>`<tr${cl?` class="${cl}"`:""}><td>${n}</td><td>${kwz(s.pv)}</td><td>${kwz(s.selbst)}</td><td>${kwz(s.ein)}</td><td>${kwz(s.bez)}</td><td>${kf(s.fSelbst)}</td><td>${kf(s.fEin+s.fLok)}</td><td>${kf(s.tot)}</td><td>${kf(-s.fBez)}</td><td><b>${kf(s.netto)}</b></td><td title="Vergütung − Kosten Netzbezug − feste Gebühren (Grundpreis, Messtarif) – geschätzt">${kf(s.aus)}</td></tr>`;
     $("gTab").innerHTML=`<thead><tr><th>Monat</th><th>PV</th><th>Selbst genutzt</th><th>Eingespeist</th><th>Netzbezug</th><th>Gespart</th><th>Vergütung</th><th>Total</th><th>Kosten Bezug</th><th>Saldo</th><th title="Geschätzte Auszahlung der AEW: Vergütung − Kosten Netzbezug − feste Gebühren">Auszahlung</th></tr></thead><tbody>`+
       zeilen.map(z=>zr(MONATE[new Date(z.k).getMonth()]+" "+new Date(z.k).getFullYear(),z)).join("")+zr("Total",tot,"summe")+"</tbody>";
     zeichnePreise();
