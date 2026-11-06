@@ -1167,7 +1167,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 06.11.26 08:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 10:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1577,13 +1577,16 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const heute=fDay(jetzt), zt=x=>(fDay(x)===heute?"":fDay(x)+" ")+fTime(x);
       if(!s){z.textContent=" · aus";return}
       const [a,e]=s, bis=e>=jetzt-3*6e4?"jetzt":zt(e);
-      const pr=((STEU&&STEU.protokoll)||[]).filter(r=>r&&r[0]&&String(r[2]||"").startsWith(K14_NAMEN[i])&&Math.abs(r[0]-a)<=4*6e4&&/geschaltet|würde/.test(String(r[5]||"")));
-      let gr=pr.length?String(pr[0][6]||""):"";
+      // letzte Schaltung dieses Ausgangs bis zum Beginn (auch vor dem sichtbaren Zeitraum, z. B. gestern 22:00)
+      const pr=((STEU&&STEU.protokoll)||[]).filter(r=>r&&r[0]&&String(r[2]||"").startsWith(K14_NAMEN[i])&&r[0]<=a+4*6e4&&/geschaltet|würde/.test(String(r[5]||""))).sort((x,y)=>y[0]-x[0]);
+      let gr=pr.length&&/^(ein|absenken|sperren|gesperrt)/i.test(String(pr[0][4]||pr[0][3]||""))?String(pr[0][6]||""):"";
+      // WP ABSENKEN: sonst aus dem Zeitplan erklären (Relais stand so, wie der Zeitplan es will)
+      if(!gr&&i===2){const zp=(K14C.zp||[]).find(([x,y])=>t>=x&&t<y); if(zp&&!zp[3]&&zp[2]!==0) gr="nach Zeitplan: "+ZP_TXT[zp[2]][0]+(zp[2]===1?" (Raum über dem Abgesenkt-Sollwert)":"")}
       const ch=STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[i];
       if(!gr&&ch&&ch.handSeit&&Math.abs(ch.handSeit-a)<=10*6e4) gr="von Hand geschaltet";
       if(!gr&&ch&&ch.ist===1&&bis==="jetzt"&&ch.grund&&!/^nur bei Bedarf|^nicht gesteuert/.test(ch.grund)) gr=String(ch.grund);
       if(gr) gr=gr.split(" (danach")[0]; if(gr&&i===2) gr=gr.split(" → ")[0];
-      z.textContent=` · ein ${zt(a)}–${bis}${gr?" · "+(i===0||i===1?"Automatik: ":"")+gr:" · Grund nicht aufgezeichnet"}`;
+      z.textContent=` · ein ${zt(a)}–${bis}${gr?" · "+(i===0||i===1?"Automatik: ":"")+gr:" · Grund nicht aufgezeichnet (älter als das Protokoll)"}`;
       if(/^von Hand/.test(gr)) z.textContent=` · ein ${zt(a)}–${bis} · von Hand geschaltet`;
     });
   }
