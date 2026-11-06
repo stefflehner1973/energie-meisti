@@ -1168,7 +1168,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 06.11.26 17:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 17:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3311,7 +3311,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     });
     g+=`<line x1="${Lg}" x2="${W-Rg}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
     svg.innerHTML=g; hlVerbinden($("gLegend"),svg);
-    const zeig=(p,m=true)=>{saeuleMarkieren(svg,m?perioden.indexOf(p):-1);$("readoutG").textContent=`${anfGross(lab(p))} · ${chf(p.tot)} = ${chf(p.fSelbst)} gespart (${kwhK(p.selbst)} selbst genutzt) + ${chf(p.fEin+p.fLok)} Einspeisung (${kwhK(p.ein)})`};
+    const zeig=(p,m=true,mit=true)=>{saeuleMarkieren(svg,m?perioden.indexOf(p):-1);$("readoutG").textContent=`${anfGross(lab(p))} · ${chf(p.tot)} = ${chf(p.fSelbst)} gespart (${kwhK(p.selbst)} selbst genutzt) + ${chf(p.fEin+p.fLok)} Einspeisung (${kwhK(p.ein)})`;
+      if(mit&&geldZeig[1]) geldZeig[1](p,m,false)};   // 06.11.2026: gleiche Säule im Bilanz-Diagramm mitwählen
+    geldZeig[0]=zeig;
     svg.querySelectorAll(".ghit").forEach(h=>{const p=perioden[+h.dataset.i];h.addEventListener("mouseenter",()=>zeig(p));h.addEventListener("click",()=>zeig(p))});
     if(perioden.length){zeig(perioden[perioden.length-1],false); svg.onmouseleave=()=>zeig(perioden[perioden.length-1],false)}
     zeichneBilanz(perioden,lab);
@@ -3326,6 +3328,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       zeilen.map(z=>zr(MONATE[new Date(z.k).getMonth()]+" "+new Date(z.k).getFullYear(),z)).join("")+zr("Total",tot,"summe")+"</tbody>";
     zeichnePreise();
   }
+  const geldZeig=[null,null];   // Pro Tag ↔ Bilanz: gewählte Säule gemeinsam
   // Bilanz: Ertrag (gespart + Vergütung) nach oben, Kosten Netzbezug nach unten, Saldo als Strich
   function zeichneBilanz(perioden,lab){
     $("gEinheit2").textContent={tag:"Tag",woche:"Woche",monat:"Monat"}[geldEinteilung];
@@ -3354,7 +3357,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     });
     g+=`<line x1="${Lg}" x2="${W-Rg}" y1="${y0}" y2="${y0}" stroke="var(--muted)"/>`;
     svg.innerHTML=g; hlVerbinden($("gLegend2"),svg);
-    const zeig=(p,m=true)=>{saeuleMarkieren(svg,m?perioden.indexOf(p):-1);$("readoutG2").textContent=`${anfGross(lab(p))} · Ertrag ${chf(p.tot)} − Netzbezug ${chf(p.fBez)} (${kwhK(p.bez)}) = Saldo ${chf(p.netto)}`};
+    const zeig=(p,m=true,mit=true)=>{if(mit&&geldZeig[0]) geldZeig[0](p,m,false); saeuleMarkieren(svg,m?perioden.indexOf(p):-1);$("readoutG2").textContent=`${anfGross(lab(p))} · Ertrag ${chf(p.tot)} − Netzbezug ${chf(p.fBez)} (${kwhK(p.bez)}) = Saldo ${chf(p.netto)}`};
+    geldZeig[1]=zeig;
     svg.querySelectorAll(".ghit2").forEach(h=>{const p=perioden[+h.dataset.i];h.addEventListener("mouseenter",()=>zeig(p));h.addEventListener("click",()=>zeig(p))});
     if(perioden.length){zeig(perioden[perioden.length-1],false); svg.onmouseleave=()=>zeig(perioden[perioden.length-1],false)}
   }
