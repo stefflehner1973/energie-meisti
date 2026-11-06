@@ -449,6 +449,7 @@ details>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px
 h3{font-size:.92rem;margin:0;font-weight:600}
 .diag{white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:360px;overflow:auto;margin:0}
 @media (prefers-reduced-motion:no-preference){#fill{transition:height .6s ease,y .6s ease}}
+.veraltet{opacity:.45;filter:grayscale(.7);transition:opacity .4s,filter .4s}
 </style>
 </head>
 <body>
@@ -1167,7 +1168,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 06.11.26 11:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 13:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1794,12 +1795,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
 
   let aktGezeigt=false;
+  // 06.11.2026: Werte aus dem Zwischenspeicher blass zeigen, bis frische da sind
+  const AKT_IDS=["temp","pow","bKwh","aPow","wPow","soc","kChips","maGrid"];
+  function aktBlass(an){const fs=new Set();AKT_IDS.forEach(i=>{const e=$(i);if(e)fs.add(e.closest(".panel")||e)});fs.forEach(e=>e.classList.toggle("veraltet",an))}
   async function update(){
     if(!cfg.histurl||!cfg.histtok){msg("Web-App-URL und Zugriffsschlüssel unter „Verbindung“ eintragen, dann erscheinen die Werte.");return}
     // 06.11.2026: zuletzt geladene Werte sofort zeigen (Alter steht bei jeder Kachel), dann frisch holen
-    if(!aktGezeigt){aktGezeigt=true;try{const c=JSON.parse(localStorage.getItem("tb.akt")||"null");if(c&&c.a&&Date.now()-c.zeit<36e5*12)renderAktuell(c.a)}catch(e){}}
+    if(!aktGezeigt){aktGezeigt=true;try{const c=JSON.parse(localStorage.getItem("tb.akt")||"null");if(c&&c.a&&Date.now()-c.zeit<36e5*12){renderAktuell(c.a);aktBlass(true)}}catch(e){}}
     const bs=document.querySelectorAll(".refresh"); bs.forEach(b=>{b.disabled=true; b.classList.add("laeuft")});
-    try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell);
+    try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell); aktBlass(false);
       try{localStorage.setItem("tb.akt",JSON.stringify({zeit:Date.now(),a:j.aktuell}))}catch(e){}}
     catch(e){msg(e.message,true)}
     finally{bs.forEach(b=>{b.disabled=false; b.classList.remove("laeuft")})}
