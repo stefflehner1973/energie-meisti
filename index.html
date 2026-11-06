@@ -1168,7 +1168,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 06.11.26 17:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 19:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3334,7 +3334,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("gEinheit2").textContent={tag:"Tag",woche:"Woche",monat:"Monat"}[geldEinteilung];
     $("gLegend2").innerHTML=`<span data-hl="ertrag"><i style="width:10px;height:10px;border-radius:2px;background:var(--g1);display:inline-block"></i>Ertrag (gespart + Vergütung)</span>`+
       `<span data-hl="kosten"><i style="width:10px;height:10px;border-radius:2px;background:var(--hot);display:inline-block"></i>Kosten Netzbezug</span>`+
-      `<span data-hl="saldo"><i style="width:14px;border-top:3px solid var(--fg);display:inline-block"></i><b>Saldo</b></span>`;
+      `<span data-hl="saldo"><i style="width:14px;border-top:3px solid var(--fg);display:inline-block"></i><span style="font-weight:700">Saldo</span></span>`;
     const svg=$("chartG2"), W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=280, Lg=44, Rg=10, Tg=22, Bg=28;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     const hi=Math.max(0.5,...perioden.map(p=>p.tot)), lo=Math.max(0.5,...perioden.map(p=>p.fBez));
