@@ -1167,7 +1167,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 06.11.26 10:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 10:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1580,6 +1580,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       // letzte Schaltung dieses Ausgangs bis zum Beginn (auch vor dem sichtbaren Zeitraum, z. B. gestern 22:00)
       const pr=((STEU&&STEU.protokoll)||[]).filter(r=>r&&r[0]&&String(r[2]||"").startsWith(K14_NAMEN[i])&&r[0]<=a+4*6e4&&/geschaltet|würde/.test(String(r[5]||""))).sort((x,y)=>y[0]-x[0]);
       let gr=pr.length&&/^(ein|absenken|sperren|gesperrt)/i.test(String(pr[0][4]||pr[0][3]||""))?String(pr[0][6]||""):"";
+      if(gr) gr="geschaltet "+zt(pr[0][0])+" – "+gr;   // Werte gelten für den Schaltmoment, nicht für die Mausposition
       // WP ABSENKEN: sonst aus dem Zeitplan erklären (Relais stand so, wie der Zeitplan es will)
       if(!gr&&i===2){const zp=(K14C.zp||[]).find(([x,y])=>t>=x&&t<y); if(zp&&!zp[3]&&zp[2]!==0) gr="nach Zeitplan: "+ZP_TXT[zp[2]][0]+(zp[2]===1?" (Raum über dem Abgesenkt-Sollwert)":"")}
       const ch=STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[i];
