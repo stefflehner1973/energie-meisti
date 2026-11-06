@@ -318,6 +318,7 @@ h2{font-size:1rem;margin:0 0 12px;font-weight:600}
 .thstat{font-size:.9rem;line-height:1.45;margin:6px 0 2px}.thstat b{font-variant-numeric:tabular-nums}
 .thbeob{font-size:.78rem;color:var(--muted);margin:4px 0 0}
 .thhand{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:.88rem;margin:8px 0 2px;padding:8px 10px;border-radius:8px;border:1px solid var(--warm);background:color-mix(in srgb,var(--warm) 10%,transparent)}
+.ungespeichert{color:var(--warm)!important}input.ungespeichert,select.ungespeichert{border-color:var(--warm)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--warm) 30%,transparent);font-weight:700}b.ungespeichert{text-decoration:underline dotted;text-underline-offset:4px}button.mitAenderung:not(:disabled){box-shadow:0 0 0 3px color-mix(in srgb,var(--warm) 45%,transparent)}
 .khand{display:block;font-style:normal;font-size:.72rem;color:var(--warm);font-weight:600}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--panel)}
 .zoomweg,.pzoom{padding:6px 11px;font-size:.82rem;margin-left:auto}
@@ -1166,7 +1167,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 05.11.26 15:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 08:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3811,8 +3812,30 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
      Ergebnis direkt beim Thermostat zeigen; braucht es den PIN, zum PIN-Feld springen. */
   const thSenden=(knopf,text,daten,ok)=>knopfSenden(knopf,text,daten,ok,"thMeld");
   let meldAktiv="thMeld", uiAktiv=null;
+  // Geänderte, noch nicht gespeicherte Zahlen sichtbar machen (Stephan 06.11.2026): Eingabefelder in anderer Farbe,
+  // Speichern-Knopf im gleichen Bereich mit Rahmen. Nach dem Speichern werden die Felder neu gezeichnet bzw. hier zurückgesetzt.
+  function aenderungMarkieren(inp){
+    if(!inp||inp.type!=="number"||inp.dataset.j!==undefined||inp.id==="gLokAnteil"||inp.closest("#tabSonne,.zeitwahl")) return;   // Preise speichern sofort selbst
+    if(!("gesp" in inp.dataset)) inp.dataset.gesp=inp.defaultValue!==""?inp.defaultValue:inp.value;
+    const g=inp.value!==inp.dataset.gesp&&!(inp.value!==""&&inp.dataset.gesp!==""&&+inp.value===+inp.dataset.gesp);
+    inp.classList.toggle("ungespeichert",g); inp.title=g?(inp.title.replace(/ ?· noch nicht gespeichert.*$/,"")+" · noch nicht gespeichert").trim():inp.title.replace(/ ?· noch nicht gespeichert.*$/,"");
+    const blk=inp.closest("details,section,.panel,.card")||document.body;
+    blk.querySelectorAll("button").forEach(b=>{if(/speichern/i.test(b.textContent)) b.classList.toggle("mitAenderung",!!blk.querySelector("input.ungespeichert,b.ungespeichert"))});
+  }
+  document.addEventListener("focusin",e=>{const i=e.target; if(i&&i.type==="number"&&!("gesp" in i.dataset)) i.dataset.gesp=i.defaultValue!==""?i.defaultValue:i.value},true);
+  document.addEventListener("input",e=>aenderungMarkieren(e.target),true);
+  // Zeitplan: geänderte Zeiten ebenfalls markieren
+  document.addEventListener("focusin",e=>{const s=e.target; if(s&&s.tagName==="SELECT"&&s.closest("#thPlanBox")&&!("gesp" in s.dataset)) s.dataset.gesp=s.value},true);
+  document.addEventListener("change",e=>{const s=e.target; if(!(s&&s.tagName==="SELECT"&&s.closest("#thPlanBox")&&"gesp" in s.dataset)) return;
+    s.classList.toggle("ungespeichert",s.value!==s.dataset.gesp); const blk=s.closest("#thPlanBox");
+    blk.querySelectorAll("button").forEach(b=>{if(/speichern/i.test(b.textContent)) b.classList.toggle("mitAenderung",!!blk.querySelector(".ungespeichert"))})},true);
+  let SPEICHERKNOPF=null;
+  function aenderungenGespeichert(knopf){const blk=knopf&&(knopf.closest("details,section,.panel,.card"));
+    if(!blk) return; blk.querySelectorAll("select.ungespeichert").forEach(i=>{i.dataset.gesp=i.value;i.classList.remove("ungespeichert")});
+    blk.querySelectorAll("input.ungespeichert").forEach(i=>{i.dataset.gesp=i.value;i.classList.remove("ungespeichert");i.title=i.title.replace(/ ?· noch nicht gespeichert.*$/,"")});
+    blk.querySelectorAll("button.mitAenderung").forEach(b=>b.classList.remove("mitAenderung"))}
   async function knopfSenden(knopf,text,daten,ok,meldId,ui){
-    ui=ui||UI_S; meldAktiv=meldId; uiAktiv=ui; const m=$(meldId); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
+    ui=ui||UI_S; meldAktiv=meldId; uiAktiv=ui; SPEICHERKNOPF=knopf; const m=$(meldId); m.hidden=false; m.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`;
     const alt=knopf?{html:knopf.innerHTML,dis:knopf.disabled}:null;
     if(knopf){knopf.disabled=true; knopf.innerHTML=`<i class="spin" aria-hidden="true"></i>${esc(text)} …`}
     thLaeuft=true;
@@ -3848,9 +3871,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const minus=document.createElement("button");minus.type="button";minus.className="knopfklein ghost";minus.textContent="−";minus.setAttribute("aria-label",n+": 0,1 °C tiefer");
       const v=document.createElement("b");v.textContent=dez(thEdit[k]);v.setAttribute("aria-live","polite");
       const plus=document.createElement("button");plus.type="button";plus.className="knopfklein ghost";plus.textContent="+";plus.setAttribute("aria-label",n+": 0,1 °C höher");
-      const set=d=>{if(typeof thEdit[k]!=="number") return; thEdit.u=true; thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); thDirty()};
+      const markV=()=>{const g=thEdit[k]!==c.p[k]; v.classList.toggle("ungespeichert",g); v.title=g?"Geändert, noch nicht gespeichert (gespeichert: "+dez(c.p[k])+" °C)":""};
+      const set=d=>{if(typeof thEdit[k]!=="number") return; thEdit.u=true; thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); markV(); thDirty()};
       minus.addEventListener("click",()=>set(-0.1)); plus.addEventListener("click",()=>set(0.1));
-      r.append(minus,v,document.createTextNode("°C"),plus); box.append(l,r)});
+      markV(); r.append(minus,v,document.createTextNode("°C"),plus); box.append(l,r)});
     thDirty(); zeichneRegeln(); zeichneRelais(); zeichneBoilerEinst();
     // Zustand
     if(!th){$("thStatus").textContent="Noch kein Lauf mit dem Raumthermostat. Neues Google-Skript (Stand 01.11.2026) einspielen.";$("thBeob").textContent="";return}
@@ -4112,7 +4136,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("thRegelnVerwerfen").addEventListener("click",()=>{regelnEdit=false;zeichneRegeln(true)});
   $("thRegelnSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#thRegelnBox input").forEach(i=>{if(i.value!=="")p[i.dataset.rp]=einstWert(i)});
     await thSenden($("thRegelnSpeichern"),"Regeln werden gespeichert",{aktion:"einstellungen",p},"Regeln gespeichert"); if($("sPinBox").hidden) zeichneRegeln(true)});
-  function thDirty(){const c=STEU&&STEU.cfg; if(!c||!thEdit) return; const d=TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]); $("thSpeichern").disabled=!d; $("thVerwerfen").hidden=!d}
+  function thDirty(){const c=STEU&&STEU.cfg; if(!c||!thEdit) return; const d=TH_SOLL.some(([k])=>thEdit[k]!==c.p[k]); $("thSpeichern").disabled=!d; $("thSpeichern").classList.toggle("mitAenderung",d); $("thVerwerfen").hidden=!d}
   $("thSpeichern").addEventListener("click",()=>{if(!thEdit)return; const p={sollTag:thEdit.sollTag,sollNacht:thEdit.sollNacht,sollAus:thEdit.sollAus};
     thSenden($("thSpeichern"),"Sollwerte werden gespeichert",{aktion:"einstellungen",p},`Sollwerte gespeichert: Zu Hause ${dez(p.sollTag)}, Abgesenkt ${dez(p.sollNacht)}, auswärts ${dez(p.sollAus)} °C`)});
   $("thVerwerfen").addEventListener("click",()=>{thEdit=null;zeichneThermo()});
@@ -4206,6 +4230,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
       STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
       $(ui.box).hidden=true; steuWartet=null; $(ui.msg).textContent=ok||"Gespeichert.";
+      try{aenderungenGespeichert(SPEICHERKNOPF)}catch(e){}
       if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; bEdit=false;
         if(daten.p&&"lokKwh" in daten.p){ if(GELD&&GELD.lok) Object.assign(GELD.lok,daten.p); gLokEdit=false; zeichneLokParam(); } }
       if(daten.aktion==="maWarn") maEdit=false;
