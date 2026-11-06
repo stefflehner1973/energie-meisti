@@ -1167,7 +1167,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 06.11.26 10:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 06.11.26 11:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1793,10 +1793,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       d.classList.toggle("ausser",aus); d.title=aus?`Ausserhalb des Bereichs (${c.min!=null?"min "+dez(c.min):""}${c.min!=null&&c.max!=null?" / ":""}${c.max!=null?"max "+dez(c.max):""} °C)`:""});
   }
 
+  let aktGezeigt=false;
   async function update(){
     if(!cfg.histurl||!cfg.histtok){msg("Web-App-URL und Zugriffsschlüssel unter „Verbindung“ eintragen, dann erscheinen die Werte.");return}
+    // 06.11.2026: zuletzt geladene Werte sofort zeigen (Alter steht bei jeder Kachel), dann frisch holen
+    if(!aktGezeigt){aktGezeigt=true;try{const c=JSON.parse(localStorage.getItem("tb.akt")||"null");if(c&&c.a&&Date.now()-c.zeit<36e5*12)renderAktuell(c.a)}catch(e){}}
     const bs=document.querySelectorAll(".refresh"); bs.forEach(b=>{b.disabled=true; b.classList.add("laeuft")});
-    try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell)}
+    try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell);
+      try{localStorage.setItem("tb.akt",JSON.stringify({zeit:Date.now(),a:j.aktuell}))}catch(e){}}
     catch(e){msg(e.message,true)}
     finally{bs.forEach(b=>{b.disabled=false; b.classList.remove("laeuft")})}
   }
@@ -4279,6 +4283,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let letzteAbfrage=0, letzterVerlauf=0, laeuft=false;
   // Kurze Zeiträume (1 h, Tag, 24 h): alles jede Minute; lange (7 Tage … 1 Jahr, Zoom): Verläufe alle 5 Minuten
   const verlaufTakt=()=>(!zoom&&tage<=1)?6e4:5*6e4;
+  let progIstZeit=0;
   async function auffrischen(verlaufAuch){
     if(laeuft) return;   // vorige Runde noch nicht fertig (Google langsam): nicht stauen
     const leise=letzteAbfrage>0;   // nach dem ersten Laden ohne Ladeanzeige austauschen
@@ -4299,7 +4304,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(!verlaufAuch||!aktiv()) return;
       // danach alle übrigen Reiter im Hintergrund, damit sie beim Wechsel schon aktuell sind
       const hinten=[loadHist(false,{teile:ALLE_TEILE.filter(t=>!(TEILE[reiter]||[]).includes(t)),still:true})];
-      if(reiter!=="prognose") hinten.push(wetterAlt||!prog?ladePrognose(true,true):ladeProgIst());
+      if(reiter!=="prognose"&&(wetterAlt||!prog||Date.now()-progIstZeit>=5*6e4)){progIstZeit=Date.now();hinten.push(wetterAlt||!prog?ladePrognose(true,true):ladeProgIst())}   // 06.11.2026: im Hintergrund höchstens alle 5 min
       if(reiter!=="geld") hinten.push(ladeGeld(true,true));
       if(!steuerReiter()) hinten.push(ladeSteuerung(true,true));
       await Promise.allSettled(hinten);
