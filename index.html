@@ -1169,7 +1169,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 08.11.26 14:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 08.11.26 14:35</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1823,12 +1823,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // 06.11.2026: Werte aus dem Zwischenspeicher blass zeigen, bis frische da sind
   const AKT_IDS=["temp","pow","bKwh","aPow","wPow","soc","kChips","maGrid"];
   function aktBlass(an){const fs=new Set();AKT_IDS.forEach(i=>{const e=$(i);if(e)fs.add(e.closest(".panel")||e)});fs.forEach(e=>e.classList.toggle("veraltet",an))}
-  async function update(){
+  let aktZeit=0;
+  async function update(leise){
     if(!cfg.histurl||!cfg.histtok){msg("Web-App-URL und Zugriffsschlüssel unter „Verbindung“ eintragen, dann erscheinen die Werte.");return}
     // 06.11.2026: zuletzt geladene Werte sofort zeigen (Alter steht bei jeder Kachel), dann frisch holen
     if(!aktGezeigt){aktGezeigt=true;try{const c=JSON.parse(localStorage.getItem("tb.akt")||"null");if(c&&c.a&&Date.now()-c.zeit<36e5*12){renderAktuell(c.a);aktBlass(true)}}catch(e){}}
-    const bs=document.querySelectorAll(".refresh"); bs.forEach(b=>{b.disabled=true; b.classList.add("laeuft")});
-    try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell); aktBlass(false);
+    // 08.11.2026: automatisch im Hintergrund still; blass nur, wenn die Werte schon alt sind (über 5 min)
+    if(!leise&&aktZeit&&Date.now()-aktZeit>5*6e4) aktBlass(true);
+    const bs=document.querySelectorAll(".refresh"); if(!leise) bs.forEach(b=>{b.disabled=true; b.classList.add("laeuft")});
+    try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell); aktBlass(false); aktZeit=Date.now();
       try{localStorage.setItem("tb.akt",JSON.stringify({zeit:Date.now(),a:j.aktuell}))}catch(e){}}
     catch(e){msg(e.message,true)}
     finally{bs.forEach(b=>{b.disabled=false; b.classList.remove("laeuft")})}
@@ -2038,7 +2041,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* opt.teile: nur diese Teile · opt.still: im Hintergrund, ohne Ladeanzeige und Fehlermeldung
      opt.rest: danach die übrigen Reiter im Hintergrund laden (Standard ja) · opt.restNeu: diese auch neu holen */
   const ALLE_TEILE=["mess","ma","fronius"];
-  const vorneLaedt=()=>[...laedtTeil].some(t=>(TEILE[reiter]||[]).includes(t));
+  const vorneLaedt=()=>[...laedtSicht].some(t=>(TEILE[reiter]||[]).includes(t));   // 08.11.2026: nur sichtbares Laden macht blass
+  const laedtSicht=new Set();
   async function loadHist(nurFehlende,opt){
     opt=opt||{};
     if(!cfg.histurl||!cfg.histtok){Object.values(CH).forEach(c=>c.series=[]);$("histhint").textContent="Für den Verlauf Web-App-URL und Zugriffsschlüssel unter „Verbindung“ eintragen.";$("histhint").hidden=false;drawAll();return}
@@ -2055,7 +2059,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     geladenSpanne=bisMs-vonMs; ROH=ROH||{};
     // gespeicherte Werte sofort zeigen, wenn noch nichts für diesen Zeitraum da ist
     if(!zoom){const c=cacheLesen(); if(c.schl===schl&&c.teile) teile.forEach(t=>{if(geladen[t]!==schl&&c.teile[t]) Object.assign(ROH,c.teile[t])})}
-    teile.forEach(t=>laedtTeil.add(t)); if(!opt.still) laden(true); zuschneiden(); drawAll();
+    teile.forEach(t=>{laedtTeil.add(t); if(opt.still) laedtSicht.delete(t); else laedtSicht.add(t)}); if(!opt.still) laden(true); zuschneiden(); drawAll();
     let fehler=null;
     await Promise.all(teile.map(async t=>{
       const nr=teilNr[t]=(teilNr[t]||0)+1, uhr=performance.now(); laedtMit[t]=schl;
@@ -2069,7 +2073,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         logD(`Verlauf ${t}: ${Math.round(performance.now()-uhr)} ms`+(j.dauer&&j.dauer[t]!=null?` (Google ${j.dauer[t]} ms`+({1:", Minutenwerte",5:", 5-Minuten-Werte",60:", Stundenwerte"}[j.aufloesung]||"")+")":""));
       }catch(e){ if(nr===teilNr[t]) fehler=e; }
       finally{
-        if(nr===teilNr[t]){laedtTeil.delete(t); laden(vorneLaedt()); zuschneiden(); drawAll()}
+        if(nr===teilNr[t]){laedtTeil.delete(t); laedtSicht.delete(t); laden(vorneLaedt()); zuschneiden(); drawAll()}
       }
     }));
     if(opt.still) return;
@@ -2364,7 +2368,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     cfg={histurl:"",histtok:""}; $("histurl").value=""; $("histtok").value="";
     msg("Zugangsdaten aus diesem Browser gelöscht.");
   });
-  document.querySelectorAll(".refresh").forEach(b=>b.addEventListener("click",()=>auffrischen(true)));
+  document.querySelectorAll(".refresh").forEach(b=>b.addEventListener("click",()=>auffrischen(true,true)));
   // Kopie mit Zugang: erst nach dem Schalt-PIN (prüft Google, jedes Mal neu eingeben, Eintrag im Schaltprotokoll + E-Mail)
   const saveZugang=()=>({url:(fest?EINGEBAUT.url:$("histurl").value).trim(), token:(fest?EINGEBAUT.token:$("histtok").value).trim()});
   $("saveEmbed").addEventListener("click",()=>{
@@ -4317,12 +4321,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // Kurze Zeiträume (1 h, Tag, 24 h): alles jede Minute; lange (7 Tage … 1 Jahr, Zoom): Verläufe alle 5 Minuten
   const verlaufTakt=()=>(!zoom&&tage<=1)?6e4:5*6e4;
   let progIstZeit=0;
-  async function auffrischen(verlaufAuch){
+  async function auffrischen(verlaufAuch,manuell){
     if(laeuft) return;   // vorige Runde noch nicht fertig (Google langsam): nicht stauen
-    const leise=letzteAbfrage>0;   // nach dem ersten Laden ohne Ladeanzeige austauschen
+    // 08.11.2026: automatisch still im Hintergrund; Ladeanzeige nur von Hand, beim ersten Laden oder wenn die Daten alt sind (über 5 min)
+    const leise=!manuell&&letzteAbfrage>0&&Date.now()-letzteAbfrage<5*6e4;
     laeuft=true; letzteAbfrage=Date.now();
     try{
-      const vorne=[update()];
+      const vorne=[update(leise)];
       if(reiter==="sonne"&&istHeute()) zeichneSonne();
       if(steuerReiter()) vorne.push(ladeSteuerung(true,leise));   // jede Minute, unabhängig vom Verlaufs-Zeitraum
       const wetterAlt=Date.now()-progZeit>=15*6e4;
