@@ -1169,7 +1169,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 08.11.26 14:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 08.11.26 16:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2214,7 +2214,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     g+=`<defs><clipPath id="${c.svg}Clip"><rect x="${L}" y="${T-6}" width="${W-L-R}" height="${H-T-B+12}"/></clipPath></defs><g clip-path="url(#${c.svg}Clip)">`;
     (c.baender||[]).forEach(b=>{const a=Math.max(b.a,t0), e=Math.min(b.e,t1); if(e<=a) return;
       g+=`<rect x="${X(a).toFixed(1)}" y="${T}" width="${Math.max(1,X(e)-X(a)).toFixed(1)}" height="${H-T-B}" fill="${b.col}" opacity=".09"><title>${b.titel}</title></rect>`});
-    lines.forEach(l=>{
+    lines.slice().sort((p,q)=>(p.z||0)-(q.z||0)).forEach(l=>{   // z: höhere Zahl wird zuoberst gezeichnet (Legende bleibt in der Reihenfolge)
       g+=`<g data-hl="${c.lines.indexOf(l)}">`;
       const s=l.series, gap=gapOf(s); let d="";
       s.forEach((p,i)=>{d+=(i&&p.t-s[i-1].t<=gap?"L":"M")+X(p.t).toFixed(1)+","+Y(p.v).toFixed(1)});
@@ -2617,9 +2617,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Verlauf: Wattpilot (davon PV-Überschuss als grüne Fläche), PV, übriger Hausverbrauch
     const reihe=f=>WB.map(p=>{const v=f(p);return {t:p.t,v,mn:v,mx:v}});
     AU.lines=WB.length?[
-      {name:"Wattpilot",col:"var(--c-wb)",series:reihe(p=>p.v),flaeche:true,breite:1.8},
-      {name:"davon PV-Überschuss",col:"var(--c-pv)",series:reihe(p=>Math.min(p.v,Math.max(0,p.pv-Math.max(0,p.haus-p.v)))),flaeche:true,flaecheDeckkraft:.4,breite:1,deckkraft:.7},
-      {name:"PV",col:"var(--c-pv)",series:reihe(p=>p.pv),breite:1.4,deckkraft:.8,dash:"4 3"},
+      {name:"Wattpilot",col:"var(--c-wb)",series:reihe(p=>p.v),flaeche:true,flaecheDeckkraft:.22,breite:2.6,z:2},   // 08.11.2026: Wattpilot zuvorderst
+      {name:"davon PV-Überschuss",col:"var(--c-pv)",series:reihe(p=>Math.min(p.v,Math.max(0,p.pv-Math.max(0,p.haus-p.v)))),flaeche:true,flaecheDeckkraft:.28,breite:.8,deckkraft:.5,z:1},
+      {name:"PV",col:"var(--c-pv)",series:reihe(p=>p.pv),breite:1.2,deckkraft:.6,dash:"4 3"},
       {name:"übriges Haus",col:"var(--muted)",series:reihe(p=>Math.max(0,p.haus-p.v)),breite:1.2,deckkraft:.7,dash:"4 3"}]:[];
     drawMulti(AU);
     {const gu=document.querySelector('[data-gilt="chartU"]'); giltSetzen("uTab",gu&&!gu.hidden?gu.textContent:"");}
