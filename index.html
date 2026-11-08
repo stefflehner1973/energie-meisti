@@ -580,6 +580,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </div>
     <div class="chartbox">
       <svg id="chartP" viewBox="0 0 720 280" role="img" aria-label="Leistungsverlauf Boiler"></svg>
+      <svg id="chartPLM" role="img" aria-label="Lastmanagement Last 1 und 2 (Boiler) ein oder aus" style="display:block;width:100%;height:auto"></svg>
     </div>
     <div class="readout" id="readoutP"></div>
 
@@ -1168,7 +1169,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 07.11.26 10:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 08.11.26 14:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1622,6 +1623,30 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!z) return "";
     return LMNAMEN.map((n,i)=>{const s=z[i+1], g=z[i+5]; return n+": "+(s===1?"ein":s===0?"aus":"–")+(typeof g==="number"&&LMGRUND[g]?" ("+LMGRUND[g]+")":"")}).join(" · ");
   }
+  // 08.11.2026: kleine Leiste unter dem Boiler-Diagramm: Last 1 / Last 2 ein (farbig) oder aus (grau), gleiche Zeitachse
+  let lmBoilerC=null;
+  function lmBoilerLeiste(c){
+    const svg=$("chartPLM"); if(!svg) return; if(c) lmBoilerC=c; c=lmBoilerC;
+    const liste=lmListe();
+    if(!c||!c.geo||!liste.length){svg.innerHTML="";svg.removeAttribute("viewBox");svg.style.height="0";return}
+    const g=c.geo, W=g.W, hb=9, gap=4, H=2*hb+gap+4; svg.style.height="";
+    svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+    let h="";
+    [0,1].forEach(i=>{const y=2+i*(hb+gap);
+      h+=`<text x="${L-8}" y="${y+hb-1}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Mono, monospace">L${i+1}</text>`;
+      h+=`<rect x="${L}" y="${y}" width="${W-L-R}" height="${hb}" rx="2" fill="var(--line)" opacity=".45"><title>${LMNAMEN[i]}: aus</title></rect>`;
+      lmStuecke(liste,i).forEach(([a,e])=>{const b=Math.min(e,g.t1); if(b<=g.t0||a>=g.t1) return;
+        const xa=g.X(Math.max(a,g.t0)),xb=g.X(b);
+        h+=`<rect x="${xa.toFixed(1)}" y="${y}" width="${Math.max(1.5,xb-xa).toFixed(1)}" height="${hb}" rx="2" fill="${LMFARBE[i]}" opacity="${LMDECK[i]}"><title>${LMNAMEN[i]}: ein ${fStempel(a)} – ${fStempel(e)}</title></rect>`});
+    });
+    svg.innerHTML=h;
+  }
+  function lmBoilerText(t){
+    const l=lmListe(); let z=null; for(const r of l){if(r[0]>t)break;z=r}
+    if(!z||t-z[0]>75*6e4) return "";
+    const w=i=>z[i+1]===1?"ein":z[i+1]===0?"aus":"–";
+    return escH(` · Last 1 ${w(0)}, Last 2 ${w(1)}`);
+  }
   function lmReadout(t){
     const l=lmListe(); if(!l.length){$("readoutLM").textContent="";return}
     let z=l[l.length-1];
@@ -1630,7 +1655,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   const LMC={svg:"chartLM",ro:null,gruppe:"ueb",geo:null};
   function zeichneLM(){
-    const svg=$("chartLM"); if(!svg) return;
+    const svg=$("chartLM"); lmBoilerLeiste(null); if(!svg) return;
     const liste=lmListe();
     $("lmHint").hidden=!!liste.length;
     if(!liste.length){svg.innerHTML="";svg.removeAttribute("viewBox");svg.style.height="0";$("lmAge").textContent="";$("readoutLM").textContent="";LMC.geo=null;return}
@@ -1837,7 +1862,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         $("sMax").textContent=de(Math.max(...s.map(p=>p.mx)))+" °C";
         $("sAvg").textContent=de(s.reduce((a,p)=>a+p.v,0)/s.length)+" °C";
       }},
-    boiler:powChart("chartP","readoutP",["pE","pOn","pMax","pE2"],"var(--c-boiler)"),
+    boiler:Object.assign(powChart("chartP","readoutP",["pE","pOn","pMax","pE2"],"var(--c-boiler)"),{nach:c=>lmBoilerLeiste(c),zusatz:t=>lmBoilerText(t)}),
     wp:powChart("chartW","readoutW",["wE","wOn","wMax","wE2"],"var(--c-wp)")
   };
   const WB_STATUS={1:"kein Auto",2:"lädt",3:"Auto wartet",4:"fertig",5:"Fehler"};
@@ -2293,7 +2318,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.innerHTML=g;
     c.geo={X,Y,t0,t1,W,H};
     giltSetzen(c.svg,spanneText(t0,fensterEnde(t1,last.t)));
-    $(c.ro).textContent=HINT; ziehZoom(svg,c);
+    $(c.ro).textContent=HINT; ziehZoom(svg,c); if(c.nach) c.nach(c);
     const hit=svg.querySelector(".hit"), hv=e=>hover(c,e);
     hit.addEventListener("pointermove",hv); hit.addEventListener("pointerdown",hv);
     hit.addEventListener("pointerleave",()=>hoverWeg(c));
@@ -2324,7 +2349,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     l.setAttribute("x1",px);l.setAttribute("x2",px);ci.setAttribute("cx",px);ci.setAttribute("cy",py);
     svg.querySelector(".hov").setAttribute("visibility","visible");
     {const zt=fFull(p.t),i=zt.lastIndexOf(" "),fe=x=>`<b style="color:var(--fg);font-weight:600">${wertHtml(x)}</b>`;
-      $(c.ro).innerHTML=escH(zt.slice(0,i+1))+fe(zt.slice(i+1))+" · "+fe(c.fmt(p.v))+(p.mx-p.mn>0.05?escH(` (${c.fmt(p.mn)} bis ${c.fmt(p.mx)})`):"")}
+      $(c.ro).innerHTML=escH(zt.slice(0,i+1))+fe(zt.slice(i+1))+" · "+fe(c.fmt(p.v))+(p.mx-p.mn>0.05?escH(` (${c.fmt(p.mn)} bis ${c.fmt(p.mx)})`):"")+(c.zusatz?c.zusatz(t):"")}
   }
 
   /* ---------- Bedienung ---------- */
