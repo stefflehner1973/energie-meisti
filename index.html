@@ -1169,7 +1169,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 08.11.26 17:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 09.11.26 09:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3409,10 +3409,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     else roh=alle.slice(-14);
     const tage=roh.map(r=>{const pv=r[1]||0, haus=r[2]||0, bez=r[3]||0, ein=r[4]||0, lad=r[5]||0, ent=r[6]||0;
       const direkt=Math.max(0,Math.min(pv-lad-ein,haus-ent-bez));
-      const vl=Math.max(0,pv-direkt-lad-ein);
+      const vlP=Math.max(0,pv-direkt-lad-ein);   // Verluste auf dem Weg PV → Batterie/Netz
+      // 09.11.2026: Entladeverluste (Batterie DC → Haus AC, Eigenverbrauch Wechselrichter/Batterie): mehr entladen als im Haus ankam
+      const vlE=Math.max(0,Math.min(ent,direkt+ent+bez-haus)), entH=ent-vlE, vl=vlP+vlE;
       const dt=new Date(r[0]), lauf=jahre?dt.getFullYear()===jetzt0.getFullYear():dt.getMonth()===jetzt0.getMonth()&&dt.getFullYear()===jetzt0.getFullYear();
       const tm=jahre?((dt.getFullYear()%4===0)?366:365):monate?new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate():0;
-      return {t:r[0],pv,haus,bez,ein,lad,ent,direkt,vl,dauer:r[7],n:r.n,lauf,teil:sum?(r.n<tm&&!lauf):(r!==hz&&typeof r[7]==="number"&&r[7]<20)}});
+      return {t:r[0],pv,haus,bez,ein,lad,ent,entH,direkt,vl,vlP,vlE,dauer:r[7],n:r.n,lauf,teil:sum?(r.n<tm&&!lauf):(r!==hz&&typeof r[7]==="number"&&r[7]<20)}});
     const MON=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
     const lab=d=>jahre?new Date(d.t).getFullYear()+(d.teil?"*":""):monate?MON[new Date(d.t).getMonth()]+(d.teil?"*":""):mitternacht(d.t)===mitternacht(Date.now())?"heute":fDay(d.t)+(d.teil?"*":"");
     const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=290, Lb=40, Rb=10, Tb=22, Bb=40;
@@ -3433,8 +3435,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const jede=Math.max(1,Math.ceil(n/(W<520?5:10))), heute=mitternacht(Date.now());
     tage.forEach((d,i)=>{const cx=Lb+sp*i+sp/2;
       g+=`<rect class="ebsel" data-i="${i}" x="${(Lb+sp*i+1).toFixed(1)}" y="${Tb}" width="${(sp-2).toFixed(1)}" height="${(H-Tb-Bb+30).toFixed(1)}" rx="5" fill="var(--muted)" opacity="0"/>`;   // Hintergrund des gewählten Tages
-      saeule(cx-gap/2-bw,[[d.direkt,C.direkt,"direkt"],[d.lad,C.batt,"batt"],[d.ein,C.ein,"ein"],[d.vl,"url(#ebVerl)","vl"]]);
- saeule(cx+gap/2,[[d.direkt,C.direkt,"direkt"],[d.ent,C.batt,"batt"],[d.bez,C.netz,"netz"]]);
+      saeule(cx-gap/2-bw,[[d.direkt,C.direkt,"direkt"],[d.lad,C.batt,"batt"],[d.ein,C.ein,"ein"],[d.vlP,"url(#ebVerl)","vl"]]);
+      saeule(cx+gap/2,[[d.direkt,C.direkt,"direkt"],[d.entH,C.batt,"batt"],[d.bez,C.netz,"netz"],[d.vlE,"url(#ebVerl)","vl"]]);   // V: Batterie = was im Haus ankam, schraffiert = Entladeverluste
       // Kennbuchstaben unter jeder Säule: P = Produktion, V = Verbrauch
       const fs=bw>=11?10:8.5;
       g+=`<text x="${(cx-gap/2-bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">P</text><text x="${(cx+gap/2+bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">V</text>`;
@@ -3448,8 +3450,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // gewählten Tag hervorheben: Beschriftung fett und dunkel (auch wenn sonst ausgeblendet), leichter Hintergrund
     const markiere=i=>saeuleMarkieren(svg,i);
     const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":""),vl=d.vl,vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Einspeisung "+k(d.ein),"a3")}`+
-      `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(vl)}${vp}</span>`+
-      `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.ent),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
+      `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(vl)}${vp}${d.vlE>=0.05?` · davon beim Entladen ${k(d.vlE)}`:""}</span>`+
+      `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.entH),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
     svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>zeig(d));h.addEventListener("click",()=>zeig(d))});
     zeig(tage[tage.length-1],false);
     svg.onmouseleave=()=>zeig(tage[tage.length-1],false);   // Maus weg: wieder heute, ohne Markierung
