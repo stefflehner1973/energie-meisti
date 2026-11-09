@@ -1169,7 +1169,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 09.11.26 09:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 09.11.26 09:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3489,7 +3489,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // Simulation ab jetzt bis Ende des Tages „tag“ (0 = heute, 1 = morgen): wann ≥ 99,5 %, sonst Höchststand pro Tag
   /* ---------- Lastmodell: erwarteter Verbrauch je 15 Minuten ----------
      Grundlast: Stundenprofil der letzten 14 Tage (Haus ohne WP und Boiler), auswärts × 0,6.
-     WP: Tagesverbrauch aus Tagesmittel aussen (Prognose) – Standby + k × (16 °C − Tmittel);
+     WP: Tagesverbrauch aus Tagesmittel aussen (Prognose) – Standby + k × (Heizgrenze − Tmittel); k und Heizgrenze rechnet Google
+         seit 09.11.2026 aus den letzten 28 Tagen ohne «auswärts» (vorher fest 16 °C, ältere Antworten ohne heizgrenze → 16 °C);
          verteilt auf die freien Zeiten der Steuerung (Automatik), sonst nach dem gemessenen Stundenprofil.
      Boiler: Temperatur wird mitgerechnet (Abkühlung pro Stunde, Aufheizen mit Überschuss, wenn die Batterie voll ist
          und der Boiler nicht gesperrt ist); vor dem Heimkommen „Boiler MANUELL“, falls unter dem Minimum. */
@@ -3524,8 +3525,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const kor=korrekturHeute(t0), schnee=schneePruefen(t0);
     const pv=t=>pvAngepasst(t,kor,schnee);
     // WP pro Tag
-    const k=(LM&&LM.wp&&LM.wp.k)||WP_K_STD, standby=(LM&&LM.wp&&LM.wp.standby!=null)?LM.wp.standby:1;
-    const tage=[0,1].map(d=>{const td=m0+d*864e5, tm=tagesMittelAussen(td), heiz=tm==null?0:k*Math.max(0,16-tm);
+    const k=(LM&&LM.wp&&LM.wp.k)||WP_K_STD, hgWp=(LM&&LM.wp&&LM.wp.heizgrenze)||16, standby=(LM&&LM.wp&&LM.wp.standby!=null)?LM.wp.standby:1;
+    const tage=[0,1].map(d=>{const td=m0+d*864e5, tm=tagesMittelAussen(td), heiz=tm==null?0:k*Math.max(0,hgWp-tm);
       let frei=0; if(auto) for(let t=td;t<td+864e5;t+=schritt){const s=szenarioBei(t); if(s.abs===0) frei++}
       const sumP=prof&&prof.wp?prof.wp.reduce((a,v)=>a+(v||0),0):0;
       return {td,tm,kwh:standby+heiz,heiz,frei,sumP,teile:{grund:0,wp:0,boiler:0}}});
