@@ -1177,7 +1177,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 09.11.26 11:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 09.11.26 12:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3051,12 +3051,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     }
     return {m:"std",text:`Vergleich mit MeteoSchweiz läuft (${Math.min(na,nb)} von ${MODELL_MIN_TAGE} Tagen)`};
   }
-  // Stundenfaktor je Dach (gemessen/Prognose), erst ab 14 Tagen, gegen 1 gedämpft und auf 0,6–1,4 begrenzt
+  // Stundenfaktor je Dach (gemessen/Prognose), erst ab 14 Tagen, gegen 1 gedämpft mit n/(n+5) und auf 0,3–1,4 begrenzt
+  // (seit 09.11.2026, vorher n/(n+10) und 0,6–1,4: Ost-Morgen nur 0,3–0,5 der Prognose, Prognose an allen Tagen zu hoch)
+  const KALIB_MIN=0.3, KALIB_MAX=1.4, KALIB_DAEMPF=5;
   function kalibTage(m){const S=PG&&PG.stunden&&PG.stunden[m];if(!S)return 0;let n=0;S.o.forEach(x=>{n=Math.max(n,x[2])});return n}
   function stundenFaktor(m,dach,h){
     const S=PG&&PG.stunden&&PG.stunden[m]&&PG.stunden[m][dach], x=S&&S[h]; if(!x) return 1;
     const [soll,ist,n]=x; if(n<KALIB_MIN_TAGE||soll<500) return 1;
-    const r=Math.max(0.6,Math.min(1.4,ist/soll)); return 1+(r-1)*n/(n+10);
+    const r=Math.max(KALIB_MIN,Math.min(KALIB_MAX,ist/soll)); return 1+(r-1)*n/(n+KALIB_DAEMPF);
   }
   // gewähltes Modell (Lücken aus dem Standardmodell), kalibriert; Tagessummen neu
   function progAufbereiten(){
