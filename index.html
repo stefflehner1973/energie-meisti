@@ -1169,7 +1169,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 09.11.26 09:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 09.11.26 10:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3488,7 +3488,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let battLetzt=null, battLaedt=false;
   // Simulation ab jetzt bis Ende des Tages „tag“ (0 = heute, 1 = morgen): wann ≥ 99,5 %, sonst Höchststand pro Tag
   /* ---------- Lastmodell: erwarteter Verbrauch je 15 Minuten ----------
-     Grundlast: Stundenprofil der letzten 14 Tage (Haus ohne WP und Boiler), auswärts × 0,6.
+     Grundlast: Stundenprofil der letzten 14 Tage (Haus ohne WP und Boiler), auswärts × 0,6; seit 09.11.2026 getrennt Mo–Fr / Sa–So
+         (profil.grundWT / grundWE aus 28 Tagen, Google-Skript (36)), sonst das gemeinsame Profil.
      WP: Tagesverbrauch aus Tagesmittel aussen (Prognose) – Standby + k × (Heizgrenze − Tmittel); k und Heizgrenze rechnet Google
          seit 09.11.2026 aus den letzten 28 Tagen ohne «auswärts» (vorher fest 16 °C, ältere Antworten ohne heizgrenze → 16 °C);
          verteilt auf die freien Zeiten der Steuerung (Automatik), sonst nach dem gemessenen Stundenprofil.
@@ -3534,7 +3535,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(auto&&d.frei>0) return standby*1000/24+(s.abs===0?d.heiz*1000/(d.frei*0.25):0);
       if(prof&&prof.wp&&d.sumP>0) return d.kwh*1000*(prof.wp[h]||0)/d.sumP;
       return d.kwh*1000/24};
-    const grundBei=(t,s)=>{const h=new Date(t).getHours(); let g=prof&&prof.grund&&prof.grund[h]!=null?prof.grund[h]:null;
+    const grundBei=(t,s)=>{const dt=new Date(t), h=dt.getHours(), we=dt.getDay()===0||dt.getDay()===6;
+      const pg=prof&&((we?prof.grundWE:prof.grundWT)||prof.grund); let g=pg&&pg[h]!=null?pg[h]:null;
       if(g==null) g=prof?konst*0.5:konst; return g*(s.art==="aus"?0.6:1)};
     // Boiler
     const bo=LM&&LM.boiler||{}, pmax=bo.pmax>500?bo.pmax:BOILER_P_STD, abfall=bo.abfallProStunde!=null?bo.abfallProStunde:0.3;
