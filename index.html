@@ -1071,6 +1071,14 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <p class="thmeld" id="bMeld" aria-live="polite" hidden></p>
       </div>
     </section>
+    <section class="panel" id="legPanel">
+      <h2 style="margin:0"><span class="tip" tabindex="0" data-tip="Der Boiler-Fühler (aussen oben am Boiler) soll innerhalb der eingestellten Tage mindestens einmal diese Temperatur erreichen. Sonst kommt eine Telegram-Meldung, danach höchstens alle «wiederholen» Tage, solange es so bleibt.">Legionellen</span></h2>
+      <p class="hint" id="legStatus" style="margin-top:8px">–</p>
+      <p class="hint" id="legWarn" style="color:var(--c-bezug);font-weight:600" role="alert" hidden></p>
+      <div id="legParam"></div>
+      <div class="krow" style="margin-top:12px"><button type="button" class="knopfklein" id="legSpeichern" disabled>Einstellungen speichern</button><button type="button" class="knopfklein ghost" id="legVerwerfen" hidden>Verwerfen</button></div>
+      <p class="thmeld" id="legMeld" aria-live="polite" hidden></p>
+    </section>
     <section class="panel" id="uePanel">
       <details id="ueBox" class="h2box">
       <summary><h2><span class="tip" tabindex="0" data-tip="Eigentlich nicht mehr nötig: Das Fronius-Lastmanagement (Last 1 und 2) schaltet den Boiler bei Überschuss schon vorher ein. Diese Funktion bleibt als Ergänzung.">Boiler mit Überschuss</span></h2><span class="sub" id="ueSum" style="text-transform:none;letter-spacing:0"></span></summary>
@@ -1169,7 +1177,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 09.11.26 10:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 09.11.26 11:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3925,7 +3933,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const set=d=>{if(typeof thEdit[k]!=="number") return; thEdit.u=true; thEdit[k]=Math.round((thEdit[k]+d)*10)/10; thEdit[k]=Math.max(10,Math.min(26,thEdit[k])); v.textContent=dez(thEdit[k]); markV(); thDirty()};
       minus.addEventListener("click",()=>set(-0.1)); plus.addEventListener("click",()=>set(0.1));
       markV(); r.append(minus,v,document.createTextNode("°C"),plus); box.append(l,r)});
-    thDirty(); zeichneRegeln(); zeichneRelais(); zeichneBoilerEinst();
+    thDirty(); zeichneRegeln(); zeichneRelais(); zeichneBoilerEinst(); zeichneLeg();
     // Zustand
     if(!th){$("thStatus").textContent="Noch kein Lauf mit dem Raumthermostat. Neues Google-Skript (Stand 01.11.2026) einspielen.";$("thBeob").textContent="";return}
     const raum=th.raum!=null?`Raum <b>${dez(th.raum)} °C</b>`:"Raum <b>–</b>";
@@ -4169,6 +4177,38 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("bVerwerfen").addEventListener("click",()=>{bEdit=false;zeichneBoilerEinst(true)});
   $("bSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#bParam input").forEach(i=>{if(i.value!=="")p[i.dataset.bp]=einstWert(i)});
     await knopfSenden($("bSpeichern"),"Wird gespeichert",{aktion:"einstellungen",p},"Boiler-Einstellungen gespeichert","bMeld",UI_U); if($("uePinBox").hidden) zeichneBoilerEinst(true)});
+  /* ---------- Legionellen (Stephan 09.11.2026): Boiler-Fühler innert legTage Tagen einmal auf legT °C, sonst Telegram (Google warnungen_) ---------- */
+  const LEG_PARAM=[["legT","Boiler mindestens einmal auf","°C",0.5,"Gilt als erreicht, sobald der Boiler-Fühler diese Temperatur hat (Fühler aussen oben am Boiler)."],
+    ["legTage","innerhalb von","Tagen",1,"Wird die Temperatur so lange nie erreicht, kommt eine Telegram-Meldung und hier eine Warnung. 0 = keine Meldung."],
+    ["legWdh","Meldung wiederholen alle","Tage",1,"Solange die Temperatur weiter nicht erreicht wird, kommt die Telegram-Meldung frühestens nach so vielen Tagen wieder."]];
+  const LEG_STD={legT:59,legTage:30,legWdh:7};
+  let legEdit=false;
+  function zeichneLeg(erzwingen){
+    const box=$("legParam"); if(!box) return;
+    const c=STEU&&STEU.cfg, p=Object.assign({},LEG_STD,(c&&c.p)||{}), L=STEU&&STEU.leg, st=$("legStatus"), w=$("legWarn");
+    const T=p.legT, D=p.legTage, vor=ms=>{const d=Math.floor(ms/864e5);return d<1?"vor weniger als 1 Tag":"vor "+d+(d===1?" Tag":" Tagen")};
+    if(!STEU){st.textContent="–";w.hidden=true}
+    else if(!L){st.textContent="Das Google-Skript kennt diese Funktion noch nicht: neues Skript einfügen und «Bereitstellen → Neue Version» wählen.";w.hidden=true}
+    else if(L.neu||(L.grenze!=null&&L.grenze!==T)){st.textContent="Wird bei der nächsten Messung (etwa alle 2 Minuten) aus dem Verlauf ermittelt.";w.hidden=true}
+    else{
+      const ref=L.t||L.seit;
+      st.innerHTML=L.t?`Zuletzt ${dez(T)} °C erreicht: <b>${fDay(L.t)}${new Date(L.t).getFullYear()} ${fTime(L.t)}</b> (${dez(L.temp)} °C) · ${vor(Date.now()-L.t)}`
+        :`Seit Beginn der Messung${L.seit?" am "+fDay(L.seit)+new Date(L.seit).getFullYear():""} nie ${dez(T)} °C erreicht.`;
+      const zuAlt=D>0&&ref&&Date.now()-ref>D*864e5; w.hidden=!zuAlt;
+      if(zuAlt) w.textContent=`⚠ Der Boiler war seit ${Math.floor((Date.now()-ref)/864e5)} Tagen nicht mehr auf ${dez(T)} °C (Grenze ${D} Tage). Die Telegram-Meldung kommt höchstens alle ${p.legWdh} Tage.`;
+    }
+    if(!c) return;
+    if(!erzwingen&&(legEdit||box.contains(document.activeElement))) return;
+    box.innerHTML=""; const g=document.createElement("div"); g.className="seinst";
+    LEG_PARAM.forEach(([k,n,e,step,tip])=>g.append(einstZeile(k,n,e,step,tip,"data-lp",p[k])));
+    box.append(g); $("legSpeichern").disabled=true; $("legVerwerfen").hidden=true;
+  }
+  $("legParam").addEventListener("input",()=>{const c=STEU&&STEU.cfg; if(!c) return; const p=Object.assign({},LEG_STD,c.p);
+    legEdit=[...document.querySelectorAll("#legParam input")].some(i=>i.value!==""&&einstWert(i)!==p[i.dataset.lp]);
+    $("legSpeichern").disabled=!legEdit; $("legVerwerfen").hidden=!legEdit});
+  $("legVerwerfen").addEventListener("click",()=>{legEdit=false;zeichneLeg(true)});
+  $("legSpeichern").addEventListener("click",async()=>{const p={}; document.querySelectorAll("#legParam input").forEach(i=>{if(i.value!=="")p[i.dataset.lp]=Math.max(0,einstWert(i))});
+    await knopfSenden($("legSpeichern"),"Wird gespeichert",{aktion:"einstellungen",p},"Legionellen-Einstellungen gespeichert","legMeld",UI_U); if($("uePinBox").hidden){legEdit=false;zeichneLeg(true)}});
   let regelnEdit=false;
   function zeichneRegeln(erzwingen){
     const box=$("thRegelnBox"), c=STEU&&STEU.cfg; if(!box||!c) return;
