@@ -1177,7 +1177,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 09.11.26 11:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 09.11.26 11:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3076,6 +3076,20 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* Anpassung heute: Faktor je Dach aus den letzten 2,5 h (gemessen/Prognose, ohne Zeiten mit Batterie ≥ 98 %).
      Er klingt ab: langsam (6 h), wenn die Prognose weiter das gleiche Wetter zeigt, schnell (1,5 h) bei angekündigtem Wetterwechsel.
      Ab Mitternacht gilt wieder die Prognose (ausser bei Schnee-Verdacht). */
+  /* Hochnebel-Verdacht (Stephan 09.11.2026): Okt–März, in den letzten 2,5 h unter 45 % der Prognose gemessen, die Prognose sagt aber
+     nicht «bedeckt» (unter 80 % Wolken), und aussen (Wetterstation) seit 07:00 nicht um 3 K oder mehr wärmer geworden (fehlt der Wert,
+     zählt nur die PV). Dann klingt die Anpassung heute nicht ab: Hochnebel bleibt meist bis am Abend (Daten 03.–06.11.2026). */
+  const NEBEL_F=0.45, NEBEL_WOLKEN=80, NEBEL_ANSTIEG=3;
+  function nebelPruefen(jetzt,fg,c0){
+    const mon=new Date(jetzt).getMonth(); if(!(mon>=9||mon<=2)) return null;
+    if(!(fg<NEBEL_F)) return null;
+    if(c0!=null&&c0>=NEBEL_WOLKEN) return null;
+    const ar=((typeof ROH!=="undefined"&&ROH&&ROH.ma)||[]).find(x=>String(x.id).toUpperCase()==="074C399C4513:2");
+    const ab=mitternacht(jetzt)+7*36e5, rows=ar&&ar.rows?ar.rows.filter(r=>typeof r[1]==="number"&&r[0]>=ab&&r[0]<=jetzt):[];
+    let anstieg=null; if(rows.length>=3){const mn=Math.min(...rows.map(r=>r[1])); anstieg=Math.round((rows[rows.length-1][1]-mn)*10)/10}
+    if(anstieg!=null&&anstieg>=NEBEL_ANSTIEG) return null;
+    return {f:fg,anstieg,c0};
+  }
   function korrekturHeute(jetzt){
     if(!prog||!prog.stunden||!progIst||progIst.length<5) return null;
     const von=jetzt-2.5*36e5, socBei=t=>{let s=null;for(const p of progSoc){if(p[0]>t)break;s=p[1]}return s};
@@ -3092,7 +3106,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Abklingen Stunde für Stunde: je grösser der Unterschied der Bewölkung zum Korrekturfenster, desto schneller
     const tau=t=>{const c=wol(t-18e5,t+18e5); if(c0==null||c==null) return 3; const d=Math.abs(c-c0); return d<15?6:d<30?3:1.5};
     const abkling=t=>{if(t<=jetzt) return 1; if(t>=ende) return 0; let k=1,x=jetzt; while(x<t){const s=Math.min(36e5,t-x); k*=Math.exp(-(s/36e5)/tau(x+s/2)); x+=s} return k};
-    return {fo,fw,fg,ist:it,soll:st,c0,abkling,jetzt,ende};
+    const nebel=nebelPruefen(jetzt,fg,c0);   // Hochnebel: Faktor gilt bis am Abend ohne Abklingen
+    return {fo,fw,fg,ist:it,soll:st,c0,abkling:nebel?(t=>t>=ende?0:1):abkling,jetzt,ende,nebel};
   }
 
   /* Schnee-Verdacht: heute ≥ 2 kWh erwartet, aber < 25 % gemessen, und kalt (Tiefst ≤ 2 °C).
@@ -3165,6 +3180,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const pz=f=>Math.round(f*100)+" %";
     $("pHeuteIst").textContent=progIst.length>1?`bisher ${kwh(ist)} gemessen, Prognose ${kwh(sollBisher)}`
       +(kor&&(Math.abs(kor.fo-1)>=0.05||Math.abs(kor.fw-1)>=0.05)?` · Rest angepasst (Ost ${pz(kor.fo)}, West ${pz(kor.fw)}), reine Prognose ${kwh(tH.kwh)}`:"")
+      +(kor&&kor.nebel?` · Hochnebel-Verdacht: gilt bis am Abend${kor.nebel.anstieg!=null?" (aussen seit 7 Uhr nur +"+String(kor.nebel.anstieg).replace(".",",")+" °C)":""}`:"")
       +(schnee&&!kor?` · Schnee-Verdacht: weniger erwartet (reine Prognose ${kwh(tH.kwh)})`:""):(tH?wtxt(tH):"");
     // Sonnenfenster morgen: zusammenhängende Stunden mit mehr als 3 kW
     const hM=prog.stunden.filter(h=>h.t>=morgen&&h.t<ueber&&h.sum>=3000);
@@ -3609,7 +3625,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("pBattLegend").innerHTML=`<span data-hl="ist"><i style="width:18px;border-top:2px solid var(--ok);display:inline-block"></i>gemessen</span><span data-hl="sim"><i style="width:18px;border-top:2px dashed var(--ok);display:inline-block"></i>erwartet</span>`;
     hlVerbinden($("pBattLegend"),svg);
     if(sim){const kw=v=>de(v,1)+" kWh", tg=(d,n)=>`${n}: Grundlast ${kw(d.teile.grund)} · WP ${kw(d.teile.wp)}${d.tm!=null?` (Ø aussen ${de(d.tm,1)} °C)`:""}${d.teile.boiler>0.05?` · Boiler ${kw(d.teile.boiler)}`:""}`;
-      $("pBattInfo").textContent=(sim.kor?`PV in den letzten 2,5 h: Ost ${Math.round(sim.kor.fo*100)} %, West ${Math.round(sim.kor.fw*100)} % der Prognose${Math.abs(sim.kor.fo-1)>=0.05||Math.abs(sim.kor.fw-1)>=0.05?" – für den Rest des Tages angepasst":""}. `:"")+(sim.schnee&&!sim.kor?"Schnee-Verdacht: weniger PV erwartet. ":"")+`Erwarteter Verbrauch – ${tg(sim.tage[0],"heute ab jetzt")}; ${tg(sim.tage[1],"morgen")}.`+(sim.mitLM?` WP: ${de(sim.k,1)} kWh pro Kelvin unter 16 °C${LM&&LM.wp&&LM.wp.k==null?" (Annahme, noch zu wenig Messtage)":" (gemessen)"}.`:" Lastmodell wird geladen …")}
+      $("pBattInfo").textContent=(sim.kor?`PV in den letzten 2,5 h: Ost ${Math.round(sim.kor.fo*100)} %, West ${Math.round(sim.kor.fw*100)} % der Prognose${Math.abs(sim.kor.fo-1)>=0.05||Math.abs(sim.kor.fw-1)>=0.05?" – für den Rest des Tages angepasst":""}${sim.kor.nebel?" (Hochnebel-Verdacht: bis am Abend)":""}. `:"")+(sim.schnee&&!sim.kor?"Schnee-Verdacht: weniger PV erwartet. ":"")+`Erwarteter Verbrauch – ${tg(sim.tage[0],"heute ab jetzt")}; ${tg(sim.tage[1],"morgen")}.`+(sim.mitLM?` WP: ${de(sim.k,1)} kWh pro Kelvin unter 16 °C${LM&&LM.wp&&LM.wp.k==null?" (Annahme, noch zu wenig Messtage)":" (gemessen)"}.`:" Lastmodell wird geladen …")}
     else $("pBattInfo").textContent="Für die Abschätzung fehlt noch der aktuelle Ladestand.";
     const alle=ist.concat(sim?sim.pts:[]);
     const zeig=t=>{if(!alle.length)return;const p=alle.reduce((b,x)=>Math.abs(x[0]-t)<Math.abs(b[0]-t)?x:b);
