@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 17:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 18:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1667,9 +1667,30 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const ein=teile.reduce((x,q)=>x+(q[2]===1||q[3]===1?q[1]-q[0]:0),0);
       let pEin=v, pAus=v;
       if(ein>0&&ein<lang){pEin=Math.min(mx,v*lang/ein); pAus=Math.max(0,(v*lang-pEin*ein)/(lang-ein))}
-      teile.forEach(([a,e,s1,s2])=>{const w=lmStufenLeistung(s1===1||s2===1?pEin:pAus,s1,s2); out.push([a,e,w[0],w[1]])});
+      teile.forEach(([a,e,s1,s2])=>out.push([a,e,s1===1||s2===1?pEin:pAus,s1,s2]));
     });
-    return out;
+    lmFlankenAusrichten(out,l);
+    return out.map(([a,e,p,s1,s2])=>{const w=lmStufenLeistung(p,s1,s2); return [a,e,w[0],w[1]]});
+  }
+  // 10.11.2026: Schaltzustand und Boiler-Leistung kommen getrennt (je einmal pro Minute) und sind darum oft 1–2 min
+  // gegeneinander verschoben. Steigt oder fällt die Leistung höchstens 3 min neben einer Schaltzeit des Lastmanagements
+  // in dieselbe Richtung, die Flanke auf die Schaltzeit legen. Ohne Schaltung in der Nähe (z. B. MANUELL) bleibt sie.
+  const LM_FLANKE_MS=3*6e4, LM_FLANKE_W=300;
+  function lmFlankenAusrichten(st,l){   // st = [[von,bis,Watt,s1,s2],…] lückenlos sortiert, wird geändert
+    const ein=r=>r&&(r[1]===1||r[2]===1);
+    const sw=[]; for(let j=1;j<l.length;j++) if(ein(l[j])!==ein(l[j-1])) sw.push([l[j][0],ein(l[j])]);
+    if(!sw.length) return;
+    const setze=(x,y,w)=>{   // Leistung im Bereich [x,y) auf w setzen
+      for(let k=0;k<st.length;k++){const q=st[k]; if(q[1]<=x||q[0]>=y) continue;
+        const neu=[]; if(q[0]<x) neu.push([q[0],x,q[2],q[3],q[4]]); neu.push([Math.max(q[0],x),Math.min(q[1],y),w,q[3],q[4]]); if(q[1]>y) neu.push([y,q[1],q[2],q[3],q[4]]);
+        st.splice(k,1,...neu); k+=neu.length-1}
+    };
+    const flanken=[]; for(let k=1;k<st.length;k++){const hoch=st[k][2]>=LM_FLANKE_W; if(st[k][0]===st[k-1][1]&&(st[k-1][2]>=LM_FLANKE_W)!==hoch) flanken.push([st[k][0],hoch,st[k-1][2],st[k][2]])}
+    flanken.forEach(([E,hoch,vor,nach])=>{
+      let T=null; sw.forEach(([t,an])=>{if(an===hoch&&Math.abs(t-E)<=LM_FLANKE_MS&&(T===null||Math.abs(t-E)<Math.abs(T-E))) T=t});
+      if(T===null||T===E) return;
+      if(T<E) setze(T,E,nach); else setze(E,T,vor);
+    });
   }
   function lmLeistungsPfad(X,t0,t1,y,hb,i){
     const s=((CH.boiler&&CH.boiler.series)||[]).filter(p=>typeof p.v==="number"&&p.t>=t0&&p.t<=t1);
