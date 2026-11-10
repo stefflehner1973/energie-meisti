@@ -1181,7 +1181,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 11:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 11:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3497,13 +3497,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Verluste: unten das Total, beim Darüberfahren (Handy: Antippen) die Aufteilung (Stephan 10.11.2026)
     const pz=(x,b)=>b>=1?`${Math.round(x/b*100)}&nbsp;%`:"";
     const vlZeile=d=>{const v=d.mv;
-      // Prozent bezogen auf die gesamte Energie, die hereinkam: PV + Netzbezug (Stephan 10.11.2026)
-      const ges=d.pv+d.bez, gp=x=>ges>=1?`&nbsp;(${pz(x,ges)})`:"";
+      // Prozent bezogen auf die Produktion (PV): nur sie geht durch Wechselrichter und Batterie, Netzbezug macht keine Verluste (Stephan 10.11.2026)
+      const ges=d.pv, gp=x=>ges>=1?`&nbsp;(${pz(x,ges)})`:"";
       if(!v) return `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(d.vl)}&nbsp;kWh${gp(d.vl)}${d.vlE>=0.05?` · davon beim Entladen ${k(d.vlE)}`:""}</span>`;
       const unsicher=v.spr>=0.2||(v.bi!=null&&v.bi<0), bi=v.bi==null?0:Math.max(0,v.bi), wr=v.wrP+v.wrE, tot=wr+bi, ca=unsicher?"≈&nbsp;":"";
       const zl=(n,x,p)=>`<span>${n}</span><span class="z">${x}</span><span class="p">${p||""}</span>`;
-      let box=`<b>Verluste ${ca}${k(tot)} kWh${ges>=1?` = ${pz(tot,ges)} der gesamten Energie`:""}</b>`+
-        `<div class="vln" style="margin-top:2px">Gesamte Energie ${k(ges)} kWh = PV ${k(d.pv)} + Netzbezug ${k(d.bez)} (alles, was hereinkam)${d.pv>=1?`. Bezogen nur auf die PV: ${pz(tot,d.pv)}`:""}</div><div class="vlg">`+zl("Wechselrichter PV",k(v.wrP),pz(v.wrP,d.pv)&&pz(v.wrP,d.pv)+" der PV")+
+      let box=`<b>Verluste ${ca}${k(tot)} kWh${ges>=1?` = ${pz(tot,ges)} der Produktion (PV ${k(d.pv)} kWh)`:""}</b>`+
+        `<div class="vln" style="margin-top:2px">Verluste entstehen nur auf dem Weg des Solarstroms durch Wechselrichter und Batterie; Netzbezug geht direkt ins Haus. An Tagen mit wenig Sonne ist der Anteil hoch, weil Grundverbrauch und Entladen in der Nacht trotzdem anfallen.</div><div class="vlg">`+zl("Wechselrichter PV",k(v.wrP),pz(v.wrP,d.pv)&&pz(v.wrP,d.pv)+" der PV")+
         zl("Wechselrichter Entladen",k(v.wrE),pz(v.wrE,d.ent)&&pz(v.wrE,d.ent)+" des Entladenen")+
         zl("Batterie intern",v.bi==null?"–":ca+k(v.bi),v.bi!=null&&d.lad>=1?pz(v.bi,d.lad)+" des Geladenen":"")+`</div>`;
       if(fit&&v.h>0){const g=Math.min(wr,fit.a*v.h);
