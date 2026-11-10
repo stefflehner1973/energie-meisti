@@ -102,8 +102,9 @@ h1 .logo{width:30px;height:30px;flex-shrink:0;display:block}
 .kpfeil[aria-expanded="true"]{color:var(--accent)}
 .kzeile{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}   /* Wetterstation-Temperatur links vom «PIN» */
 .kzeile .kpfeil{margin-left:0}
-.wstemp{color:var(--c-wp);font-family:"IBM Plex Mono",monospace;font-size:.78rem;font-weight:600;text-transform:none;letter-spacing:0}
-.sublabel .wstemp{margin-left:14px}
+.wstemp{color:var(--c-wp);font-family:"IBM Plex Mono",monospace;font-size:.78rem;font-weight:400;text-transform:none;letter-spacing:0;white-space:nowrap}
+.wstemp b{color:var(--c-wp);font-weight:700;font-size:1em} .wstemp .wssoll,.wstemp .wszeit{color:var(--muted)}
+.sublabel .wstemp{margin-left:14px;display:inline-block}
 .kchip .kbtn{flex:none;min-width:4.2em;padding:5px 12px;font-size:.82rem;font-weight:700;font-family:var(--f-mono);border-radius:8px;
   background:color-mix(in srgb,var(--hot) 12%,transparent);color:var(--hot);border:1px solid color-mix(in srgb,var(--hot) 45%,transparent)}
 .kchip .kbtn.an{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent);border:1.5px solid var(--accent)}
@@ -1185,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 16:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 17:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1850,20 +1851,27 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     maKachelnMarkieren();
     wsTempZeigen();
   }
-  // 10.11.2026: Temperatur der Wetterstation (danach steuert das Raumthermostat WP ABSENKEN) bei der Wärmepumpe
-  // und unter den Schaltzuständen: «Raum 21,4 °C (Soll 21,9 °C) · aussen 5,2 °C»
-  function wsTempText(){   // → Teile, die nicht umbrechen sollen
-    const w=(maInfo||[]).find(x=>String(x.id).toUpperCase()==="074C399C4513");
-    if(!w||typeof w.t1!=="number") return [];
-    const th=STEU&&STEU.status&&STEU.status.th;
-    const t=["Raum "+de(w.t1)+" °C"+(th&&th.aktiv&&typeof th.soll==="number"?" (Soll "+de(th.soll)+")":"")];
-    if(typeof w.t2==="number") t.push("aussen "+de(w.t2)+" °C");
-    if(w.zeit&&Date.now()-w.zeit>30*6e4) t.push("Stand "+fStempel(w.zeit));
-    return t;
+  // 10.11.2026: Temperatur der Wetterstation innen (danach steuert das Raumthermostat WP ABSENKEN) bei der Wärmepumpe
+  // und unter den Schaltzuständen: «21,1°C (Soll 21,4)». Beim Darüberfahren über ein Diagramm: Werte zu dieser Zeit.
+  function wsTempHtml(raum,soll,zeit){
+    if(typeof raum!=="number") return "";
+    return (zeit?`<span class="wszeit">${escH(zeit)}</span> `:"")+`<b>${de(raum)}°C</b>`+(typeof soll==="number"?` <span class="wssoll">(Soll ${de(soll)})</span>`:"");
+  }
+  function wsTempSetzen(h,titel){
+    ["wTempW","wTempK"].forEach(id=>{const e=$(id); if(!e) return; e.innerHTML=h; e.hidden=!h; if(titel) e.title=titel});
   }
   function wsTempZeigen(){
-    const t=wsTempText(), h=t.map(x=>`<span style="white-space:nowrap">${escH(x)}</span>`).join(" · ");
-    ["wTempW","wTempK"].forEach(id=>{const e=$(id); if(!e) return; e.innerHTML=h; e.hidden=!t.length});
+    const w=(maInfo||[]).find(x=>String(x.id).toUpperCase()==="074C399C4513");
+    const th=STEU&&STEU.status&&STEU.status.th;
+    wsTempSetzen(w?wsTempHtml(w.t1,th&&th.aktiv?th.soll:null,w.zeit&&Date.now()-w.zeit>30*6e4?fStempel(w.zeit):""):"",
+      "Raum (Wetterstation innen) jetzt, danach steuert das Raumthermostat WP ABSENKEN");
+  }
+  function wsTempBei(t){   // Werte zur Zeit t (Darüberfahren)
+    const r=((ROH&&ROH.ma)||[]).find(x=>String(x.id).toUpperCase()==="074C399C4513"), rows=(r&&r.rows)||[];
+    let raum=null; for(const z of rows){if(z[0]>t)break; if(typeof z[1]==="number"&&t-z[0]<=30*6e4) raum=z[1]}
+    let soll=null; for(const z of ((ROH&&ROH.th&&ROH.th.rows)||[])){if(z[0]>t)break; soll=typeof z[2]==="number"&&t-z[0]<=2*36e5?z[2]:null}
+    if(raum==null) return wsTempSetzen(`<span class="wszeit">${escH(fTime(Math.round(t/6e4)*6e4))}</span> <span class="wssoll">kein Raumwert</span>`);
+    wsTempSetzen(wsTempHtml(raum,soll,fTime(Math.round(t/6e4)*6e4)));
   }
   // Kachel leicht rot, sobald der Wert ausserhalb Min/Max der Warnungen liegt (sofort, ohne Dauer)
   function maKachelnMarkieren(){
@@ -2395,8 +2403,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t=g.t0+(x-L)/(g.W-L-R)*(g.t1-g.t0);
     einzelGruppe(c).forEach(k=>zeigeBei(k,t));
   }
-  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C){zpErklaeren(null);k14Erklaeren(null)}})}
+  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C){zpErklaeren(null);k14Erklaeren(null)}});wsTempZeigen()}
   function zeigeBei(c,t){
+    wsTempBei(t);   // Wetterstation bei der Wärmepumpe: Wert zu dieser Zeit
     if(c.lines) return zeigeMultiBei(c,t);
     if(c===K14C) return k14Linie(t);
     if(c===LMC) return lmLinie(t);
