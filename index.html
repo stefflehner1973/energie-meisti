@@ -1181,7 +1181,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 11:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 13:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1960,7 +1960,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     document.querySelectorAll(".histhead,.row.oben").forEach(h=>h.classList.toggle("zoomaktiv",!!zoom));
   }
   function zoomWeg(){zoom=null;zoomAnzeige();zuschneiden();drawAll();loadHist(true)}
-  document.querySelectorAll(".zoomweg").forEach(b=>b.addEventListener("click",zoomWeg));
+  // «Zoom aufheben» gilt für alle Reiter, auch für den eigenen Zoom der PV-Prognose (Stephan 10.11.2026)
+  function zoomAlleWeg(){try{if(PROG.zoom){PROG.zoom=null;zeichnePrognose()}}catch(e){} if(zoom) zoomWeg()}
+  document.querySelectorAll(".zoomweg").forEach(b=>b.addEventListener("click",zoomAlleWeg));
   function setzeZoom(a,b){
     let von=Math.min(a,b), bis=Math.min(Date.now(),Math.max(a,b));
     // kurze Auswahl (z. B. ganz am Ende des Diagramms): auf mindestens 3 Minuten erweitern statt nichts tun
@@ -1995,7 +1997,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     };
     hit.addEventListener("pointerup",ende);
     hit.addEventListener("pointercancel",()=>{start=null;if(sel){sel.remove();sel=null}});
-    hit.addEventListener("dblclick",()=>{if(c.eigenerZoom){if(c.zoom){c.zoom=null;c.neuZeichnen()}}else if(zoom)zoomWeg()});
+    hit.addEventListener("dblclick",zoomAlleWeg);
   }
 
   // geladene Rohdaten auf den sichtbaren Bereich zuschneiden
@@ -3272,7 +3274,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.innerHTML=g;
     giltSetzen("progTage",tage.length?spanTage(tage[0].t,tage[tage.length-1].t)+" · Prognose "+fTime(progZeit):"");
   }
-  $("pZoomWeg").addEventListener("click",()=>{PROG.zoom=null;zeichnePrognose()});
+  $("pZoomWeg").addEventListener("click",zoomAlleWeg);
   window.addEventListener("resize",()=>{if(reiter==="prognose"&&prog) zeichnePrognose()});
 
   /* ---------- $$$: Ersparnis aus den Tageswerten ---------- */
