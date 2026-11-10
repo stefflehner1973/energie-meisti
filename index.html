@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 17:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 17:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1870,8 +1870,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const r=((ROH&&ROH.ma)||[]).find(x=>String(x.id).toUpperCase()==="074C399C4513"), rows=(r&&r.rows)||[];
     let raum=null; for(const z of rows){if(z[0]>t)break; if(typeof z[1]==="number"&&t-z[0]<=30*6e4) raum=z[1]}
     let soll=null; for(const z of ((ROH&&ROH.th&&ROH.th.rows)||[])){if(z[0]>t)break; soll=typeof z[2]==="number"&&t-z[0]<=2*36e5?z[2]:null}
-    if(raum==null) return wsTempSetzen(`<span class="wszeit">${escH(fTime(Math.round(t/6e4)*6e4))}</span> <span class="wssoll">kein Raumwert</span>`);
-    wsTempSetzen(wsTempHtml(raum,soll,fTime(Math.round(t/6e4)*6e4)));
+    if(raum==null) return wsTempSetzen(`<span class="wssoll">kein Raumwert</span>`);
+    wsTempSetzen(wsTempHtml(raum,soll));
   }
   // Kachel leicht rot, sobald der Wert ausserhalb Min/Max der Warnungen liegt (sofort, ohne Dauer)
   function maKachelnMarkieren(){
