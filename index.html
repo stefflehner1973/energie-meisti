@@ -1181,7 +1181,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 10:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 11:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3497,18 +3497,20 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Verluste: unten das Total, beim Darüberfahren (Handy: Antippen) die Aufteilung (Stephan 10.11.2026)
     const pz=(x,b)=>b>=1?`${Math.round(x/b*100)}&nbsp;%`:"";
     const vlZeile=d=>{const v=d.mv;
-      if(!v){const vp=d.pv>=2&&d.pv+d.ent>0?`&nbsp;(${Math.round(d.vl/(d.pv+d.ent)*100)}&nbsp;%)`:"";
-        return `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(d.vl)}${vp}${d.vlE>=0.05?` · davon beim Entladen ${k(d.vlE)}`:""}</span>`}
+      // Prozent bezogen auf die gesamte Energie, die hereinkam: PV + Netzbezug (Stephan 10.11.2026)
+      const ges=d.pv+d.bez, gp=x=>ges>=1?`&nbsp;(${pz(x,ges)})`:"";
+      if(!v) return `<span class="vl" style="color:${T.vl};font-weight:600">Verluste ${k(d.vl)}&nbsp;kWh${gp(d.vl)}${d.vlE>=0.05?` · davon beim Entladen ${k(d.vlE)}`:""}</span>`;
       const unsicher=v.spr>=0.2||(v.bi!=null&&v.bi<0), bi=v.bi==null?0:Math.max(0,v.bi), wr=v.wrP+v.wrE, tot=wr+bi, ca=unsicher?"≈&nbsp;":"";
       const zl=(n,x,p)=>`<span>${n}</span><span class="z">${x}</span><span class="p">${p||""}</span>`;
-      let box=`<b>Verluste ${ca}${k(tot)} kWh</b><div class="vlg">`+zl("Wechselrichter PV",k(v.wrP),pz(v.wrP,d.pv)&&pz(v.wrP,d.pv)+" der PV")+
+      let box=`<b>Verluste ${ca}${k(tot)} kWh${ges>=1?` = ${pz(tot,ges)} der gesamten Energie`:""}</b>`+
+        `<div class="vln" style="margin-top:2px">Gesamte Energie ${k(ges)} kWh = PV ${k(d.pv)} + Netzbezug ${k(d.bez)} (alles, was hereinkam)${d.pv>=1?`. Bezogen nur auf die PV: ${pz(tot,d.pv)}`:""}</div><div class="vlg">`+zl("Wechselrichter PV",k(v.wrP),pz(v.wrP,d.pv)&&pz(v.wrP,d.pv)+" der PV")+
         zl("Wechselrichter Entladen",k(v.wrE),pz(v.wrE,d.ent)&&pz(v.wrE,d.ent)+" des Entladenen")+
         zl("Batterie intern",v.bi==null?"–":ca+k(v.bi),v.bi!=null&&d.lad>=1?pz(v.bi,d.lad)+" des Geladenen":"")+`</div>`;
       if(fit&&v.h>0){const g=Math.min(wr,fit.a*v.h);
         box+=`<div class="vln">Wechselrichter zusammen ${k(wr)}: Grundverbrauch ${k(g)} (${Math.round(fit.a*1000)}&nbsp;W während ${de(v.h,v.h>=100?0:1)}&nbsp;h Betrieb) + Umwandlung ${k(Math.max(0,wr-g))} (${de(fit.k*100,1)}&nbsp;% der Leistung). Gerechnet aus ${fit.n===1?"1 Tag":fit.n+" Tagen"}, wird mit jedem Tag neu bestimmt.</div>`}
       if(v.bi!=null&&v.bi-d.biS>=0.05) box+=`<div class="vln">Säule zeigt vom Batterie-Verlust ${k(d.biS)} (höchstens das Geladene), der Rest ging beim Entladen bzw. aus früher Geladenem verloren.</div>`;
       if(unsicher) box+=`<div class="vln">≈ Ladestand der Batterie hat gesprungen (die BYD korrigiert ihn ab und zu) – Batterie-Verlust an diesem Tag nur ungefähr, über mehrere Tage gleicht es sich aus.</div>`;
-      return `<span class="vl vltip" tabindex="0" style="color:${T.vl};font-weight:600">Verluste ${ca}${k(tot)}${d.pv>=2?`&nbsp;(${pz(tot,d.pv)} der PV)`:""}<span class="vlbox" role="tooltip">${box}</span></span>`};
+      return `<span class="vl vltip" tabindex="0" style="color:${T.vl};font-weight:600">Verluste ${ca}${k(tot)}&nbsp;kWh${gp(tot)}<span class="vlbox" role="tooltip">${box}</span></span>`};
     const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":"");$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Einspeisung "+k(d.ein),"a3")}`+
       vlZeile(d)+
       `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.entH),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
