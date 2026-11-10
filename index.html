@@ -1181,7 +1181,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 13:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 15:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1635,6 +1635,17 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!z) return "";
     return LMNAMEN.map((n,i)=>{const s=z[i+1], g=z[i+5]; return n+": "+(s===1?"ein":s===0?"aus":"–")+(typeof g==="number"&&LMGRUND[g]?" ("+LMGRUND[g]+")":"")}).join(" · ");
   }
+  // 10.11.2026: feine Linie der Boiler-Leistung im Balken Stufe 1/2 (0 unten … 6 kW oder höchster Wert oben):
+  // zeigt auf einen Blick, ob der Boiler bei freigegebener Stufe auch Strom zieht (oder schon warm ist)
+  const LM_BOILER_W=6000;
+  function lmLeistungsPfad(X,t0,t1,y,hb){
+    const s=((CH.boiler&&CH.boiler.series)||[]).filter(p=>typeof p.v==="number"&&p.t>=t0&&p.t<=t1);
+    if(!s.length) return "";
+    const pm=Math.max(LM_BOILER_W,...s.map(p=>p.v)), yv=v=>(y+hb-1-Math.max(0,Math.min(1,v/pm))*(hb-2)).toFixed(1);
+    let d="", vor=null;
+    for(const p of s){d+=(vor===null||p.t-vor>20*6e4?"M":"L")+X(p.t).toFixed(1)+" "+yv(Math.max(0,p.v)); vor=p.t}
+    return `<path class="lmleist" d="${d}" fill="none" stroke="var(--fg)" stroke-width="1" stroke-opacity=".75" stroke-linejoin="round" pointer-events="none"/>`;
+  }
   // 08.11.2026: kleine Leiste unter dem Boiler-Diagramm: Last 1 / Last 2 ein (farbig) oder aus (grau), gleiche Zeitachse
   let lmBoilerC=null;
   function lmBoilerLeiste(c){
@@ -1650,6 +1661,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       lmStuecke(liste,i).forEach(([a,e])=>{const b=Math.min(e,g.t1); if(b<=g.t0||a>=g.t1) return;
         const xa=g.X(Math.max(a,g.t0)),xb=g.X(b);
         h+=`<rect x="${xa.toFixed(1)}" y="${y}" width="${Math.max(1.5,xb-xa).toFixed(1)}" height="${hb}" rx="2" fill="${LMFARBE[i]}" opacity="${LMDECK[i]}"><title>${LMNAMEN[i]}: ein ${fStempel(a)} – ${fStempel(e)}</title></rect>`});
+      h+=lmLeistungsPfad(g.X,g.t0,g.t1,y,hb);
     });
     svg.innerHTML=h;
   }
@@ -1685,7 +1697,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         const xa=X(a),xb=X(b); ein+=b-Math.max(a,t0);
         bars+=`<rect x="${xa.toFixed(1)}" y="${yb}" width="${Math.max(1.5,xb-xa).toFixed(1)}" height="${hb}" rx="3" fill="${LMFARBE[i]}" opacity="${LMDECK[i]}"><title>${n}: ein ${fStempel(a)} – ${fStempel(e)}</title></rect>`});
       const gr=letzte[i+5], fehlt=gr===0;
-      g+=`<rect x="${Lr}" y="${yb}" width="${W-Lr-Rr}" height="${hb}" rx="3" fill="var(--line)" opacity=".45"/>`+bars;
+      g+=`<rect x="${Lr}" y="${yb}" width="${W-Lr-Rr}" height="${hb}" rx="3" fill="var(--line)" opacity=".45"/>`+bars+(i<2?lmLeistungsPfad(X,t0,t1,yb,hb):"");
       g+=`<text x="${Lr}" y="${y+11}" font-size="11.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}<tspan fill="var(--fg)" font-weight="600"> · ${ein>0?de(ein/36e5,1)+" h ein":"aus"}</tspan>${fehlt?`<tspan fill="var(--c-bezug)"> · Konfiguration fehlt</tspan>`:""}</text>`;
     });
     const yA=oben+4*lane;
