@@ -100,6 +100,10 @@ h1 .logo{width:30px;height:30px;flex-shrink:0;display:block}
 .kchart{width:100%;display:block;margin-top:6px}.kchart .klab{paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
 .kpfeil{display:block;margin-left:auto;background:transparent;border:0;color:var(--muted);padding:2px 4px;font-size:.78rem;font-weight:500}
 .kpfeil[aria-expanded="true"]{color:var(--accent)}
+.kzeile{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}   /* Wetterstation-Temperatur links vom «PIN» */
+.kzeile .kpfeil{margin-left:0}
+.wstemp{color:var(--c-wp);font-family:"IBM Plex Mono",monospace;font-size:.78rem;font-weight:600;text-transform:none;letter-spacing:0}
+.sublabel .wstemp{margin-left:14px}
 .kchip .kbtn{flex:none;min-width:4.2em;padding:5px 12px;font-size:.82rem;font-weight:700;font-family:var(--f-mono);border-radius:8px;
   background:color-mix(in srgb,var(--hot) 12%,transparent);color:var(--hot);border:1px solid color-mix(in srgb,var(--hot) 45%,transparent)}
 .kchip .kbtn.an{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent);border:1.5px solid var(--accent)}
@@ -588,7 +592,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </div>
     <div class="readout" id="readoutP"></div>
 
-    <div class="sublabel"><span class="gilt" data-gilt="chartW" hidden></span><b class="tc-wp">Wärmepumpe</b> · Leistung (U13)</div>
+    <div class="sublabel"><span class="gilt" data-gilt="chartW" hidden></span><b class="tc-wp">Wärmepumpe</b> · Leistung (U13)<span class="wstemp" id="wTempW" hidden title="Wetterstation: danach steuert das Raumthermostat WP ABSENKEN"></span></div>
     <div class="stats">
       <div><b id="wE">–</b><span>Energie</span></div>
       <div><b id="wOn">–</b><span>Laufzeit</span></div>
@@ -600,7 +604,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     <div class="readout" id="readoutW"></div>
     <div class="sublabel ksub" aria-live="polite"><span><b>Schaltzustände</b> · Shelly Pro 3 (K14)</span><span class="sub" id="kAge"></span></div>
     <div class="kchips" id="kChips"></div>
-    <button type="button" class="kpfeil" id="kPfeil" aria-expanded="false" title="PIN-Einstellungen zum Schalten">▾ PIN</button>
+    <div class="kzeile"><span class="wstemp" id="wTempK" hidden title="Wetterstation: danach steuert das Raumthermostat WP ABSENKEN"></span><button type="button" class="kpfeil" id="kPfeil" aria-expanded="false" title="PIN-Einstellungen zum Schalten">▾ PIN</button></div>
     <form class="kschalt" id="kSchalt" hidden autocomplete="off">
       <div class="kfrage" id="kFrage"></div>
       <div class="krow">
@@ -1181,7 +1185,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 10.11.26 16:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 10.11.26 16:40</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1844,6 +1848,22 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       grid.append(d);
     });
     maKachelnMarkieren();
+    wsTempZeigen();
+  }
+  // 10.11.2026: Temperatur der Wetterstation (danach steuert das Raumthermostat WP ABSENKEN) bei der Wärmepumpe
+  // und unter den Schaltzuständen: «Raum 21,4 °C (Soll 21,9 °C) · aussen 5,2 °C»
+  function wsTempText(){   // → Teile, die nicht umbrechen sollen
+    const w=(maInfo||[]).find(x=>String(x.id).toUpperCase()==="074C399C4513");
+    if(!w||typeof w.t1!=="number") return [];
+    const th=STEU&&STEU.status&&STEU.status.th;
+    const t=["Raum "+de(w.t1)+" °C"+(th&&th.aktiv&&typeof th.soll==="number"?" (Soll "+de(th.soll)+")":"")];
+    if(typeof w.t2==="number") t.push("aussen "+de(w.t2)+" °C");
+    if(w.zeit&&Date.now()-w.zeit>30*6e4) t.push("Stand "+fStempel(w.zeit));
+    return t;
+  }
+  function wsTempZeigen(){
+    const t=wsTempText(), h=t.map(x=>`<span style="white-space:nowrap">${escH(x)}</span>`).join(" · ");
+    ["wTempW","wTempK"].forEach(id=>{const e=$(id); if(!e) return; e.innerHTML=h; e.hidden=!t.length});
   }
   // Kachel leicht rot, sobald der Wert ausserhalb Min/Max der Warnungen liegt (sofort, ohne Dauer)
   function maKachelnMarkieren(){
@@ -3777,7 +3797,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(!j.cfg) throw new Error("Die Web-App kennt die Steuerung noch nicht. Neues Google-Skript einfügen und neue Version bereitstellen.");
       STEU=j; steuZeit=Date.now();
       try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
-      $("sHint").hidden=true;
+      $("sHint").hidden=true; wsTempZeigen();
       if(k14Jetzt) renderK14(k14Jetzt);   // Anzeige «Automatik» bei WP ABSENKEN nachführen
       zeichneBoilerStatus();
     }catch(e){ if(!hintergrund){$("sHint").textContent=e.message;$("sHint").hidden=false} }
@@ -4400,7 +4420,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     catch(e){j={ok:false,error:"Keine Antwort von der Web-App."}}
     if(j&&j.ok&&j.cfg){
       if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
-      STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){}
+      STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){} wsTempZeigen();
       $(ui.box).hidden=true; steuWartet=null; $(ui.msg).textContent=ok||"Gespeichert.";
       try{aenderungenGespeichert(SPEICHERKNOPF)}catch(e){}
       if(daten.aktion==="einstellungen"){ $("sWoche").dataset.dirty=""; regelnEdit=false; bEdit=false;
