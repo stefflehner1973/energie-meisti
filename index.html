@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 11.11.26 09:15</span></summary>
+      <summary>Verbindung <span class="sub">· Version 11.11.26 17:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3603,7 +3603,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         // Erklärung unter den Zahlen, kleiner und eng (Stephan 11.11.2026)
         `<div class="vlk">Verluste entstehen nur auf dem Weg des Solarstroms durch Wechselrichter und Batterie; Netzbezug geht direkt ins Haus. An Tagen mit wenig Sonne ist der Anteil hoch, weil Grundverbrauch und Entladen in der Nacht trotzdem anfallen.</div>`;
       if(fit&&v.h>0){const g=Math.min(wr,fit.a*v.h);
-        box+=`<div class="vln">Wechselrichter zusammen ${k(wr)}: Grundverbrauch ${k(g)} (${Math.round(fit.a*1000)}&nbsp;W während ${de(v.h,v.h>=100?0:1)}&nbsp;h Betrieb) + Umwandlung ${k(Math.max(0,wr-g))} (${de(fit.k*100,1)}&nbsp;% der Leistung). Gerechnet aus ${fit.n===1?"1 Tag":fit.n+" Tagen"}, wird mit jedem Tag neu bestimmt.</div>`}
+        box+=`<div class="vlk">Wechselrichter zusammen ${k(wr)}: Grundverbrauch ${k(g)} (${Math.round(fit.a*1000)}&nbsp;W während ${de(v.h,v.h>=100?0:1)}&nbsp;h Betrieb) + Umwandlung ${k(Math.max(0,wr-g))} (${de(fit.k*100,1)}&nbsp;% der Leistung). Gerechnet aus ${fit.n===1?"1 Tag":fit.n+" Tagen"}, wird mit jedem Tag neu bestimmt.</div>`}
       if(v.bi!=null&&v.bi-d.biS>=0.05) box+=`<div class="vln">Säule zeigt vom Batterie-Verlust ${k(d.biS)} (höchstens das Geladene), der Rest ging beim Entladen bzw. aus früher Geladenem verloren.</div>`;
       if(unsicher) box+=`<div class="vln">≈ Ladestand der Batterie hat gesprungen (die BYD korrigiert ihn ab und zu) – Batterie-Verlust an diesem Tag nur ungefähr, über mehrere Tage gleicht es sich aus.</div>`;
       return `<span class="vl vltip" tabindex="0" style="color:${T.vl};font-weight:600">Verluste ${ca}${k(tot)}&nbsp;kWh${gp(tot)}<span class="vlbox" role="tooltip">${box}</span></span>`};
