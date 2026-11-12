@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 12.11.26 11:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 12.11.26 12:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1460,6 +1460,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     a.forEach(([x,y,m,v])=>{if(y<=von||x>=bis){res.push([x,y,m,v]);return} if(x<von) res.push([x,von,m,v]); if(y>bis) res.push([bis,y,m,v])});
     return res.concat(b).sort((p,q)=>p[0]-q[0]);
   }
+  // Aneinanderstossende Stücke mit gleichem Zustand zusammenhängen – sonst zeigt das Darüberfahren je nach Mausposition
+  // nur ein Teilstück (z. B. «Abgesenkt 04:34–05:34» statt «00:00–09:30»), weil Google den Zustand regelmässig neu aufzeichnet (Stephan 12.11.2026)
+  function stueckeVerbinden(s){
+    const out=[]; s.forEach(([a,b,m,v])=>{const l=out[out.length-1];
+      if(l&&l[2]===m&&!!l[3]===!!v&&a<=l[1]+6e4) l[1]=Math.max(l[1],b); else out.push([a,b,m,v])});
+    return out;
+  }
   // Vorheizzeit nach «auswärts»: von Google berechnet (Raum, Aussen, gelernte Raten; Stand 03.11.2026 (28)), sonst die feste
   function vhAus(c){ const th=c&&c.th, l=c&&c.lern, std=(c&&c.p&&c.p.vorheiz)||0;
     return th&&th.betrieb==="aus"&&th.ausBis&&l&&l.vhAus&&l.vhAus.bis===th.ausBis&&l.vhAus.h>0?l.vhAus.h:std }
@@ -1502,7 +1509,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     };
     const mitHist=(t0,t1)=>{ const plan=berechnet(t0,t1), h=thHistStuecke(ROH&&ROH.th&&ROH.th.rows,Math.min(t1,Date.now()))
         .map(([a,b,m,v])=>[Math.max(a,t0),Math.min(b,t1),m,v]).filter(x=>x[1]>x[0]);
-      return stueckeErsetzen(plan,h) };
+      return stueckeVerbinden(stueckeErsetzen(plan,h)) };
     return mitHist;
   }
   function zeichneK14(){
