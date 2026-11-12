@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 12.11.26 12:30</span></summary>
+      <summary>Verbindung <span class="sub">· Version 12.11.26 12:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1595,7 +1595,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const svg=$("chartK"), z=svg&&svg.querySelector(".zptxt"); if(!z) return;
     if(t===null){z.textContent=z.dataset.jetzt||"";return}
     const s=(K14C.zp||[]).find(([a,b])=>t>=a&&t<b); if(!s){z.textContent=z.dataset.jetzt||"";return}
-    const [a,b,m,v]=s, was=v?"Vorheizen (Sollwert Zu Hause)":ZP_TXT[m][0];
+    const [a,b,m,v]=s, was=v?"Vorheizen":ZP_TXT[m][0];
     const zt=k14Zeit;
     z.textContent=` · ${was} ${zt(a)}–${b>=Date.now()-6e4?"jetzt":zt(b)}${relaisGrund(t,m,v)}`;
   }
@@ -4240,7 +4240,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     return stueckeErsetzen(f(t0,t1),hs); }
   function woZeigen(t,row,x){ const G=WOGEO, s=woStuecke().find(([a,b])=>t>=a&&t<b), info=$("thWocheInfo"), l=$("thWoche").querySelector(".wohov");
     if(!s){woWeg();return}
-    const [a,b,m,v]=s, jetzt=Date.now(), was=v?"Vorheizen (Sollwert Zu Hause)":ZP_TXT[m][0], zt=x=>(mitternacht(x)===mitternacht(t)?"":fDay(x)+" ")+fTime(x);
+    const [a,b,m,v]=s, jetzt=Date.now(), was=v?"Vorheizen":ZP_TXT[m][0], zt=x=>(mitternacht(x)===mitternacht(t)?"":fDay(x)+" ")+fTime(x);
     const lauf=a<=jetzt&&b>jetzt, von=lauf&&t>=jetzt?"jetzt":zt(a), bis=lauf&&t<jetzt?"jetzt":zt(b);
     info.textContent=`${TH_TAGE.find(([k])=>k===new Date(t).getDay())[1]} ${fDay(t)} ${fTime(t)}: ${was} ${von}–${bis}${t<=jetzt+6e4?relaisGrund(Math.min(t,jetzt),m,v):""}`;
     if(l){const y=row*(G.lane+G.gap); l.setAttribute("x1",x.toFixed(1)); l.setAttribute("x2",x.toFixed(1)); l.setAttribute("y1",y-2); l.setAttribute("y2",y+G.lane+2); l.setAttribute("visibility","visible")} }
