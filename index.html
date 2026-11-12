@@ -939,7 +939,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
     </section>
     <section class="panel" id="thPanel">
       <div class="histhead"><h2 class="tc-wp" style="margin:0">Raumthermostat · Wärmepumpe</h2>
-        <div class="seg" role="group" aria-label="Regel für WP ABSENKEN"><button type="button" data-th="1" aria-pressed="false" title="WP ABSENKEN nach Raumtemperatur (Wetterstation innen) gegen den Sollwert">Raumthermostat</button><button type="button" data-th="0" aria-pressed="false" title="Bisherige Regel: frei im wärmsten Zeitfenster der Prognose">Wärmstes Fenster</button></div></div>
+        <div class="seg" role="group" aria-label="Regel für WP ABSENKEN"><button type="button" data-th="1" aria-pressed="false" title="WP ABSENKEN nach Raumtemperatur (Wetterstation innen) gegen den Sollwert">Raumthermostat</button><button type="button" data-th="0" aria-pressed="false" title="Bisherige Regel: Komfort im wärmsten Zeitfenster der Prognose">Wärmstes Fenster</button></div></div>
       <p class="thstat" id="thStatus">–</p>
       <div class="krow" id="thAbw"></div>
       <p class="thmeld" id="thMeld" aria-live="polite" hidden></p>
@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 12.11.26 21:20</span></summary>
+      <summary>Verbindung <span class="sub">· Version 12.11.26 21:25</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1585,7 +1585,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(hr&&hr[4]&&hr[3]===rel) gr=hr[4];
     if(!gr&&ch&&ch.ist===rel&&(aktuell||!k.some(r=>r[0]>t))) gr=ch.pause?"von Hand geschaltet, Automatik pausiert":ch.grund;
     if(gr){gr=grundKurz(String(gr).split(" (danach")[0].split(" → ")[0])}   // kurz: «Mindestlaufzeit bis 22:39», «Raum 21.6 °C, Soll 21.4 °C (Komfort)»
-    return ` · Relais ${rel?"abgesenkt":"frei"}: ${gr||"Grund nicht aufgezeichnet"}`;
+    return ` · Relais ${rel?"abgesenkt":"Komfort"}: ${gr||"Grund nicht aufgezeichnet"}`;
   }
   // Zeit im Text beim Darüberfahren: zeigt die Seite nur 1 Tag, ohne Datum (spart Platz; Stephan 12.11.2026),
   // ausser die Zeit liegt an einem anderen Tag (z. B. Abgesenkt seit gestern 22:00). Sonst Datum, wenn nicht heute.
@@ -3834,8 +3834,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let STEU=null, steuZeit=0, steuNr=0, steuWartet=null;
   const SZ_FARBE={alltag:"var(--s5)",heim:"var(--accent)",aus:"var(--muted)"};
   const AUSG=["Boiler SPERREN","Boiler MANUELL 1h","WP ABSENKEN"];
-  const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand","°C",0.1,"Abstand total zwischen den beiden Schaltpunkten, je die Hälfte über und unter dem Sollwert. Beispiel Sollwert 21,9 und 0,2: abgesenkt ab 22,0, wieder frei bei 21,8 °C. Dazwischen bleibt es, wie es ist. 0 = genau am Sollwert."],["minFrei","WP nach Freigabe mindestens frei","min",15,"Einmal freigegeben, bleibt die WP mindestens so lange frei, auch wenn der Raum schon warm genug ist (verhindert häufiges Schalten)."],["minAbs","WP einmal abgesenkt mindestens","min",5,"Einmal abgesenkt, bleibt die WP mindestens so lange abgesenkt."],["minLauf","Laufende WP erst absenken nach","min",5,"Läuft die WP gerade (über 800 W), wird sie erst abgesenkt, wenn sie so lange gelaufen ist. Das verhindert kurze Läufe, die den Verdichter belasten und wenig Wärme bringen. Gilt ohne Ausnahme. 0 = aus."],["raumMax","Ohne Raumwert seit","h",0.5,"Meldet die Wetterstation so lange keine Raumtemperatur, wird die WP abgesenkt, und es kommt eine Meldung aufs Handy (Telegram). Kommen wieder Werte, regelt das Thermostat normal weiter.",60]]],
-    ["Solarüberschuss (gilt immer)",[["pvPlus","Sollwert höher um","°C",0.1,"Bei Solarüberschuss wird der gültige Sollwert (Komfort, Vorheizen, Abgesenkt oder Auswärts) um so viel angehoben, damit die WP mit eigenem Strom heizt. 0 = aus."],["pvSchwelle","Einspeisung ins Netz mindestens","W",100,"So viel Strom muss ins Netz fliessen, damit es als Überschuss zählt."],["pvMin","während mindestens","min",5,"So lange muss die Einspeisung ohne Unterbruch über der Schwelle liegen."],["pvSoc","Batterie mindestens","%",5,"Die Anhebung gilt erst, wenn die Batterie mindestens so voll ist."],["pvNach","gilt danach noch","min",5,"Überbrückt kurze Wolken: so lange bleibt die Anhebung nach dem letzten Überschuss. Danach wird eine Freigabe wegen Solarüberschuss sofort beendet (ohne Mindestzeit «frei»), damit die WP nicht aus der Batterie läuft."],["reglerTag","Tagtemperatur am WP-Regler","°C",0.1,"Ist der Raum schon so warm, heizt die WP ohnehin nicht – dann keine Anhebung bei Solarüberschuss. Gleicher Wert wie am WP-Regler einstellen (heute 21,5 °C). 0 = aus."]]]];
+  const TH_PARAM=[["Schalten",[["thHyst","Schaltabstand","°C",0.1,"Abstand total zwischen den beiden Schaltpunkten, je die Hälfte über und unter dem Sollwert. Beispiel Sollwert 21,9 und 0,2: abgesenkt ab 22,0, wieder Komfort bei 21,8 °C. Dazwischen bleibt es, wie es ist. 0 = genau am Sollwert."],["minFrei","WP nach Freigabe mindestens Komfort","min",15,"Einmal freigegeben, bleibt die WP mindestens so lange auf Komfort, auch wenn der Raum schon warm genug ist (verhindert häufiges Schalten)."],["minAbs","WP einmal abgesenkt mindestens","min",5,"Einmal abgesenkt, bleibt die WP mindestens so lange abgesenkt."],["minLauf","Laufende WP erst absenken nach","min",5,"Läuft die WP gerade (über 800 W), wird sie erst abgesenkt, wenn sie so lange gelaufen ist. Das verhindert kurze Läufe, die den Verdichter belasten und wenig Wärme bringen. Gilt ohne Ausnahme. 0 = aus."],["raumMax","Ohne Raumwert seit","h",0.5,"Meldet die Wetterstation so lange keine Raumtemperatur, wird die WP abgesenkt, und es kommt eine Meldung aufs Handy (Telegram). Kommen wieder Werte, regelt das Thermostat normal weiter.",60]]],
+    ["Solarüberschuss (gilt immer)",[["pvPlus","Sollwert höher um","°C",0.1,"Bei Solarüberschuss wird der gültige Sollwert (Komfort, Vorheizen, Abgesenkt oder Auswärts) um so viel angehoben, damit die WP mit eigenem Strom heizt. 0 = aus."],["pvSchwelle","Einspeisung ins Netz mindestens","W",100,"So viel Strom muss ins Netz fliessen, damit es als Überschuss zählt."],["pvMin","während mindestens","min",5,"So lange muss die Einspeisung ohne Unterbruch über der Schwelle liegen."],["pvSoc","Batterie mindestens","%",5,"Die Anhebung gilt erst, wenn die Batterie mindestens so voll ist."],["pvNach","gilt danach noch","min",5,"Überbrückt kurze Wolken: so lange bleibt die Anhebung nach dem letzten Überschuss. Danach wird eine Freigabe wegen Solarüberschuss sofort beendet (ohne Mindestzeit «Komfort»), damit die WP nicht aus der Batterie läuft."],["reglerTag","Tagtemperatur am WP-Regler","°C",0.1,"Ist der Raum schon so warm, heizt die WP ohnehin nicht – dann keine Anhebung bei Solarüberschuss. Gleicher Wert wie am WP-Regler einstellen (heute 21,5 °C). 0 = aus."]]]];
   const PARAM_GR=[
     ["Regel «wärmstes Fenster»",[["komfort","Komfort","°C",0.1,"Sollwert der Fenster-Regel beim Heimkommen und zu Hause."],["nacht","Nachts / niemand da","°C",0.1],["aus","Auswärts (Frostschutz)","°C",0.5],
       ["hyst","Abstand bis wieder absenken","°C",0.1],["fMin","Warmes Fenster mindestens","h",1],["fMax","Warmes Fenster höchstens","h",1],
@@ -3895,7 +3895,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         ["Netz",w.netz!=null?(w.netz<0?"−"+de(-w.netz/1000,2)+" kW Einspeisung":de(w.netz/1000,2)+" kW Bezug"):"–"]];
       if(f) teile.push(["Warmes Fenster",f.frost?"ganzer Tag (Frost)":fTime(f.von)+"–"+fTime(f.bis),f.tm!=null?"Tagesmittel "+dez(f.tm)+"°C":"ohne Prognose"]);
       $("sWerte").innerHTML=teile.map(([n,v,z])=>`<span>${n} <b>${v}</b>${z?" ("+z+")":""}</span>`).join("");
-      const zeile=i=>{const ch=st.ch[i], wp=i===2, an=wp?"abgesenkt":"ein", aus=wp?"frei":"aus";
+      const zeile=i=>{const ch=st.ch[i], wp=i===2, an=wp?"abgesenkt":"ein", aus=wp?"Komfort":"aus";
         const diff=ch.soll!==null&&ch.ist!==null&&ch.soll!==ch.ist;
         return `<tr><td>${AUSG[i]}</td><td class="w">${pill(ch.ist,an,aus)}</td><td class="w">${ch.soll===null?'<span class="spill">–</span>':pill(ch.soll,an,aus,diff)}</td><td class="g">${ch.grund||""}${ch.pause?" · <b>Handbetrieb "+pauseTxt(ch.pause)+"</b>":""}</td></tr>`};
       $("sAusg").innerHTML=`<thead><tr><th>Ausgang</th><th>Ist</th><th>Soll</th><th>Grund</th></tr></thead><tbody>${[2,0,1].map(zeile).join("")}</tbody>`;
@@ -4113,8 +4113,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!th){$("thStatus").textContent="Noch kein Lauf mit dem Raumthermostat. Neues Google-Skript (Stand 01.11.2026) einspielen.";$("thBeob").textContent="";return}
     const raum=th.raum!=null?`Raum <b>${dez(th.raum)} °C</b>`:"Raum <b>–</b>";
     const soll=`Soll jetzt <b>${dez(th.soll)} °C</b>${th.pvAn?` (inkl. +${dez(c.p.pvPlus)} °C PV-Überschuss)`:th.pvGrenze?" (Solarüberschuss: keine Anhebung, Raum schon über der Tagtemperatur am WP-Regler)":""}`;
-    const regel=th.genau?`frei unter ${dez(th.soll)}, abgesenkt über ${dez(th.soll)} °C`:`frei bei ${dez(th.frei)} °C und tiefer, abgesenkt bei ${dez(th.abs)} °C und höher`;
-    const wp=st.ch&&st.ch[2], istT=wp&&wp.ist===1?"abgesenkt":wp&&wp.ist===0?"frei":"–";
+    const regel=th.genau?`Komfort unter ${dez(th.soll)}, abgesenkt über ${dez(th.soll)} °C`:`Komfort bei ${dez(th.frei)} °C und tiefer, abgesenkt bei ${dez(th.abs)} °C und höher`;
+    const wp=st.ch&&st.ch[2], istT=wp&&wp.ist===1?"abgesenkt":wp&&wp.ist===0?"Komfort":"–";
     const MN=["Komfort","Abgesenkt","Auswärts"], q={zeitplan:"Zeitplan",vorheizen:"Vorheizen nach Zeitplan",abweichung:"Abweichung",auswärts:cth.ausBis?"bis "+fDay(cth.ausBis)+" "+fTime(cth.ausBis):"bis du zurückstellst"}[th.quelle]||"";
     const naechst=th.wechsel?` · ${th.mod===0?"Abgesenkt":"Komfort"} ab ${fDay(th.wechsel)===fDay(Date.now())?"":fDay(th.wechsel)+" "}${fTime(th.wechsel)}${th.quelle==="auswärts"?" (Vorheizen)":""}`:"";
     $("thStatus").innerHTML=(typeof th.mod==="number"?`<b class="tc-wp">${MN[th.mod]}</b> (${q})${naechst}<br>`:"")+`${raum} · ${soll} · WP jetzt <b>${istT}</b><br><span class="sub" style="text-transform:none;letter-spacing:0">${regel}</span>`;
@@ -4130,7 +4130,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(hp){const t=document.createElement("span");t.innerHTML=`<b>WP ABSENKEN von Hand geschaltet</b>${wp.handSeit?" (erkannt "+fStempel(wp.handSeit)+")":""} – die Automatik schaltet O3 nicht, ${hp>=PAUSE_OFFEN?"bis du fortsetzt.":"bis "+fTime(hp)+"."}`;
       const b=document.createElement("button");b.type="button";b.className="knopfklein ghost";b.textContent="Automatik sofort fortsetzen";b.addEventListener("click",()=>thSenden(b,"Automatik wird fortgesetzt",{aktion:"pauseWeg"},"Automatik fortgesetzt"));hb.append(t,b)}
     if(th.raum==null&&th.raumZeit) $("thStatus").innerHTML+=`<br><b style="color:var(--c-bezug)">Wetterstation meldet seit ${fStempel(th.raumZeit)} nichts – WP wird abgesenkt.</b>`;
-    $("thBeob").textContent=aktiv?(th.fenster?"Zum Beobachten – Regel «wärmstes Fenster» würde: "+(th.fenster.soll?"absenken":"frei")+" ("+th.fenster.grund+")":""):"Aktiv ist die Regel «wärmstes Fenster». Das Raumthermostat würde: "+(th.zustand?"absenken":"frei")+" ("+th.grund+")";
+    $("thBeob").textContent=aktiv?(th.fenster?"Zum Beobachten – Regel «wärmstes Fenster» würde: "+(th.fenster.soll?"absenken":"Komfort")+" ("+th.fenster.grund+")":""):"Aktiv ist die Regel «wärmstes Fenster». Das Raumthermostat würde: "+(th.zustand?"absenken":"Komfort")+" ("+th.grund+")";
   }
   /* Zeitplan Komfort / Nacht je Wochentag */
   const TH_TAGE=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
@@ -4267,7 +4267,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   $("thAusOhne").addEventListener("click",()=>{$("thAusForm").hidden=true; thSenden(null,"Auswärts wird eingestellt",{aktion:"thermo",th:{betrieb:"aus"}},"Auswärts, bis du zurückstellst")});
   // «Mindestlaufzeit bis 11:13 (danach: … → abgesenkt …)» aus dem Grund der Steuerung → kurzer Hinweis im Relais-Kästchen
   function mindestTxt(g){ const m=/^(?:WP läuft seit \d{1,2}:\d{2}, Mindestlauf|Mindest(?:laufzeit|zeit abgesenkt)) bis (\d{1,2}:\d{2})/.exec(g||""); if(!m) return "";
-    const d=/danach:.*?→ (abgesenkt|frei)/.exec(g), dn=d?(d[1]==="abgesenkt"?"abgesenkt":"normal"):"";
+    const d=/danach:.*?→ (abgesenkt|Komfort|frei)/.exec(g), dn=d?(d[1]==="abgesenkt"?"abgesenkt":"normal"):"";
     return `<small style="color:var(--c-wp)" title="${esc(g)}">Mindestzeit bis ${m[1]}${dn?", danach "+dn:""}</small>` }
   function zeichneRelais(){
     const box=$("thRelais"); if(!box) return;
@@ -4469,13 +4469,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const arten=[...new Set(P.arten)];
     giltSetzen("chartSt",spanTage(t0,t1-1)+(STEU.status&&STEU.status.zeit?" · Plan "+fStempel(STEU.status.zeit):""));
     $("sLegend").innerHTML=`<span data-hl="aussen"><i style="width:18px;border-top:2px solid var(--cold);display:inline-block"></i>Aussen (Prognose)</span><span data-hl="min"><i style="width:18px;border-top:2px dashed ${thermo?"var(--c-wp)":"var(--hot)"};display:inline-block"></i>${thermo?"Raum Soll":"Raum mindestens"}</span>`+(raumIst.length>1?`<span data-hl="raum"><i style="width:18px;border-top:2px solid var(--fg);display:inline-block"></i>Raum gemessen</span>`:"")+
-      `<span data-hl="frei"><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>WP frei (heizt normal)${thermo?" · «Fenster» = alte Regel, nur beobachtet":""}</span><span data-hl="abs"><i style="width:10px;height:10px;border-radius:2px;background:var(--cold);opacity:.35;display:inline-block"></i>WP abgesenkt</span>`+
+      `<span data-hl="frei"><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>WP Komfort (heizt normal)${thermo?" · «Fenster» = alte Regel, nur beobachtet":""}</span><span data-hl="abs"><i style="width:10px;height:10px;border-radius:2px;background:var(--cold);opacity:.35;display:inline-block"></i>WP abgesenkt</span>`+
       (mods?[...new Set(mods)].sort().map(m=>`<span data-hl="mod-${m}"><i style="width:10px;height:10px;border-radius:2px;background:${MOD_F[m]};display:inline-block"></i>${MOD_N[m]}</span>`).join(""):
       arten.map(a=>`<span data-hl="sz-${a}"><i style="width:10px;height:10px;border-radius:2px;background:${SZ_FARBE[a]};display:inline-block"></i>${{alltag:"Alltag",heim:"Komme nach Hause",aus:"Auswärts"}[a]}</span>`).join(""));
     hlVerbinden($("sLegend"),svg);
     const zeig=t=>{const i=Math.max(0,Math.min(P.abs.length-1,Math.floor((t-t0)/P.schritt)));const tt=t0+i*P.schritt;
       const tv=temp.length?temp.reduce((b,p)=>Math.abs(p[0]-tt)<Math.abs(b[0]-tt)?p:b)[1]:null;
-      $("readoutSt").textContent=`${fDay(tt)} ${fTime(tt)} · ${mods?MOD_N[mods[i]]:P.texte[P.sz[i]]} · `+(thermo?`Raum Soll ${dez(P.soll[i])}°C · Fenster-Regel: WP ${P.abs[i]?"abgesenkt":"frei"}`:`WP ${P.abs[i]?"abgesenkt":"frei"} · Raum min. ${dez(P.min[i])}°C`)+(tv!=null?` · aussen ${dez(tv)}°C`:"");
+      $("readoutSt").textContent=`${fDay(tt)} ${fTime(tt)} · ${mods?MOD_N[mods[i]]:P.texte[P.sz[i]]} · `+(thermo?`Raum Soll ${dez(P.soll[i])}°C · Fenster-Regel: WP ${P.abs[i]?"abgesenkt":"Komfort"}`:`WP ${P.abs[i]?"abgesenkt":"Komfort"} · Raum min. ${dez(P.min[i])}°C`)+(tv!=null?` · aussen ${dez(tv)}°C`:"");
       const c=$("sCross");c.setAttribute("x1",X(tt));c.setAttribute("x2",X(tt));c.setAttribute("visibility","visible")};
     const hit=$("sHit"), pos=ev=>{const r=svg.getBoundingClientRect();return t0+((ev.clientX-r.left)*W/r.width-Lp)/(W-Lp-Rp)*(t1-t0)};
     hit.addEventListener("mousemove",ev=>zeig(pos(ev)));hit.addEventListener("click",ev=>zeig(pos(ev)));
