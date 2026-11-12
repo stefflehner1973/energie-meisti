@@ -953,7 +953,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
         <svg id="thWoche" class="kchart" role="img" aria-label="Wochenübersicht Komfort und Abgesenkt"></svg>
         <p class="hint" id="thWocheInfo" style="margin:2px 0 0;min-height:1.4em;font-weight:600;color:var(--fg)" aria-live="polite">&nbsp;</p>
         <p class="hint" id="thWocheAbw" style="margin:4px 0 0" hidden></p>
-        <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Komfort</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span><span title="Vergangenheit: wie das Relais WP ABSENKEN stand"><svg width="18" height="12" style="vertical-align:-2px" aria-hidden="true"><path d="M1 2.5H8V9.5H17" fill="none" stroke="currentColor" stroke-width=".9" opacity=".75"/></svg>Relais: oben frei, unten abgesenkt</span></div>
+        <div class="legend" style="font-size:.78rem;margin-top:4px"><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);display:inline-block"></i>Komfort</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--warm);opacity:.35;display:inline-block"></i>Vorheizen</span><span><i style="width:10px;height:10px;border-radius:2px;background:var(--accent);opacity:.3;display:inline-block"></i>Abgesenkt</span><span title="Vergangenheit: wie das Relais WP ABSENKEN stand"><svg width="18" height="12" style="vertical-align:-2px" aria-hidden="true"><path d="M1 2.5H8V9.5H17" fill="none" stroke="currentColor" stroke-width=".9" opacity=".75"/></svg>Relais: oben Komfort, unten abgesenkt</span></div>
       </div>
       <details class="thplanzu" id="thPlanBox">
         <summary>Zeiten einstellen · zuklappen</summary>
@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 12.11.26 21:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 12.11.26 21:20</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1550,7 +1550,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       let bars="", jetztMod=null; const stk=zp(t0,t1); K14C.zp=stk;
       stk.forEach(([a,b,mod,vh])=>{const xa=X(a),xb=X(b); if(xb-xa<.2) return; if(a<=Date.now()&&b>=Date.now()-6e4) jetztMod=vh?"Vorheizen":["Komfort","Abgesenkt","Auswärts"][mod];
         bars+=`<rect x="${xa.toFixed(1)}" y="${yb}" width="${(xb-xa).toFixed(1)}" height="${hb}" rx="2" fill="${ZF[mod]}" opacity="${vh?.35:ZO[mod]}"/>`});
-      // feine Linie: Relais WP ABSENKEN – oben frei, unten abgesenkt (Stephan 05.11.2026)
+      // feine Linie: Relais WP ABSENKEN – oben Komfort (frei), unten abgesenkt (Stephan 05.11.2026)
       let rl=""; { const st=liste.filter(r=>r[3]===0||r[3]===1).filter((r,i,a)=>!i||a[i-1][3]!==r[3]), te=Math.min(t1,Date.now());
         st.forEach((r,i)=>{const a=Math.max(r[0],t0), b=i+1<st.length?st[i+1][0]:te; if(b<=a) return; const yy=yb+(r[3]?hb-2:2), xa=X(a), xb=X(b);
           rl+=`<line x1="${xa.toFixed(1)}" x2="${xb.toFixed(1)}" y1="${yy}" y2="${yy}" stroke="var(--bg)" stroke-opacity=".75" stroke-width="2.6" stroke-linecap="round"/><line x1="${xa.toFixed(1)}" x2="${xb.toFixed(1)}" y1="${yy}" y2="${yy}" stroke="var(--fg)" stroke-opacity=".9" stroke-width=".9"/>`;
