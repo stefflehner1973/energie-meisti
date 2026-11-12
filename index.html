@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 12.11.26 12:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 12.11.26 12:30</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1585,12 +1585,18 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(gr){gr=String(gr).split(" (danach")[0].split(" → ")[0]}   // kurz: «Mindestlaufzeit bis 22:39», «Raum 21.6 °C, Soll 21.4 °C (zu Hause)»
     return ` · Relais ${rel?"abgesenkt":"frei"}: ${gr||"Grund nicht aufgezeichnet"}`;
   }
+  // Zeit im Text beim Darüberfahren: zeigt die Seite nur 1 Tag, ohne Datum (spart Platz; Stephan 12.11.2026),
+  // ausser die Zeit liegt an einem anderen Tag (z. B. Abgesenkt seit gestern 22:00). Sonst Datum, wenn nicht heute.
+  function k14Zeit(x){
+    const g=K14C.geo, einTag=g&&g.t1>g.t0&&mitternacht(g.t0)===mitternacht(g.t1-1), ref=einTag?mitternacht(g.t0):mitternacht(Date.now());
+    return (mitternacht(x)===ref?"":fDay(x)+" ")+fTime(x);
+  }
   function zpErklaeren(t){   // Text in der Zeile «Zeitplan» zur Zeit t: was die Farbe dort bedeutet
     const svg=$("chartK"), z=svg&&svg.querySelector(".zptxt"); if(!z) return;
     if(t===null){z.textContent=z.dataset.jetzt||"";return}
     const s=(K14C.zp||[]).find(([a,b])=>t>=a&&t<b); if(!s){z.textContent=z.dataset.jetzt||"";return}
     const [a,b,m,v]=s, was=v?"Vorheizen (Sollwert Zu Hause)":ZP_TXT[m][0];
-    const heute=fDay(Date.now()), zt=x=>(fDay(x)===heute?"":fDay(x)+" ")+fTime(x);
+    const zt=k14Zeit;
     z.textContent=` · ${was} ${zt(a)}–${b>=Date.now()-6e4?"jetzt":zt(b)}${relaisGrund(t,m,v)}`;
   }
   // Beim Darüberfahren: Ausgang ein/aus zur Zeit t und – wenn bekannt – weshalb eingeschaltet (Protokoll der Steuerung; Stephan 05.11.2026)
@@ -1600,7 +1606,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.querySelectorAll(".k14txt").forEach(z=>{const i=+z.dataset.i;
       if(t===null){z.textContent=z.dataset.std;return}
       const s=((K14C.st&&K14C.st[i])||[]).find(([a,e])=>t>=a&&t<e), jetzt=Date.now();
-      const heute=fDay(jetzt), zt=x=>(fDay(x)===heute?"":fDay(x)+" ")+fTime(x);
+      const zt=k14Zeit;
       if(!s){z.textContent=" · aus";return}
       const [a,e]=s, bis=e>=jetzt-3*6e4?"jetzt":zt(e);
       // letzte Schaltung dieses Ausgangs bis zum Beginn (auch vor dem sichtbaren Zeitraum, z. B. gestern 22:00)
