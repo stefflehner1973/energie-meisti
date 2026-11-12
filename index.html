@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 12.11.26 12:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 12.11.26 13:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1571,6 +1571,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // senkrechter Strich in den Schaltzuständen zur gleichen Zeit wie in den Diagrammen darüber
   const ZP_TXT=[["Zu Hause","Zu Hause (orange)"],["Abgesenkt","Abgesenkt (hellblau)"],["Auswärts","Auswärts (grau)"]];
   // Relais WP ABSENKEN anders als der Zeitplan? Dann den Grund nennen (Google ab Stand 03.11.2026 (29) schreibt ihn mit)
+  // «Raum 21.2 °C, Soll 21.1 °C (zu Hause)» → «Ist 21.2 °C, Soll 21.1 °C» (Zustand steht schon vorne; Stephan 12.11.2026)
+  function grundKurz(g){ return String(g).replace(/Raum (-?[\d.,]+ °C), Soll (-?[\d.,]+ °C) \([^)]*\)/,"Ist $1, Soll $2") }
   function relaisGrund(t,m,v){
     const erw=v||m===0?0:1, jetzt=Date.now();
     const k=((K14C.liste&&K14C.liste.length?K14C.liste:(STEU&&STEU.ist))||[]).filter(r=>r[0]<=t), kr=k.length?k[k.length-1]:null;
@@ -1582,7 +1584,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const h=((ROH&&ROH.th&&ROH.th.rows)||[]).concat((STEU&&STEU.thHist)||[]).filter(r=>r[0]<=t).sort((a,b)=>a[0]-b[0]), hr=h.length?h[h.length-1]:null;
     if(hr&&hr[4]&&hr[3]===rel) gr=hr[4];
     if(!gr&&ch&&ch.ist===rel&&(aktuell||!k.some(r=>r[0]>t))) gr=ch.pause?"von Hand geschaltet, Automatik pausiert":ch.grund;
-    if(gr){gr=String(gr).split(" (danach")[0].split(" → ")[0]}   // kurz: «Mindestlaufzeit bis 22:39», «Raum 21.6 °C, Soll 21.4 °C (zu Hause)»
+    if(gr){gr=grundKurz(String(gr).split(" (danach")[0].split(" → ")[0])}   // kurz: «Mindestlaufzeit bis 22:39», «Raum 21.6 °C, Soll 21.4 °C (zu Hause)»
     return ` · Relais ${rel?"abgesenkt":"frei"}: ${gr||"Grund nicht aufgezeichnet"}`;
   }
   // Zeit im Text beim Darüberfahren: zeigt die Seite nur 1 Tag, ohne Datum (spart Platz; Stephan 12.11.2026),
@@ -1612,7 +1614,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       // letzte Schaltung dieses Ausgangs bis zum Beginn (auch vor dem sichtbaren Zeitraum, z. B. gestern 22:00)
       const pr=((STEU&&STEU.protokoll)||[]).filter(r=>r&&r[0]&&String(r[2]||"").startsWith(K14_NAMEN[i])&&r[0]<=a+4*6e4&&/geschaltet|würde/.test(String(r[5]||""))).sort((x,y)=>y[0]-x[0]);
       let gr=pr.length&&/^(ein|absenken|sperren|gesperrt)/i.test(String(pr[0][4]||pr[0][3]||""))?String(pr[0][6]||""):"";
-      if(gr) gr="geschaltet "+zt(pr[0][0])+" – "+gr;   // Werte gelten für den Schaltmoment, nicht für die Mausposition
+      if(gr) gr="geschaltet "+zt(pr[0][0])+" – "+grundKurz(gr);   // Werte gelten für den Schaltmoment, nicht für die Mausposition
       // WP ABSENKEN: sonst aus dem Zeitplan erklären (Relais stand so, wie der Zeitplan es will)
       if(!gr&&i===2){const zp=(K14C.zp||[]).find(([x,y])=>t>=x&&t<y); if(zp&&!zp[3]&&zp[2]!==0) gr="nach Zeitplan: "+ZP_TXT[zp[2]][0]+(zp[2]===1?" (Raum über dem Abgesenkt-Sollwert)":"")}
       const ch=STEU&&STEU.status&&STEU.status.ch&&STEU.status.ch[i];
