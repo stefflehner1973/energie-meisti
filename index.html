@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 10:00</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 10:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3106,20 +3106,31 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
 
   const istPunkt=r=>({t:r[0],v:r[1],mn:r[1],mx:r[1],o:typeof r[6]==="number"?r[6]:null,w:typeof r[7]==="number"?r[7]:null});
   // nur den gemessenen PV-Verlauf und Ladestand von heute (für Prognose-Diagramme und PV-Korrektur), ohne Wetter
-  let progIstLaedt=false;
-  async function ladeProgIst(){
-    if(!cfg.histurl||!cfg.histtok||progIstLaedt) return;
+  let progIstLaedt=false, progIstZeit=0;   // progIstZeit: wann der gemessene Verlauf von heute zuletzt geholt (oder angefordert) wurde
+  async function ladeProgIst(trotzdem){
+    if(!cfg.histurl||!cfg.histtok||progIstLaedt||(!trotzdem&&progLaeuft())) return;   // die ganze Prognose holt den gemessenen Verlauf selbst
     progIstLaedt=true;
     try{const ist=await api({art:"verlauf",teil:"fronius",von:String(mitternacht(Date.now())),bis:String(Date.now()),punkte:"1500"});
       const rows=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows:null;
-      if(rows){progIst=rows.filter(r=>typeof r[1]==="number").map(istPunkt);progSoc=rows.filter(r=>typeof r[5]==="number").map(r=>[r[0],r[5]]);
+      if(rows){progIstZeit=Date.now();progIst=rows.filter(r=>typeof r[1]==="number").map(istPunkt);progSoc=rows.filter(r=>typeof r[5]==="number").map(r=>[r[0],r[5]]);
         battVollZeigen(); if(reiter==="prognose"&&prog) zeichnePrognose()}}
     catch(e){logD("Prognose gemessen: "+e.message)}
     finally{progIstLaedt=false}
   }
-  async function ladePrognose(neu,hintergrund){
-    if(reiter!=="prognose"&&!hintergrund) return;
-    if(!neu&&prog&&Date.now()-progZeit<30*6e4){if(reiter==="prognose")zeichnePrognose();return}
+  // Läuft schon eine Abfrage mit denselben Angaben (höchstens 30 s alt), wartet ein zweiter Aufruf auf diese, statt alles noch einmal zu holen.
+  // Beim Öffnen kamen sonst 8 statt 4 Wetter-Abfragen, der gemessene Verlauf und die Prognose-Güte doppelt (13.11.2026).
+  let progLauf=null;
+  const progLaeuft=()=>progLauf&&Date.now()-progLauf.zeit<30e3&&progLauf.cfg===JSON.stringify(pvCfg)?progLauf:null;
+  function ladePrognose(neu,hintergrund){
+    if(reiter!=="prognose"&&!hintergrund) return Promise.resolve();
+    if(!neu&&prog&&Date.now()-progZeit<30*6e4){if(reiter==="prognose")zeichnePrognose();return Promise.resolve()}
+    const l=progLaeuft();
+    if(l){ if(!hintergrund) $("pStand").textContent="lädt …"; return l.p||Promise.resolve() }
+    const lauf={zeit:Date.now(),cfg:JSON.stringify(pvCfg)}, fertig=()=>{if(progLauf===lauf)progLauf=null};
+    progLauf=lauf; lauf.p=prognoseHolen(hintergrund); lauf.p.then(fertig,fertig);
+    return lauf.p;
+  }
+  async function prognoseHolen(hintergrund){
     const nr=++progNr;
     if(!prog){try{const c=JSON.parse(localStorage.getItem("tb.prog")||"null");if(c&&c.cfg===JSON.stringify(pvCfg)&&c.prog&&c.prog.roh){prog=c.prog;progAufbereiten();progZeit=c.zeit;zeichnePrognose()}}catch(e){}}
     if(!hintergrund) $("pStand").textContent="lädt …";
@@ -3136,13 +3147,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       prog={roh,tage}; progAufbereiten(); progZeit=Date.now();
       progIst=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows.filter(r=>typeof r[1]==="number").map(istPunkt):[];
       progSoc=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows.filter(r=>typeof r[5]==="number").map(r=>[r[0],r[5]]):[];
+      if(ist&&ist.verlauf&&ist.verlauf.fronius) progIstZeit=Date.now();   // gemessener Verlauf ist damit frisch
       try{localStorage.setItem("tb.prog",JSON.stringify({cfg:JSON.stringify(pvCfg),zeit:progZeit,prog:{roh:prog.roh,tage:prog.tage}}))}catch(e){}
       battVollZeigen();
       $("pHint").hidden=true;
     }catch(e){
       if(nr!==progNr) return;
       $("pHint").textContent="Wetterprognose nicht erreichbar: "+e.message+". Gezeigt wird die letzte gespeicherte Prognose; die gemessenen Werte von heute sind aktuell.";$("pHint").hidden=false;
-      ladeProgIst();   // Messwerte bis jetzt trotzdem holen und zeichnen
+      ladeProgIst(true);   // Messwerte bis jetzt trotzdem holen und zeichnen
     }
     if(reiter==="prognose") zeichnePrognose();
   }
@@ -3427,18 +3439,27 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function summe(liste){const s={pv:0,selbst:0,ein:0,bez:0,haus:0,fSelbst:0,fEin:0,fLok:0,fBez:0,fGrund:0};liste.forEach(d=>Object.keys(s).forEach(k=>s[k]+=(d[k]||0)));s.tot=s.fSelbst+s.fEin+s.fLok;s.netto=s.tot-s.fBez;s.aus=s.fEin+s.fLok-s.fBez-s.fGrund;return s}
   const chf=v=>"CHF "+(Math.round(v*100)/100).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
   const kwhK=v=>eK(v,v=>(v>=100?Math.round(v):de(v,1))+" kWh");
-  async function ladeGeld(neu,hintergrund){
-    if(!cfg.histurl||!cfg.histtok) return;
-    if(hintergrund&&!neu&&GELD&&Date.now()-geldZeit<FRISCH) return;
+  // Läuft schon eine Abfrage (höchstens 30 s alt), wartet ein zweiter Aufruf auf diese, statt die Tageswerte noch einmal zu holen
+  // (im Reiter Energiefluss und Wattpilot kam «tage» beim Öffnen doppelt; 13.11.2026).
+  let geldLauf=null;
+  function ladeGeld(neu,hintergrund){
+    if(!cfg.histurl||!cfg.histtok) return Promise.resolve();
+    if(hintergrund&&!neu&&GELD&&Date.now()-geldZeit<FRISCH) return Promise.resolve();
+    if(geldLauf&&Date.now()-geldLauf.zeit<30e3){ if(!hintergrund){geldLauf.still=false;$("gBusy").hidden=false} return geldLauf.p||Promise.resolve() }
+    const lauf={zeit:Date.now(),still:!!hintergrund}, fertig=()=>{if(geldLauf===lauf)geldLauf=null};
+    geldLauf=lauf; lauf.p=geldHolen(lauf); lauf.p.then(fertig,fertig);
+    return lauf.p;
+  }
+  async function geldHolen(lauf){
     if(!GELD){try{const c=JSON.parse(localStorage.getItem("tb.geld")||"null");if(c&&c.tage){GELD=c;if(reiter==="geld")zeichneGeld()}}catch(e){}}
     const nr=++geldNr;
-    if(!hintergrund) $("gBusy").hidden=false;
+    if(!lauf.still) $("gBusy").hidden=false;
     try{
       const j=await api({art:"tage"}); if(nr!==geldNr) return;
       GELD={tage:j.tage||[],heute:j.heute||null,wbHist:j.wbHist||[],lok:j.lok||null}; geldZeit=Date.now(); battVollZeigen();
       try{localStorage.setItem("tb.geld",JSON.stringify(GELD))}catch(e){}
       $("gHint").hidden=true;
-    }catch(e){ if(!hintergrund){$("gHint").textContent=e.message;$("gHint").hidden=false} }
+    }catch(e){ if(!lauf.still){$("gHint").textContent=e.message;$("gHint").hidden=false} }
     finally{ if(nr===geldNr) $("gBusy").hidden=true }
     if(reiter==="geld") zeichneGeld();
     if(reiter==="energie") zeichneEB();
@@ -4549,7 +4570,6 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   let letzteAbfrage=0, letzterVerlauf=0, laeuft=false;
   // Kurze Zeiträume (1 h, Tag, 24 h): alles jede Minute; lange (7 Tage … 1 Jahr, Zoom): Verläufe alle 5 Minuten
   const verlaufTakt=()=>(!zoom&&tage<=1)?6e4:5*6e4;
-  let progIstZeit=0;
   async function auffrischen(verlaufAuch,manuell){
     if(laeuft) return;   // vorige Runde noch nicht fertig (Google langsam): nicht stauen
     // 08.11.2026: automatisch still im Hintergrund; Ladeanzeige nur von Hand, beim ersten Laden oder wenn die Daten alt sind (über 5 min)
@@ -4571,8 +4591,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(!verlaufAuch||!aktiv()) return;
       // danach alle übrigen Reiter im Hintergrund, damit sie beim Wechsel schon aktuell sind
       const hinten=[loadHist(false,{teile:ALLE_TEILE.filter(t=>!(TEILE[reiter]||[]).includes(t)),still:true})];
-      if(reiter!=="prognose"&&(wetterAlt||!prog||Date.now()-progIstZeit>=5*6e4)){progIstZeit=Date.now();hinten.push(wetterAlt||!prog?ladePrognose(true,true):ladeProgIst())}   // 06.11.2026: im Hintergrund höchstens alle 5 min
-      if(reiter!=="geld") hinten.push(ladeGeld(true,true));
+      // 13.11.2026: erst jetzt prüfen, ob das Wetter alt ist – beim Öffnen hat die Batterie-Anzeige die Prognose inzwischen schon geholt (sonst käme alles doppelt)
+      const wetterAlt2=Date.now()-progZeit>=15*6e4;
+      if(reiter!=="prognose"&&(wetterAlt2||!prog||Date.now()-progIstZeit>=5*6e4)){progIstZeit=Date.now();hinten.push(wetterAlt2||!prog?ladePrognose(true,true):ladeProgIst())}   // 06.11.2026: im Hintergrund höchstens alle 5 min
+      if(reiter!=="geld") hinten.push(ladeGeld(Date.now()-geldZeit>=30e3,true));   // eben erst geholt (beim Öffnen im Reiter Energiefluss/Wattpilot): nicht gleich nochmals
       if(!steuerReiter()) hinten.push(ladeSteuerung(true,true));
       await Promise.allSettled(hinten);
     }finally{ laeuft=false }
