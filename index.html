@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 09:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 10:00</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1542,7 +1542,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         bars+=`<rect x="${xa.toFixed(1)}" y="${yb}" width="${Math.max(1.5,xb-xa).toFixed(1)}" height="${hb}" rx="3" fill="${KFARBE[i]}"/>`});
       g+=`<rect x="${Lr}" y="${yb}" width="${W-Lr-Rr}" height="${hb}" rx="3" fill="var(--line)" opacity=".45"/>`+bars;
       (K14C.st||(K14C.st=[]))[i]=stuecke;
-      const std=` · ${ein>0?de(ein/36e5,1)+" h ein":"aus"}`;
+      const std=` · ${ein>0?de(ein/36e5,1)+" h ein":k14Aus(i)}`;
       labs+=`<text class="klab" x="${Lr}" y="${y+11}" font-size="11.5" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">${n}<tspan class="k14txt" data-i="${i}" data-std="${std}" fill="var(--fg)" font-weight="600">${std}</tspan></text>`;
     });
     if(zp){   // 4. Zeile: Zeitplan Raumthermostat (Komfort / Vorheizen / Abgesenkt / Auswärts bzw. Abweichung)
@@ -1603,14 +1603,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   // Beim Darüberfahren: Ausgang ein/aus zur Zeit t und – wenn bekannt – weshalb eingeschaltet (Protokoll der Steuerung; Stephan 05.11.2026)
   const K14_NAMEN=["Boiler SPERREN","Boiler MANUELL","WP ABSENKEN"];
-  const k14Ein=i=>i===2?"Abgesenkt":"ein";   // WP ABSENKEN: «Abgesenkt» statt «ein» (Stephan 13.11.2026)
+  const k14Ein=i=>i===2?"Abgesenkt":"ein"; const k14Aus=i=>i===2?"Komfort":"aus";   // WP ABSENKEN: «Abgesenkt» statt «ein» (Stephan 13.11.2026)
   function k14Erklaeren(t){
     const svg=$("chartK"); if(!svg) return;
     svg.querySelectorAll(".k14txt").forEach(z=>{const i=+z.dataset.i;
       if(t===null){z.textContent=z.dataset.std;return}
       const s=((K14C.st&&K14C.st[i])||[]).find(([a,e])=>t>=a&&t<e), jetzt=Date.now();
       const zt=k14Zeit;
-      if(!s){z.textContent=" · aus";return}
+      if(!s){z.textContent=" · "+k14Aus(i);return}
       const [a,e]=s, bis=e>=jetzt-3*6e4?"jetzt":zt(e);
       // letzte Schaltung dieses Ausgangs bis zum Beginn (auch vor dem sichtbaren Zeitraum, z. B. gestern 22:00)
       const pr=((STEU&&STEU.protokoll)||[]).filter(r=>r&&r[0]&&String(r[2]||"").startsWith(K14_NAMEN[i])&&r[0]<=a+4*6e4&&/geschaltet|würde/.test(String(r[5]||""))).sort((x,y)=>y[0]-x[0]);
