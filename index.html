@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 10:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 12:41</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1515,6 +1515,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function zeichneK14(){
     const svg=$("chartK"); if(!svg) return;
     const k=(ROH&&ROH.k14)||null, rows=(k&&k.rows)||[];
+    if(versteckt(svg)){   // Reiter nicht offen: nur die Liste nachführen (braucht auch der Reiter Steuerung), nicht zeichnen
+      const l=rows.slice(); if(k14Jetzt&&k14Jetzt.a&&(!l.length||l[l.length-1][0]<k14Jetzt.zeit)) l.push([k14Jetzt.zeit].concat(k14Jetzt.a));
+      K14C.liste=l; return;
+    }
     if(!rows.length&&!k14Jetzt){svg.innerHTML="";svg.removeAttribute("viewBox");svg.style.height="0";kBereich="";kAgeZeigen();return}
     svg.style.height="";
     const zp=zeitplanStuecke(), nL=zp?4:3;
@@ -1758,7 +1762,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   const LMC={svg:"chartLM",ro:null,gruppe:"ueb",geo:null};
   function zeichneLM(){
-    const svg=$("chartLM"); lmBoilerLeiste(null); if(!svg) return;
+    const svg=$("chartLM"); if(!svg||versteckt(svg)) return;   // Reiter nicht offen: nicht zeichnen (13.11.2026)
+    lmBoilerLeiste(null);
     const liste=lmListe();
     $("lmHint").hidden=!!liste.length;
     if(!liste.length){svg.innerHTML="";svg.removeAttribute("viewBox");svg.style.height="0";$("lmAge").textContent="";$("readoutLM").textContent="";LMC.geo=null;return}
@@ -2245,6 +2250,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     return out;
   }
 
+  // Seit 13.11.2026 (Stephan «8 umsetzen»): Diagramme in einem nicht offenen Reiter werden nicht gezeichnet (vorher bei jedem
+  // Auffrischen alle, beim Öffnen sechsmal). Beim Wechsel des Reiters zeichnet zeigeReiter() sie mit den aktuellen Daten.
+  const versteckt=el=>{const p=el&&el.closest(".tabpanel");return !!(p&&p.hidden)};
   function drawAll(){
     try{if(steuerReiter()&&STEU){zeichneUeb();zeichneFahrplan()}}catch(e){}   // STEU wird weiter unten angelegt (beim ersten Aufruf evtl. noch nicht); Fahrplan mit gemessenem Raum
     const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"7 Tage",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
@@ -2313,6 +2321,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const K14C={svg:"chartK",ro:null,gruppe:"ueb",geo:null};   // Schaltzustände: nur der Strich
   function drawMulti(c){
     const svg=$(c.svg), lines=c.lines.filter(l=>l.series.length);
+    if(versteckt(svg)) return;   // Reiter nicht offen
     const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=Math.round(Math.min(300,Math.max(220,W*0.42)));
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     const lg=$(c.legend); lg.textContent=""; if(c.fett){lg.style.fontSize=".92rem";lg.style.gap="6px 20px"}
@@ -2405,9 +2414,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
 
   function drawChart(c){
     const svg=$(c.svg), series=c.series;
+    c.stats(series);   // Kennzahlen (Energie, Laufzeit …) immer nachführen
+    if(versteckt(svg)) return;   // Reiter nicht offen: Diagramm erst beim Wechsel zeichnen
     const W=Math.round(Math.max(300,Math.min(900,svg.clientWidth||720))), H=Math.round(Math.min(300,Math.max(220,W*0.42)));
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-    c.stats(series);
     if(series.length<2){
       svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--muted)" font-size="14" font-family="IBM Plex Sans, sans-serif">${laedtTeil.has(c.teil||"mess")?"Lädt …":"Noch zu wenige Werte für einen Verlauf"}</text>`;
       c.geo=null; $(c.ro).textContent=""; giltSetzen(c.svg,""); return;
@@ -2890,7 +2900,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Daten, die im Hintergrund schon aktuell geladen wurden, nur zeichnen; sonst zuerst Gespeichertes zeigen und neu laden
     const frisch=z=>Date.now()-z<FRISCH;
     if(r==="geld"){ if(GELD) zeichneGeld(); if(!ohneLaden&&!(GELD&&frisch(geldZeit))) ladeGeld(); }
-    else if(r==="steuerung"||r==="boiler"||r==="temperatur"){ if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); }
+    else if(r==="steuerung"||r==="boiler"||r==="temperatur"){ drawAll(); if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); }   // drawAll: Diagramme dieses Reiters (seit 13.11.2026 werden sie nur gezeichnet, wenn der Reiter offen ist)
     else if(r==="sonne") zeichneSonne();
     else if(r==="prognose"){ if(prog) zeichnePrognose(); if(!ohneLaden&&!(prog&&frisch(progZeit))) ladePrognose(true); }
     else {drawAll(); if(!ohneLaden&&typeof loadHist==="function") loadHist(true); if(r==="energie"||r==="auto"){ if(GELD) (r==="auto"?zeichneAutoTage:zeichneEB)(); if(!(GELD&&frisch(geldZeit))) ladeGeld(false,true); }}
@@ -4617,8 +4627,18 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!/github\.io$/.test(location.hostname)||!meineVers||document.hidden||Date.now()-versGeprueft<60e3) return;
     versGeprueft=Date.now();
     try{
-      const r=await fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}); if(!r.ok) return;
-      const neu=versZahl(await r.text());
+      // Seit 13.11.2026 (Stephan «9 umsetzen»): zuerst nur das Kennzeichen der Datei bei GitHub holen (wenige Bytes statt der ganzen Seite,
+      // rund 130 KB). Ist es dasselbe wie beim letzten Mal, ist die Version dort schon bekannt. Nur wenn die Datei neu ist (oder das
+      // Kennzeichen fehlt), wird wie bisher die ganze Seite geholt und die Versionszeile gelesen.
+      const marke=r=>{const h=r&&r.headers; return h?(h.get("etag")||h.get("last-modified")||""):""};
+      let neu=0, gemerkt=null; try{gemerkt=JSON.parse(localStorage.getItem("tb.versMarke")||"null")}catch(e){}
+      try{const k=await fetch(location.pathname+"?nocache="+Date.now(),{method:"HEAD",cache:"no-store"}), m=k.ok?marke(k):"";
+        if(m&&gemerkt&&gemerkt.m===m&&gemerkt.v>0) neu=gemerkt.v}catch(e){}
+      if(!neu){
+        const r=await fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}); if(!r.ok) return;
+        neu=versZahl(await r.text());
+        try{const m=marke(r); if(m&&neu) localStorage.setItem("tb.versMarke",JSON.stringify({m,v:neu})); else localStorage.removeItem("tb.versMarke")}catch(e){}
+      }
       if(neu>meineVers){
         const ziel=location.pathname+"?v="+neu;
         try{if(sessionStorage.getItem("tb.neuVers")===String(neu))return;sessionStorage.setItem("tb.neuVers",String(neu))}catch(e){}   // nicht im Kreis laden
