@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 12.11.26 21:25</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 09:50</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1734,7 +1734,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         h+=`<rect x="${xa.toFixed(1)}" y="${y}" width="${Math.max(1.5,xb-xa).toFixed(1)}" height="${hb}" rx="2" fill="${LMFARBE[i]}" opacity="${LMDECK[i]}"><title>${LMNAMEN[i]}: ein ${fStempel(a)} – ${fStempel(e)}</title></rect>`});
       h+=lmLeistungsPfad(g.X,g.t0,g.t1,y,hb,i);
     });
+    h+=`<line class="hovl" visibility="hidden" y1="0" y2="${H}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3" pointer-events="none"/>`;
     svg.innerHTML=h;
+  }
+  // 13.11.2026: der gestrichelte Mausstrich des Boiler-Diagramms läuft auch durch die Leiste L1/L2 (px=null: ausblenden)
+  function lmBoilerLinie(px){
+    const svg=$("chartPLM"), l=svg&&svg.querySelector(".hovl"); if(!l) return;
+    if(px==null){l.setAttribute("visibility","hidden");return}
+    l.setAttribute("x1",px);l.setAttribute("x2",px);l.setAttribute("visibility","visible");
   }
   function lmBoilerText(t){
     const l=lmListe(); let z=null; for(const r of l){if(r[0]>t)break;z=r}
@@ -2458,7 +2465,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t=g.t0+(x-L)/(g.W-L-R)*(g.t1-g.t0);
     einzelGruppe(c).forEach(k=>zeigeBei(k,t));
   }
-  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C){zpErklaeren(null);k14Erklaeren(null)}});wsTempZeigen()}
+  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.svg==="chartP")lmBoilerLinie(null);if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C){zpErklaeren(null);k14Erklaeren(null)}});wsTempZeigen()}
   function zeigeBei(c,t){
     wsTempBei(t);   // Wetterstation bei der Wärmepumpe: Wert zu dieser Zeit
     if(c.lines) return zeigeMultiBei(c,t);
@@ -2473,6 +2480,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const l=svg.querySelector(".hovl"),ci=svg.querySelector(".hovc");
     l.setAttribute("x1",px);l.setAttribute("x2",px);ci.setAttribute("cx",px);ci.setAttribute("cy",py);
     svg.querySelector(".hov").setAttribute("visibility","visible");
+    if(c.svg==="chartP") lmBoilerLinie(px);
     {const zt=fFull(p.t),i=zt.lastIndexOf(" "),fe=x=>`<b style="color:var(--fg);font-weight:600">${wertHtml(x)}</b>`;
       $(c.ro).innerHTML=escH(zt.slice(0,i+1))+fe(zt.slice(i+1))+" · "+fe(c.fmt(p.v))+(p.mx-p.mn>0.05?escH(` (${c.fmt(p.mn)} bis ${c.fmt(p.mx)})`):"")+(c.zusatz?c.zusatz(t):"")}
   }
