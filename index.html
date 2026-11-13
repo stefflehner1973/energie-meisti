@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 17:24</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 17:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2164,6 +2164,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const NEU_GANZ=15*6e4, NEU_LUECKE=10*6e4, NEU_PUNKTE=1500;
   const neuStand={};   // je Teil: {schl, bis, ganz} = bis wohin geladen, wann zuletzt ganz
   const neuReihen=(t,v)=>t==="mess"?[v.temp,v.boiler,v.wp]:t==="fronius"?[v.fronius]:(v.ma||[]);
+  /* 13.11.2026 (Stephan): Hineinzoomen lädt nicht nach, wenn schon alle Minutenwerte des Ausschnitts da sind (1 h, Tag, 24 h:
+     Google schickt dort jeden Wert, nichts zusammengefasst). Nur bei längeren Zeiträumen (5-Minuten- oder Stundenwerte)
+     holt der Zoom feinere Werte. deckt[t] = Zeitraum, für den Teil t vollständige Minutenwerte im Speicher sind. */
+  const deckt={};
+  const vollMinuten=(t,j,v)=>{const r=neuReihen(t,v); return j.aufloesung===1&&r.length>0&&r.every(x=>x&&Array.isArray(x.rows)&&x.roh===x.rows.length)};
+  const zoomGedeckt=t=>{const d=deckt[t]; return !!(zoom&&d&&d.von<=zoom.von&&zoom.bis<=d.bis+2*6e4)};
   function neuMoeglich(t,j,v){   // darf beim nächsten Mal nur das Neue geholt werden? Nur bei Minutenwerten, die Google nicht zusammengefasst hat
     if(zoom||j.aufloesung!==1) return false;
     const r=neuReihen(t,v), grenze=t==="ma"?Math.max(50,Math.floor(NEU_PUNKTE/Math.max(1,r.length))):NEU_PUNKTE;
@@ -2218,7 +2224,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const fenster=bereich(), schl=ladeSchluessel();
     const abfrageTage=fenster.von?Math.max(0.06,(Date.now()-fenster.von)/864e5+0.01):tage;
     const bisMs=Math.round(fenster.bis||Date.now()), vonMs=Math.round(fenster.von||bisMs-tage*864e5);
-    const teile=(opt.teile||TEILE[reiter]||[]).filter(t=>!(nurFehlende&&(teilFrisch(t,schl)||(laedtTeil.has(t)&&laedtMit[t]===schl))));
+    const teile=(opt.teile||TEILE[reiter]||[]).filter(t=>!zoomGedeckt(t)&&!(nurFehlende&&(teilFrisch(t,schl)||(laedtTeil.has(t)&&laedtMit[t]===schl))));
     const restLaden=()=>{
       if(opt.still||opt.rest===false||!aktiv()) return;
       const rest=ALLE_TEILE.filter(t=>!(TEILE[reiter]||[]).includes(t));
@@ -2248,6 +2254,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         const nurNeu=!!d;
         if(!d){d={}; FELDER[t].forEach(k=>{if(v[k]!==undefined)d[k]=v[k]})}
         Object.assign(ROH,d); geladen[t]=schl; teilZeit[t]=Date.now();
+        deckt[t]=vollMinuten(t,j,d)?{von:vonMs,bis:bisMs}:null;
         neuStand[t]=neuMoeglich(t,j,d)?{schl,bis:bisMs,ganz:nurNeu?st.ganz:jetztL}:null;
         if(!zoom) cacheSchreiben(schl,t,d);
         logD(`Verlauf ${t}${nurNeu?" (nur das Neue)":""}: ${Math.round(performance.now()-uhr)} ms`+(j.dauer&&j.dauer[t]!=null?` (Google ${j.dauer[t]} ms`+({1:", Minutenwerte",5:", 5-Minuten-Werte",60:", Stundenwerte"}[j.aufloesung]||"")+")":""));
