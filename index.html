@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 17:45</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 18:10</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3674,7 +3674,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const f=(c,x,kl)=>`<span${kl?` class="${kl}"`:""} style="color:${c};font-weight:600">${x}</span>`;
     const muster=(id,f,w=45)=>`<pattern id="${id}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(${w})"><rect width="4" height="4" fill="${f}" fill-opacity=".22"/><line x1="0" y1="0" x2="0" y2="4" stroke="${f}" stroke-width="1.4" stroke-opacity=".75"/></pattern>`;
     const vlLeg=(hk,c,id,n,tt,w)=>`<span data-hl="${hk}" style="color:${c};font-weight:600" title="${tt}"><svg width="11" height="11" style="vertical-align:-1px;margin-right:4px"><defs>${muster(id,c,w)}</defs><rect width="11" height="11" rx="2" fill="url(#${id})"/></svg>${n}</span>`;
-    $("ebLegend").innerHTML=`<span><b style="color:var(--fg);font-family:inherit;font-weight:700">P</b>&nbsp;Produktion (PV)</span><span><b style="color:var(--fg);font-family:inherit;font-weight:700">V</b>&nbsp;Verbrauch (Haus)</span>`+[["PV direkt im Haus",T.direkt,"direkt"],["Batterie (laden / entladen)",T.batt,"batt"],["Einspeisung",T.ein,"ein"],["Netzbezug",T.netz,"netz"]].map(([n,c,k])=>`<span data-hl="${k}" style="color:${c};font-weight:600">${n}</span>`).join("")+`${vlLeg("vl",T.vl,"ebVerlL","Verluste Wechselrichter","Grau schraffiert, oben auf beiden Säulen: alles, was hineinkommt (PV, Batterie entladen, Netzbezug), minus alles, was herausgeht (Haus, Batterie laden, Einspeisung) = Umwandlung im Wechselrichter.")}${vlLeg("vlb",T.batt,"ebVerlBL","Verluste Batterie","Grün schraffiert, im grünen Teil der P-Säule: was in der Batterie selbst verloren ging (geladen − entladen − Änderung Ladestand). Höchstens so viel, wie am Tag geladen wurde; Maus auf «Verluste» unten zeigt alle Werte.",-45)}`;
+    $("ebLegend").innerHTML=`<span><b style="color:var(--fg);font-family:inherit;font-weight:700">P</b>&nbsp;Produktion (PV)</span><span><b style="color:var(--fg);font-family:inherit;font-weight:700">V</b>&nbsp;Verbrauch (Haus)</span>`+[["PV direkt im Haus",T.direkt,"direkt"],["Batterie (laden / entladen)",T.batt,"batt"],["Einspeisung",T.ein,"ein"],["Netzbezug",T.netz,"netz"]].map(([n,c,k])=>`<span data-hl="${k}" style="color:${c};font-weight:600">${n}</span>`).join("")+`${vlLeg("vl",T.vl,"ebVerlL","Verluste Wechselrichter","Grau schraffiert, oben auf beiden Säulen: alles, was hineinkommt (PV, Batterie entladen, Netzbezug), minus alles, was herausgeht (Haus, Batterie laden, Einspeisung) = Umwandlung im Wechselrichter.")}${vlLeg("vlb",T.batt,"ebVerlBL","Verluste Batterie","Grün schraffiert, oben auf der P-Säule (unter den Wechselrichter-Verlusten): was in der Batterie selbst verloren ging (geladen − entladen − Änderung Ladestand). Höchstens so viel, wie am Tag geladen wurde; Maus auf «Verluste» unten zeigt alle Werte.",-45)}`;
     if(!tage.length){svg.innerHTML="";$("readoutEB").textContent="Noch keine Tageswerte.";giltSetzen("chartEB","");return}
     giltSetzen("chartEB",jahre?new Date(tage[0].t).getFullYear()+(tage.length>1?"–"+jetzt0.getFullYear():""):monate?MON[new Date(tage[0].t).getMonth()]+"–"+MON[jetzt0.getMonth()]+" "+jetzt0.getFullYear():spanTage(tage[0].t,tage[tage.length-1].t));
     const max=Math.max(1,...tage.map(d=>Math.max(d.pv,d.haus))), step=niceStep(max,4), top=Math.ceil(max/step)*step;
@@ -3687,8 +3687,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const jede=Math.max(1,Math.ceil(n/(W<520?5:10))), heute=mitternacht(Date.now());
     tage.forEach((d,i)=>{const cx=Lb+sp*i+sp/2;
       g+=`<rect class="ebsel" data-i="${i}" x="${(Lb+sp*i+1).toFixed(1)}" y="${Tb}" width="${(sp-2).toFixed(1)}" height="${(H-Tb-Bb+30).toFixed(1)}" rx="5" fill="var(--muted)" opacity="0"/>`;   // Hintergrund des gewählten Tages
-      // P: Batterie-Verlust (intern) aus dem grünen Teil herausgenommen, höchstens so viel wie geladen → Säule bleibt = PV (Stephan 10.11.2026)
-      saeule(cx-gap/2-bw,[[d.direkt,C.direkt,"direkt"],[d.lad-d.biS,C.batt,"batt"],[d.biS,"url(#ebVerlB)","vlb"],[d.ein,C.ein,"ein"],[d.vlP,"url(#ebVerl)","vl"]]);
+      // P: Batterie-Verlust (intern) aus dem grünen Teil herausgenommen, höchstens so viel wie geladen → Säule bleibt = PV (Stephan 10.11.2026); alle Verluste ganz oben (Stephan 13.11.2026)
+      saeule(cx-gap/2-bw,[[d.direkt,C.direkt,"direkt"],[d.lad-d.biS,C.batt,"batt"],[d.ein,C.ein,"ein"],[d.biS,"url(#ebVerlB)","vlb"],[d.vlP,"url(#ebVerl)","vl"]]);
       saeule(cx+gap/2,[[d.direkt,C.direkt,"direkt"],[d.entH,C.batt,"batt"],[d.bez,C.netz,"netz"],[d.vlE,"url(#ebVerl)","vl"]]);   // V: Batterie = was im Haus ankam, schraffiert = Entladeverluste
       // Kennbuchstaben unter jeder Säule: P = Produktion, V = Verbrauch
       const fs=bw>=11?10:8.5;
