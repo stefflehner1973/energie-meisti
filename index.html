@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 12:41</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 17:04</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2147,6 +2147,34 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     }
   }
 
+  /* Nur das Neue nachladen (seit 13.11.2026, Stephan): Bei Minutenwerten (1 h, Tag, 24 h) holt die Seite nach dem ersten ganzen Laden
+     jede Minute nur noch die Werte seit dem letzten Mal (mit etwas Überlappung, Google-Skript ab Stand (48): «ab») und hängt sie an,
+     statt die ganzen 24 Stunden neu zu holen. Ganz neu geladen wird weiterhin: beim Öffnen, bei anderem Zeitraum oder Zoom, nach
+     einer Pause über 10 Minuten, alle 15 Minuten zur Sicherheit, und wenn Google die Werte zusammenfasst (mehr als 1500 Punkte).
+     Ein älteres Google-Skript kennt «ab» nicht und schickt einfach alles – dann läuft es wie bisher. */
+  const NEU_RAND={mess:3*6e4,fronius:3*6e4,ma:30*6e4};   // Überlappung: Mobile Alerts werden bis ~20 min nach der Messung gespeichert
+  const NEU_GANZ=15*6e4, NEU_LUECKE=10*6e4, NEU_PUNKTE=1500;
+  const neuStand={};   // je Teil: {schl, bis, ganz} = bis wohin geladen, wann zuletzt ganz
+  const neuReihen=(t,v)=>t==="mess"?[v.temp,v.boiler,v.wp]:t==="fronius"?[v.fronius]:(v.ma||[]);
+  function neuMoeglich(t,j,v){   // darf beim nächsten Mal nur das Neue geholt werden? Nur bei Minutenwerten, die Google nicht zusammengefasst hat
+    if(zoom||j.aufloesung!==1) return false;
+    const r=neuReihen(t,v), grenze=t==="ma"?Math.max(50,Math.floor(NEU_PUNKTE/Math.max(1,r.length))):NEU_PUNKTE;
+    return r.length>0&&r.every(x=>x&&Array.isArray(x.rows)&&x.roh===x.rows.length&&x.rows.length<grenze-5);
+  }
+  // alte Reihe (ab «von», bis vor den ersten neuen Wert) + neue Werte
+  function neuAnhaengen(alt,neu,von){
+    const a=(alt&&alt.rows)||[], n=(neu&&neu.rows)||[], ab=n.length?n[0][0]:Infinity, rows=a.filter(r=>r[0]>=von&&r[0]<ab).concat(n);
+    return Object.assign({},alt||{},neu||{},{roh:rows.length,rows});
+  }
+  function neuZusammen(t,v,von){   // Antwort «nur das Neue» mit dem Vorhandenen (ROH) zusammensetzen; gibt null, wenn das nicht sauber geht
+    const d={};
+    if(t==="mess"){ ["temp","boiler","wp"].forEach(k=>{d[k]=neuAnhaengen(ROH[k],v[k],von)}); ["k14","lm","th"].forEach(k=>{if(v[k]!==undefined)d[k]=v[k]}) }
+    else if(t==="fronius") d.fronius=neuAnhaengen(ROH.fronius,v.fronius,von);
+    else{ const alt=ROH.ma||[], neu=v.ma||[]; if(neu.some(x=>!alt.some(y=>y.id===x.id))) return null;   // neuer Sensor: Reihenfolge unklar → ganz laden
+      d.ma=alt.map(y=>neuAnhaengen(y,neu.find(x=>x.id===y.id),von)) }
+    return d;
+  }
+
   let ladeNr=0;
   function laden(an){
     ["histPanel"].forEach(id=>$(id).classList.toggle("laedt",an));
@@ -2196,14 +2224,25 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     let fehler=null;
     await Promise.all(teile.map(async t=>{
       const nr=teilNr[t]=(teilNr[t]||0)+1, uhr=performance.now(); laedtMit[t]=schl;
+      // nur das Neue? (gleicher Zeitraum schon ganz da, kurz her, noch nicht 15 min seit dem letzten ganzen Laden)
+      const st=neuStand[t], jetztL=Date.now();
+      const ab=(!opt.ganz&&!zoom&&st&&st.schl===schl&&geladen[t]===schl&&bisMs>st.bis&&bisMs-st.bis<NEU_LUECKE&&jetztL-st.ganz<NEU_GANZ
+        &&FELDER[t].every(k=>ROH[k]!==undefined)&&st.bis-NEU_RAND[t]>vonMs)?st.bis-NEU_RAND[t]:0;
       try{
-        const j=await api({art:"verlauf",teil:t,von:String(vonMs),bis:String(bisMs),tage:String(abfrageTage),punkte:"1500"});
+        let j=await api(Object.assign({art:"verlauf",teil:t,von:String(vonMs),bis:String(bisMs),tage:String(abfrageTage),punkte:"1500"},ab?{ab:String(ab)}:{}));
         if(nr!==teilNr[t]||schl!==ladeSchluessel()) return;   // inzwischen anderer Zeitraum gewählt
-        const v=j.verlauf||{}, d={};
-        FELDER[t].forEach(k=>{if(v[k]!==undefined)d[k]=v[k]});
+        let v=j.verlauf||{}, d=null;
+        if(j.ab){   // Google hat nur das Neue geschickt: anhängen
+          d=ab&&j.ab===ab&&j.aufloesung===1?neuZusammen(t,v,vonMs):null;
+          if(!d){ j=await api({art:"verlauf",teil:t,von:String(vonMs),bis:String(bisMs),tage:String(abfrageTage),punkte:"1500"});   // geht nicht sauber: ganz holen
+            if(nr!==teilNr[t]||schl!==ladeSchluessel()) return; v=j.verlauf||{} }
+        }
+        const nurNeu=!!d;
+        if(!d){d={}; FELDER[t].forEach(k=>{if(v[k]!==undefined)d[k]=v[k]})}
         Object.assign(ROH,d); geladen[t]=schl; teilZeit[t]=Date.now();
+        neuStand[t]=neuMoeglich(t,j,d)?{schl,bis:bisMs,ganz:nurNeu?st.ganz:jetztL}:null;
         if(!zoom) cacheSchreiben(schl,t,d);
-        logD(`Verlauf ${t}: ${Math.round(performance.now()-uhr)} ms`+(j.dauer&&j.dauer[t]!=null?` (Google ${j.dauer[t]} ms`+({1:", Minutenwerte",5:", 5-Minuten-Werte",60:", Stundenwerte"}[j.aufloesung]||"")+")":""));
+        logD(`Verlauf ${t}${nurNeu?" (nur das Neue)":""}: ${Math.round(performance.now()-uhr)} ms`+(j.dauer&&j.dauer[t]!=null?` (Google ${j.dauer[t]} ms`+({1:", Minutenwerte",5:", 5-Minuten-Werte",60:", Stundenwerte"}[j.aufloesung]||"")+")":""));
       }catch(e){ if(nr===teilNr[t]) fehler=e; }
       finally{
         if(nr===teilNr[t]){laedtTeil.delete(t); laedtSicht.delete(t); laden(vorneLaedt()); zuschneiden(); drawAll()}
