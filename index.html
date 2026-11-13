@@ -1186,7 +1186,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 09:50</span></summary>
+      <summary>Verbindung <span class="sub">· Version 13.11.26 09:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1603,6 +1603,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   // Beim Darüberfahren: Ausgang ein/aus zur Zeit t und – wenn bekannt – weshalb eingeschaltet (Protokoll der Steuerung; Stephan 05.11.2026)
   const K14_NAMEN=["Boiler SPERREN","Boiler MANUELL","WP ABSENKEN"];
+  const k14Ein=i=>i===2?"Abgesenkt":"ein";   // WP ABSENKEN: «Abgesenkt» statt «ein» (Stephan 13.11.2026)
   function k14Erklaeren(t){
     const svg=$("chartK"); if(!svg) return;
     svg.querySelectorAll(".k14txt").forEach(z=>{const i=+z.dataset.i;
@@ -1621,8 +1622,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(!gr&&ch&&ch.handSeit&&Math.abs(ch.handSeit-a)<=10*6e4) gr="von Hand geschaltet";
       if(!gr&&ch&&ch.ist===1&&bis==="jetzt"&&ch.grund&&!/^nur bei Bedarf|^nicht gesteuert/.test(ch.grund)) gr=String(ch.grund);
       if(gr) gr=gr.split(" (danach")[0]; if(gr&&i===2) gr=gr.split(" → ")[0];
-      z.textContent=` · ein ${zt(a)}–${bis}${gr?" · "+(i===0||i===1?"Automatik: ":"")+gr:" · Grund nicht aufgezeichnet (älter als das Protokoll)"}`;
-      if(/^von Hand/.test(gr)) z.textContent=` · ein ${zt(a)}–${bis} · von Hand geschaltet`;
+      z.textContent=` · ${k14Ein(i)} ${zt(a)}–${bis}${gr?" · "+(i===0||i===1?"Automatik: ":"")+gr:" · Grund nicht aufgezeichnet (älter als das Protokoll)"}`;
+      if(/^von Hand/.test(gr)) z.textContent=` · ${k14Ein(i)} ${zt(a)}–${bis} · von Hand geschaltet`;
     });
   }
   function k14Linie(t){
