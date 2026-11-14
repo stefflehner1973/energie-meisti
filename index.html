@@ -345,6 +345,7 @@ svg .hit{cursor:crosshair;touch-action:pan-y}
 #readoutEB b{color:var(--fg);font-weight:700}
 /* Legende: Maus über einen Eintrag hebt die Kurve bzw. die Balken im Diagramm hervor, der Rest wird blass */
 svg.hl [data-hl]:not(.hlon){opacity:.15}
+svg.hl [data-hl].hlhalb:not(.hlon){opacity:.5}
 svg [data-hl]{transition:opacity .15s}
 svg.hl .hlon .lp,svg.hl path.lp.hlon{stroke-width:3.2px;stroke-opacity:1}
 .legend [data-hl]{cursor:pointer;border-radius:4px}
@@ -1187,7 +1188,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 14.11.26 11:19</span></summary>
+      <summary>Verbindung <span class="sub">· Version 14.11.26 11:48</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3736,7 +3737,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const ro=$("readoutEB"); ro.onmouseenter=()=>clearTimeout(zur);
     // Werte in der Zeile unten: Maus darauf hebt den passenden Teil der P- bzw. V-Säule des gezeigten Tages hervor (Stephan 14.11.2026; Verluste: wie bisher der Kasten)
     const ebHl=sp=>{const [sd,...ks]=sp?sp.dataset.ebh.split(" "):[], lk=svg.dataset.hlk;svg.classList.toggle("hl",!!sp||lk!=null);   // danach wieder wie in der Legende gewählt
-      svg.querySelectorAll("[data-hl]").forEach(e=>e.classList.toggle("hlon",sp?e.dataset.s===sd&&+e.dataset.i===ebI&&ks.includes(e.dataset.hl):lk!=null&&e.dataset.hl===lk));
+      svg.querySelectorAll("[data-hl]").forEach(e=>{const gl=!!sp&&e.dataset.s===sd&&ks.includes(e.dataset.hl);   // gleicher Teil an den anderen Tagen: etwas hervorgehoben (Stephan 14.11.2026)
+        e.classList.toggle("hlon",sp?gl&&+e.dataset.i===ebI:lk!=null&&e.dataset.hl===lk); e.classList.toggle("hlhalb",gl&&+e.dataset.i!==ebI)});
       ro.querySelectorAll("[data-ebh]").forEach(e=>e.classList.toggle("hlon",e===sp))};
     ro.onmouseover=e=>{const sp=e.target.closest&&e.target.closest("[data-ebh]");if(sp)ebHl(sp)};
     ro.onmouseout=e=>{const sp=e.target.closest&&e.target.closest("[data-ebh]");if(sp&&!sp.contains(e.relatedTarget))ebHl(null)}; ro.onmouseleave=()=>{clearTimeout(zur);zur=setTimeout(zurueck,400)};
