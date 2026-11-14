@@ -352,6 +352,7 @@ svg.hl .hlon .lp,svg.hl path.lp.hlon{stroke-width:3.2px;stroke-opacity:1}
 /* Zeile unter der Energiebilanz als Tabelle: gleiche Angaben untereinander, Verluste unter Haus */
 .ebtab{display:grid;grid-template-columns:auto auto auto auto auto auto;justify-content:start;column-gap:10px;row-gap:2px;white-space:nowrap}
 .ebtab .pf{color:var(--muted)}
+.ebtab [data-ebh]{cursor:default;border-radius:4px}.ebtab [data-ebh].hlon{background:color-mix(in srgb,var(--muted) 14%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--muted) 14%,transparent)}
 .vltip{position:relative;cursor:help;text-decoration:underline dotted;text-underline-offset:3px;outline:none}
 .vltip .vlbox{display:none;position:absolute;left:0;bottom:calc(100% + 6px);z-index:20;width:min(400px,calc(100vw - 90px));padding:9px 11px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:.78rem;line-height:1.4;font-weight:400;white-space:normal;box-shadow:0 4px 14px rgba(0,0,0,.25);text-decoration:none;cursor:default}
 .vltip:hover .vlbox,.vltip:focus .vlbox,.vltip:focus-within .vlbox{display:block}
@@ -1186,7 +1187,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 13.11.26 18:10</span></summary>
+      <summary>Verbindung <span class="sub">· Version 14.11.26 11:19</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3671,7 +3672,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
     const C={direkt:"var(--c-pv)",batt:"var(--c-batt)",ein:"var(--c-einsp)",netz:"var(--c-bezug)"};
     const T={direkt:"var(--warm-t)",batt:"var(--c-batt)",ein:"var(--c-einsp)",netz:"var(--c-bezug)",vl:"var(--muted)"};   // Schriftfarben (Orange/Blau dunkler, besser lesbar)
-    const f=(c,x,kl)=>`<span${kl?` class="${kl}"`:""} style="color:${c};font-weight:600">${x}</span>`;
+    const f=(c,x,kl,hh)=>`<span${kl?` class="${kl}"`:""}${hh?` data-ebh="${hh}"`:""} style="color:${c};font-weight:600">${x}</span>`;
     const muster=(id,f,w=45)=>`<pattern id="${id}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(${w})"><rect width="4" height="4" fill="${f}" fill-opacity=".22"/><line x1="0" y1="0" x2="0" y2="4" stroke="${f}" stroke-width="1.4" stroke-opacity=".75"/></pattern>`;
     const vlLeg=(hk,c,id,n,tt,w)=>`<span data-hl="${hk}" style="color:${c};font-weight:600" title="${tt}"><svg width="11" height="11" style="vertical-align:-1px;margin-right:4px"><defs>${muster(id,c,w)}</defs><rect width="11" height="11" rx="2" fill="url(#${id})"/></svg>${n}</span>`;
     $("ebLegend").innerHTML=`<span><b style="color:var(--fg);font-family:inherit;font-weight:700">P</b>&nbsp;Produktion (PV)</span><span><b style="color:var(--fg);font-family:inherit;font-weight:700">V</b>&nbsp;Verbrauch (Haus)</span>`+[["PV direkt im Haus",T.direkt,"direkt"],["Batterie (laden / entladen)",T.batt,"batt"],["Einspeisung",T.ein,"ein"],["Netzbezug",T.netz,"netz"]].map(([n,c,k])=>`<span data-hl="${k}" style="color:${c};font-weight:600">${n}</span>`).join("")+`${vlLeg("vl",T.vl,"ebVerlL","Verluste Wechselrichter","Grau schraffiert, oben auf beiden Säulen: alles, was hineinkommt (PV, Batterie entladen, Netzbezug), minus alles, was herausgeht (Haus, Batterie laden, Einspeisung) = Umwandlung im Wechselrichter.")}${vlLeg("vlb",T.batt,"ebVerlBL","Verluste Batterie","Grün schraffiert, oben auf der P-Säule (unter den Wechselrichter-Verlusten): was in der Batterie selbst verloren ging (geladen − entladen − Änderung Ladestand). Höchstens so viel, wie am Tag geladen wurde; Maus auf «Verluste» unten zeigt alle Werte.",-45)}`;
@@ -3682,14 +3683,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     let g=`<defs>${muster("ebVerl","var(--muted)")}${muster("ebVerlB","var(--c-batt)",-45)}</defs>`;
     for(let v=0;v<=top+1e-9;v+=step){const y=Y(v).toFixed(1);g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${Lb-8}" y="${(+y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${v}</text>`}
     g+=`<text x="4" y="12" font-size="11" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">kWh</text>`;
-    const saeule=(x,teile)=>{let y0=Y(0);teile.forEach(([v,c,hk],i)=>{const h=Y(0)-Y(v);if(h<=0.3)return;const y=y0-h, oben=teile.slice(i+1).every(([w])=>w<=0.001);
-      g+=oben?`<path data-hl="${hk}" d="M${x.toFixed(1)},${y0.toFixed(1)} V${(y+2).toFixed(1)} q0,-2 2,-2 H${(x+bw-2).toFixed(1)} q2,0 2,2 V${y0.toFixed(1)} Z" fill="${c}"/>`:`<rect data-hl="${hk}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h-1.5).toFixed(1)}" fill="${c}"/>`;y0=y})};
+    const saeule=(x,teile,sd,ix)=>{let y0=Y(0);const da=` data-s="${sd}" data-i="${ix}"`;teile.forEach(([v,c,hk],i)=>{const h=Y(0)-Y(v);if(h<=0.3)return;const y=y0-h, oben=teile.slice(i+1).every(([w])=>w<=0.001);
+      g+=oben?`<path data-hl="${hk}"${da} d="M${x.toFixed(1)},${y0.toFixed(1)} V${(y+2).toFixed(1)} q0,-2 2,-2 H${(x+bw-2).toFixed(1)} q2,0 2,2 V${y0.toFixed(1)} Z" fill="${c}"/>`:`<rect data-hl="${hk}"${da} x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h-1.5).toFixed(1)}" fill="${c}"/>`;y0=y})};
     const jede=Math.max(1,Math.ceil(n/(W<520?5:10))), heute=mitternacht(Date.now());
     tage.forEach((d,i)=>{const cx=Lb+sp*i+sp/2;
       g+=`<rect class="ebsel" data-i="${i}" x="${(Lb+sp*i+1).toFixed(1)}" y="${Tb}" width="${(sp-2).toFixed(1)}" height="${(H-Tb-Bb+30).toFixed(1)}" rx="5" fill="var(--muted)" opacity="0"/>`;   // Hintergrund des gewählten Tages
       // P: Batterie-Verlust (intern) aus dem grünen Teil herausgenommen, höchstens so viel wie geladen → Säule bleibt = PV (Stephan 10.11.2026); alle Verluste ganz oben (Stephan 13.11.2026)
-      saeule(cx-gap/2-bw,[[d.direkt,C.direkt,"direkt"],[d.lad-d.biS,C.batt,"batt"],[d.ein,C.ein,"ein"],[d.biS,"url(#ebVerlB)","vlb"],[d.vlP,"url(#ebVerl)","vl"]]);
-      saeule(cx+gap/2,[[d.direkt,C.direkt,"direkt"],[d.entH,C.batt,"batt"],[d.bez,C.netz,"netz"],[d.vlE,"url(#ebVerl)","vl"]]);   // V: Batterie = was im Haus ankam, schraffiert = Entladeverluste
+      saeule(cx-gap/2-bw,[[d.direkt,C.direkt,"direkt"],[d.lad-d.biS,C.batt,"batt"],[d.ein,C.ein,"ein"],[d.biS,"url(#ebVerlB)","vlb"],[d.vlP,"url(#ebVerl)","vl"]],"P",i);
+      saeule(cx+gap/2,[[d.direkt,C.direkt,"direkt"],[d.entH,C.batt,"batt"],[d.bez,C.netz,"netz"],[d.vlE,"url(#ebVerl)","vl"]],"V",i);   // V: Batterie = was im Haus ankam, schraffiert = Entladeverluste
       // Kennbuchstaben unter jeder Säule: P = Produktion, V = Verbrauch
       const fs=bw>=11?10:8.5;
       g+=`<text x="${(cx-gap/2-bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">P</text><text x="${(cx+gap/2+bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">V</text>`;
@@ -3723,15 +3724,22 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       else if(v.spr>=0.2) box+=`<div class="vln">≈ Ladestand der Batterie hat gesprungen (die BYD korrigiert ihn ab und zu) – Batterie-Verlust an diesem Tag nur ungefähr, über mehrere Tage gleicht es sich aus.</div>`;
       else if(unsicher) box+=`<div class="vln">≈ Ladestand der Batterie ungenau – Batterie-Verlust an diesem Tag nur ungefähr, über mehrere Tage gleicht es sich aus.</div>`;
       return `<span class="vl vltip" tabindex="0" style="color:${T.vl};font-weight:600">Verluste ${ca}${k(tot)}&nbsp;kWh${gp(tot)}<span class="vlbox" role="tooltip">${box}</span></span>`};
-    const zeig=(d,m=true)=>{markiere(m?tage.indexOf(d):-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":"");$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.lad),"b")}${f(T.ein,"Einspeisung "+k(d.ein),"a3")}`+
+    let ebI=tage.length-1;   // Tag, der unten in der Zeile steht
+    const zeig=(d,m=true)=>{ebI=tage.indexOf(d);markiere(m?ebI:-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":"");$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a","P direkt")}${f(T.batt,"Batterie "+k(d.lad),"b","P batt vlb")}${f(T.ein,"Einspeisung "+k(d.ein),"a3","P ein")}`+
       vlZeile(d)+
-      `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a")}${f(T.batt,"Batterie "+k(d.entH),"b")}${f(T.netz,"Netzbezug "+k(d.bez),"a3")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
+      `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a","V direkt")}${f(T.batt,"Batterie "+k(d.entH),"b","V batt")}${f(T.netz,"Netzbezug "+k(d.bez),"a3","V netz")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
     let fest=null, zur=null;   // fest = angeklickter Tag
     const zurueck=()=>{zur=null; fest&&tage.includes(fest)?zeig(fest):zeig(tage[tage.length-1],false)};
     svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>{clearTimeout(zur);zeig(d)});h.addEventListener("click",()=>{fest=d;zeig(d)})});
     zeig(tage[tage.length-1],false);
     svg.onmouseleave=()=>{clearTimeout(zur);zur=setTimeout(zurueck,400)};   // Maus weg: wieder heute (bzw. angeklickter Tag); kurz warten, damit man zur Zeile «Verluste» fahren kann
-    const ro=$("readoutEB"); ro.onmouseenter=()=>clearTimeout(zur); ro.onmouseleave=()=>{clearTimeout(zur);zur=setTimeout(zurueck,400)};
+    const ro=$("readoutEB"); ro.onmouseenter=()=>clearTimeout(zur);
+    // Werte in der Zeile unten: Maus darauf hebt den passenden Teil der P- bzw. V-Säule des gezeigten Tages hervor (Stephan 14.11.2026; Verluste: wie bisher der Kasten)
+    const ebHl=sp=>{const [sd,...ks]=sp?sp.dataset.ebh.split(" "):[], lk=svg.dataset.hlk;svg.classList.toggle("hl",!!sp||lk!=null);   // danach wieder wie in der Legende gewählt
+      svg.querySelectorAll("[data-hl]").forEach(e=>e.classList.toggle("hlon",sp?e.dataset.s===sd&&+e.dataset.i===ebI&&ks.includes(e.dataset.hl):lk!=null&&e.dataset.hl===lk));
+      ro.querySelectorAll("[data-ebh]").forEach(e=>e.classList.toggle("hlon",e===sp))};
+    ro.onmouseover=e=>{const sp=e.target.closest&&e.target.closest("[data-ebh]");if(sp)ebHl(sp)};
+    ro.onmouseout=e=>{const sp=e.target.closest&&e.target.closest("[data-ebh]");if(sp&&!sp.contains(e.relatedTarget))ebHl(null)}; ro.onmouseleave=()=>{clearTimeout(zur);zur=setTimeout(zurueck,400)};
   }
   function zeichnePreise(){
     const p=preise(), t=$("gPreisTab"); if(t.dataset.offen==="1") return;
