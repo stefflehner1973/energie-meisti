@@ -1188,7 +1188,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 07:58</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 08:40</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -4188,8 +4188,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     thLaeuft=true;
     try{ await steuerSenden(daten,ok,undefined,undefined,ui); }finally{ thLaeuft=false; if(knopf){knopf.innerHTML=alt.html; knopf.disabled=alt.dis} }   // Knopf immer zurücksetzen (feste Knöpfe werden nicht neu gezeichnet)
     if(!$(ui.box).hidden){ m.textContent="Bitte Schalt-PIN eingeben – danach wird es ausgeführt."; $(ui.box).scrollIntoView({block:"center",behavior:"smooth"}); $(ui.pin).focus({preventScroll:true}); }
-    else { const t=$(ui.msg).textContent; $(ui.msg).textContent=""; const fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":"✓ ")+t:""; m.hidden=!t;
-      if(!fehler){const jetzt=m.textContent; setTimeout(()=>{if(m.textContent===jetzt) m.hidden=true},8000)} }
+    else { const t=$(ui.msg).textContent; $(ui.msg).textContent=""; const fehler=/Fehler|falsch|Keine Antwort|ungültig|gesperrt/i.test(t); m.textContent=t?(fehler?"⚠ ":/^Google antwortet langsam/.test(t)?"⏳ ":"✓ ")+t:""; m.hidden=!t;
+      if(!fehler){const jetzt=m.textContent; setTimeout(()=>{if(m.textContent===jetzt) m.hidden=true},/^⏳/.test(jetzt)?120e3:8000)} }
     if(STEU) zeichneSteuerung();
   }
   function zeichneThermo(){
@@ -4230,7 +4230,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const regel=th.genau?`Komfort unter ${dez(th.soll)}, abgesenkt über ${dez(th.soll)} °C`:`Komfort bei ${dez(th.frei)} °C und tiefer, abgesenkt bei ${dez(th.abs)} °C und höher`;
     const wp=st.ch&&st.ch[2], istT=wp&&wp.ist===1?"abgesenkt":wp&&wp.ist===0?"Komfort":"–";
     const MN=["Komfort","Abgesenkt","Auswärts"], q={zeitplan:"Zeitplan",vorheizen:"Vorheizen nach Zeitplan",abweichung:"Abweichung",auswärts:cth.ausBis?"bis "+fDay(cth.ausBis)+" "+fTime(cth.ausBis):"bis du zurückstellst"}[th.quelle]||"";
-    const naechst=th.wechsel?` · ${th.mod===0?"Abgesenkt":"Komfort"} ab ${fDay(th.wechsel)===fDay(Date.now())?"":fDay(th.wechsel)+" "}${fTime(th.wechsel)}${th.quelle==="auswärts"?" (Vorheizen)":""}`:"";
+    // nächster echter Wechsel («danach», Google-Skript ab Stand 50); bei älterem Skript wie bisher «wechsel»
+    const nx="danach" in th?(th.danach&&{zeit:th.danach.zeit,mod:th.danach.mod}):th.wechsel&&{zeit:th.wechsel,mod:th.mod===0?1:0};
+    const naechst=nx&&nx.zeit?` · ${th.quelle==="auswärts"?"Komfort":MN[nx.mod]} ab ${fDay(nx.zeit)===fDay(Date.now())?"":fDay(nx.zeit)+" "}${fTime(nx.zeit)}${th.quelle==="auswärts"?" (Vorheizen)":""}`:"";
     $("thStatus").innerHTML=(typeof th.mod==="number"?`<b class="tc-wp">${MN[th.mod]}</b> (${q})${naechst}<br>`:"")+`${raum} · ${soll} · WP jetzt <b>${istT}</b><br><span class="sub" style="text-transform:none;letter-spacing:0">${regel}</span>`;
     const ab=$("thAbw"); ab.innerHTML="";
     if((cth.betrieb||"plan")==="plan"&&typeof th.mod==="number"){
@@ -4598,13 +4600,25 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   }
   // Änderungen senden (Zugriffsschlüssel + PIN, wie beim Schalten)
   const UI_S={box:"sPinBox",pin:"sPin",merk:"sMerk",msg:"sMeldung"}, UI_U={box:"uePinBox",pin:"uePin",merk:"ueMerk",msg:"ueMeldung"}, UI_T={box:"tPinBox",pin:"tPin",merk:"tMerk",msg:"tMeldung"}, UI_G={box:"gPinBox",pin:"gPin",merk:"gMerk",msg:"gMeldung"};
+  const STEU_WARTE=()=>window.TB_STEU_WARTE||30e3;   // ms; TB_STEU_WARTE nur für die Prüfungen
   async function steuerSenden(daten,ok,pin,merken,ui){
     ui=ui||UI_S; pin=pin||pinGemerkt();
     if(!pin){steuWartet={daten,ok,ui};$(ui.box).hidden=false;$(ui.msg).textContent="Bitte Schalt-PIN eingeben.";$(ui.pin).focus();return}
     $(ui.msg).textContent="speichert …";
-    let j=null;
-    try{const r=await fetch(cfg.histurl.trim(),{method:"POST",body:JSON.stringify(Object.assign({art:"steuerung",token:cfg.histtok,pin},daten))});j=JSON.parse(await r.text())}
-    catch(e){j={ok:false,error:"Keine Antwort von der Web-App."}}
+    let j=null, zuLang=false;
+    // Höchstens STEU_WARTE warten (Stephan 15.11.2026: Ladeanzeige blieb sehr lange stehen). Google speichert den Auftrag sofort
+    // und schaltet danach (wartet dafür u. U. auf das laufende Messen); dauert die Antwort zu lange, Stand neu laden statt weiter warten.
+    const ctl=typeof AbortController==="function"?new AbortController():null, uhr=setTimeout(()=>{zuLang=true; if(ctl) ctl.abort()},STEU_WARTE());
+    try{const r=await fetch(cfg.histurl.trim(),{method:"POST",signal:ctl?ctl.signal:undefined,body:JSON.stringify(Object.assign({art:"steuerung",token:cfg.histtok,pin},daten))});j=JSON.parse(await r.text())}
+    catch(e){j=zuLang?{ok:false,langsam:true}:{ok:false,error:"Keine Antwort von der Web-App."}}
+    finally{clearTimeout(uhr)}
+    if(j&&j.langsam){
+      $(ui.box).hidden=true; steuWartet=null;
+      await ladeSteuerung(true,true);
+      setTimeout(()=>ladeSteuerung(true,true),60e3);   // nach einer Minute nochmals: dann ist meist auch geschaltet
+      $(ui.msg).textContent="Google antwortet langsam – der Auftrag ist unterwegs. Anzeige neu geladen, in 1–2 Minuten ist alles nachgeführt.";
+      return;
+    }
     if(j&&j.ok&&j.cfg){
       if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
       STEU=j; steuZeit=Date.now(); try{localStorage.setItem("tb.steuer",JSON.stringify(j))}catch(e){} wsTempZeigen();
