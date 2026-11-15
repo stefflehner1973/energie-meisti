@@ -1209,7 +1209,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 10:34</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 10:44</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1987,14 +1987,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const AKT_IDS=["temp","pow","bKwh","aPow","wPow","soc","kChips","maGrid"];
   function aktBlass(an){const fs=new Set();AKT_IDS.forEach(i=>{const e=$(i);if(e)fs.add(e.closest(".panel")||e)});fs.forEach(e=>e.classList.toggle("veraltet",an))}
   let aktZeit=0;
-  async function update(leise){
+  async function update(leise,frisch){
     if(!cfg.histurl||!cfg.histtok){msg("Web-App-URL und Zugriffsschlüssel unter „Verbindung“ eintragen, dann erscheinen die Werte.");return}
     // 06.11.2026: zuletzt geladene Werte sofort zeigen (Alter steht bei jeder Kachel), dann frisch holen
     if(!aktGezeigt){aktGezeigt=true;try{const c=JSON.parse(localStorage.getItem("tb.akt")||"null");if(c&&c.a&&Date.now()-c.zeit<36e5*12){renderAktuell(c.a);aktBlass(true)}}catch(e){}}
     // 08.11.2026: automatisch im Hintergrund still; blass nur, wenn die Werte schon alt sind (seit 15.11.2026 über 2 statt 5 min)
     if(!leise&&aktZeit&&Date.now()-aktZeit>2*6e4) aktBlass(true);
     const bs=document.querySelectorAll(".refresh"); if(!leise) bs.forEach(b=>{b.disabled=true; b.classList.add("laeuft")});
-    try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell); aktBlass(false); aktZeit=Date.now();
+    try{const j=await api(Object.assign({art:"aktuell"},frisch?{frisch:1}:{})); renderAktuell(j.aktuell); aktBlass(false); aktZeit=Date.now();
       try{localStorage.setItem("tb.akt",JSON.stringify({zeit:Date.now(),a:j.aktuell}))}catch(e){}}
     catch(e){msg(e.message,true)}
     finally{bs.forEach(b=>{b.disabled=false; b.classList.remove("laeuft")})}
@@ -4492,6 +4492,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     else if(sp===1){z="hand";titel="Boiler gesperrt manuell";text="gilt, bis «Auswärts» beginnt"}
     else{z="frei";titel="Boiler nicht gesperrt";
       if(st&&st.o1HandEnde&&Date.now()-st.o1HandEnde<36e5*48) text="Sperre von Hand aufgehoben "+fDay(st.o1HandEnde)+" "+fTime(st.o1HandEnde)+" («Auswärts» begonnen)"}
+    const gp=k14Jetzt&&(k14Jetzt.geprueft||k14Jetzt.zeit); if(sp!==null&&gp) text+=(text?" · ":"")+"Stand "+fTime(gp);
     box.dataset.z=z; $("bSperrTitel").textContent=titel; $("bSperrText").textContent=text;
     if(bSperrLaeuft) return;
     kn.disabled=sp===null; kn.setAttribute("aria-pressed",String(sp===1)); kn.textContent="Boiler SPERREN";
@@ -4742,7 +4743,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const ALT_ANZEIGE=2*6e4, datenAlt=()=>Date.now()-letzteAbfrage>ALT_ANZEIGE;
   // Kurze Zeiträume (1 h, Tag, 24 h): alles jede Minute; lange (7 Tage … 1 Jahr, Zoom): Verläufe alle 5 Minuten
   const verlaufTakt=()=>(!zoom&&tage<=1)?6e4:5*6e4;
-  async function auffrischen(verlaufAuch,manuell){
+  async function auffrischen(verlaufAuch,manuell,frisch){
     if(laeuft) return;   // vorige Runde noch nicht fertig (Google langsam): nicht stauen
     // 08.11.2026: automatisch still im Hintergrund; Ladeanzeige nur von Hand oder beim ersten Laden
     // 15.11.2026 (Stephan): das Nachladen beim Anschauen (jede Minute) bleibt still.
@@ -4751,7 +4752,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const leise=!manuell&&letzteAbfrage>0&&!datenAlt();
     laeuft=true; letzteAbfrage=Date.now();
     try{
-      const vorne=[update(leise)];
+      const vorne=[update(leise,manuell||frisch)];   // frisch: Schaltzustand neu vom Shelly (z. B. in der Shelly-App geschaltet, Stephan 15.11.2026)
       if(reiter==="sonne"&&istHeute()) zeichneSonne();
       if(steuerReiter()) vorne.push(ladeSteuerung(true,leise));   // jede Minute, unabhängig vom Verlaufs-Zeitraum
       const wetterAlt=Date.now()-progZeit>=15*6e4;
@@ -4778,7 +4779,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   auffrischen(true);
   // jede Minute, aber nur wenn die Seite vorne ist (sichtbarer Tab und Fenster aktiv)
   setInterval(()=>{if(aktiv()) auffrischen(Date.now()-letzterVerlauf>=verlaufTakt()-5e3)},60000);
-  const zurueck=()=>{if(aktiv()&&Date.now()-letzteAbfrage>15e3) auffrischen(Date.now()-letzterVerlauf>=6e4)};
+  // Zurück auf der Seite (z. B. aus der Shelly-App): Werte und Schaltzustand frisch holen (seit 15.11.2026 schon nach 5 statt 15 s, Stephan)
+  const zurueck=()=>{if(aktiv()&&Date.now()-letzteAbfrage>5e3) auffrischen(Date.now()-letzterVerlauf>=6e4,false,true)};
   document.addEventListener("visibilitychange",zurueck);
   window.addEventListener("focus",zurueck);
 
