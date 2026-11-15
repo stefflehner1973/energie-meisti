@@ -470,6 +470,7 @@ button.bsperrknopf:disabled{opacity:.5}
 .bsperrzust[data-z=hand]{background:color-mix(in srgb,var(--c-bezug) 12%,transparent);border:2px solid var(--c-bezug);border-radius:10px;padding:10px 14px}
 .bsperrzust[data-z=hand] b{color:var(--c-bezug);font-size:1.15rem}.bsperrzust[data-z=hand] i{background:var(--c-bezug);width:14px;height:14px}.bsperrzust[data-z=hand] span{color:var(--fg)}
 .bsperrzust[data-z=auswaerts] i{background:var(--warm)}.bsperrzust[data-z=frei] i{background:var(--ok)}
+.bstat span.an.rot{border-color:var(--c-bezug)}.bstat span.an.rot i{background:var(--c-bezug)}   /* Boiler gesperrt: rot (Stephan 15.11.2026) */
 </style>
 </head>
 <body>
@@ -1209,7 +1210,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 10:44</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 10:51</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -4463,9 +4464,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const aus=!!(c&&c.th&&c.th.betrieb==="aus")&&!(ende&&Date.now()>=ende);
     let sp=st&&st.ch&&st.ch[0]?st.ch[0].ist:null, zeit=st&&st.zeit;
     if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
-    const pill=(an,txt,tip)=>`<span class="${an?"an":""}" title="${tip}"><i aria-hidden="true"></i>${txt}</span>`;
+    const pill=(an,txt,tip,rot)=>`<span class="${an?"an":""}${an&&rot?" rot":""}" title="${tip}"><i aria-hidden="true"></i>${txt}</span>`;
     box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(ende?" bis "+fDay(ende)+" "+fTime(ende):""):"Auswärts nicht aktiv",aus&&ende?"Rückkehr "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis)+"; ab "+fTime(ende)+" vorheizen, Boiler frei":"Betriebsart Raumthermostat"):"")+
-      (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"");
+      (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)",true):"");
     { // Batterie-Maximum in der Erklärung von «Batterie mindestens» (beim Darüberfahren)
       const i=document.querySelector('#bParam input[data-bp=auSoc]'), tip=i&&i.closest("label").querySelector(".tip");
       if(tip&&st){ tip.dataset.tip=(tip.dataset.basis||(tip.dataset.basis=tip.dataset.tip))+" "+(st.battMax
