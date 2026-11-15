@@ -461,6 +461,15 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 .diag{white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:360px;overflow:auto;margin:0}
 @media (prefers-reduced-motion:no-preference){#fill{transition:height .6s ease,y .6s ease}}
 .veraltet{opacity:.45;filter:grayscale(.7);transition:opacity .4s,filter .4s}
+/* Boiler sperren von Hand (Reiter Boiler, Stephan 15.11.2026) */
+button.bsperrknopf{padding:8px 16px;font-weight:700;border-radius:9px;border:2px solid var(--c-bezug);background:transparent;color:var(--c-bezug)}
+button.bsperrknopf[aria-pressed=true]{background:var(--c-bezug);color:#fff}
+button.bsperrknopf:disabled{opacity:.5}
+.bsperrzust{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:.92rem}
+.bsperrzust i{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.bsperrzust span{color:var(--muted);font-size:.85rem}
+.bsperrzust[data-z=hand] b{color:var(--c-bezug)}.bsperrzust[data-z=hand] i{background:var(--c-bezug)}
+.bsperrzust[data-z=auswaerts] i{background:var(--warm)}.bsperrzust[data-z=frei] i{background:var(--ok)}
 </style>
 </head>
 <body>
@@ -1071,6 +1080,18 @@ h3{font-size:.92rem;margin:0;font-weight:600}
   </div>
 
   <div id="tabBoiler" role="tabpanel" aria-labelledby="tabBtnBoiler" class="tabpanel" hidden>
+    <section class="panel" id="bSperrPanel">
+      <div class="uekopf"><h2 style="margin:0">Boiler sperren</h2><button type="button" class="bsperrknopf" id="bSperrKnopf" aria-pressed="false" disabled>Boiler SPERREN</button></div>
+      <div class="bsperrzust" id="bSperrZust" data-z="unbekannt" aria-live="polite"><i aria-hidden="true"></i><b id="bSperrTitel">–</b><span id="bSperrText"></span></div>
+      <p class="hint" style="margin-top:6px">Der Knopf schaltet das Relais «Boiler SPERREN» (Shelly K14, O1) ein bzw. aus. Beginnt «Auswärts», übernimmt die Steuerung «Boiler auswärts» (unten); danach bleibt der Boiler frei.</p>
+      <form class="krow spinbox" id="bSperrPinBox" hidden autocomplete="off">
+        <input type="password" id="bSperrPin" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Schalt-PIN" aria-label="Schalt-PIN" autocomplete="off">
+        <label class="kmerk"><input type="checkbox" id="bSperrMerk"> 30 Tage merken</label>
+        <button type="submit" class="knopfklein">Schalten</button>
+        <button type="button" class="knopfklein ghost" id="bSperrAbbr">Abbrechen</button>
+      </form>
+      <p class="hint" id="bSperrMeldung" aria-live="polite"></p>
+    </section>
     <section class="panel">
       <div id="bEinst">
         <div class="uekopf"><h2 style="margin:0">Boiler auswärts</h2><div class="bstat" id="bStat"></div></div>
@@ -1188,7 +1209,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 09:55</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 10:01</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1354,6 +1375,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   function steuerModusAuto(){ let c=STEU; if(!c){try{c=JSON.parse(localStorage.getItem("tb.steuer")||"null")}catch(e){c=null}} return !!(c&&c.cfg&&c.cfg.modus==="auto") }
   function renderK14(k){
     k14Jetzt=k||null; if(typeof zeichneRelais==="function"&&STEU){ zeichneRelais(); zeichneBoilerStatus(); }
+    if(typeof zeichneBoilerSperre==="function") zeichneBoilerSperre();
     const box=$("kChips"); box.innerHTML="";
     const namen=((k&&k.namen)||KNAMEN).map(kurz);
     document.querySelectorAll(".kzeit").forEach(e=>e.remove());
@@ -4435,13 +4457,14 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     await knopfSenden($("maWarnSpeichern"),"Wird gespeichert",{aktion:"maWarn",maWarn:e},"Warnungen gespeichert","tMeld",UI_T); if($("tPinBox").hidden){maEdit=false;zeichneMaWarn(true)}});
   let bEdit=false;
   function zeichneBoilerStatus(){
+    zeichneBoilerSperre();
     const box=$("bStat"); if(!box) return; const c=STEU&&STEU.cfg, st=STEU&&STEU.status;
     const ende=c&&c.th&&c.th.ausBis?c.th.ausBis-vhAus(c)*36e5:null;   // auswärts endet mit dem Vorheizen (Google Stand (26))
     const aus=!!(c&&c.th&&c.th.betrieb==="aus")&&!(ende&&Date.now()>=ende);
     let sp=st&&st.ch&&st.ch[0]?st.ch[0].ist:null, zeit=st&&st.zeit;
     if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
     const pill=(an,txt,tip)=>`<span class="${an?"an":""}" title="${tip}"><i aria-hidden="true"></i>${txt}</span>`;
-    box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(ende?" bis "+fDay(ende)+" "+fTime(ende):""):"Auswärts nicht aktiv",aus&&ende?"Rückkehr "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis)+"; ab "+fTime(ende)+" vorheizen und Boiler SPERREN wie vorher":"Betriebsart Raumthermostat"):"")+
+    box.innerHTML=(c?pill(aus,aus?"Auswärts aktiv"+(ende?" bis "+fDay(ende)+" "+fTime(ende):""):"Auswärts nicht aktiv",aus&&ende?"Rückkehr "+fDay(c.th.ausBis)+" "+fTime(c.th.ausBis)+"; ab "+fTime(ende)+" vorheizen, Boiler frei":"Betriebsart Raumthermostat"):"")+
       (sp===1||sp===0?pill(sp===1,sp===1?"Boiler gesperrt":"Boiler nicht gesperrt","Relais Boiler SPERREN (O1)"):"");
     { // Batterie-Maximum in der Erklärung von «Batterie mindestens» (beim Darüberfahren)
       const i=document.querySelector('#bParam input[data-bp=auSoc]'), tip=i&&i.closest("label").querySelector(".tip");
@@ -4452,6 +4475,53 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       bw.hidden=!(bm&&typeof so==="number"&&bm.soc-1<so);
       if(!bw.hidden) bw.textContent=`Die Batterie lädt nur bis ${bm.soc} % (Maximum am Fronius, erkannt ${fDay(bm.zeit)} ${fTime(bm.zeit)}). «Batterie mindestens» ${so} % würde nie erreicht – es gilt darum ${bm.soc-1} %.`; }
   }
+  /* Boiler sperren von Hand (Stephan 15.11.2026): Knopf schaltet «Boiler SPERREN» (O1). Die Handsperre gilt, bis «auswärts»
+     beginnt; dann übernimmt das Google-Skript (Steuerung «Boiler auswärts»), danach ist der Boiler frei. */
+  function boilerAuswaerts(){ const c=STEU&&STEU.cfg; if(!c||!c.th||c.th.betrieb!=="aus") return false;
+    const ende=c.th.ausBis?c.th.ausBis-vhAus(c)*36e5:null; return !(ende&&Date.now()>=ende) }
+  function o1Jetzt(){ const st=STEU&&STEU.status; let sp=st&&st.ch&&st.ch[0]?st.ch[0].ist:null; const zeit=st&&st.zeit;
+    if(k14Jetzt&&k14Jetzt.a&&(k14Jetzt.a[0]===0||k14Jetzt.a[0]===1)&&(!zeit||(k14Jetzt.zeit||0)>=zeit)) sp=k14Jetzt.a[0];
+    return sp===0||sp===1?sp:null }
+  var bSperrLaeuft=false;
+  function zeichneBoilerSperre(){
+    const kn=$("bSperrKnopf"), box=$("bSperrZust"); if(!kn||!box) return;
+    const sp=o1Jetzt(), aus=boilerAuswaerts(), st=STEU&&STEU.status;
+    let z, titel, text="";
+    if(sp===null){z="unbekannt";titel="Zustand unbekannt";text="Noch kein Schaltzustand vom Shelly K14."}
+    else if(aus){z="auswaerts";titel=sp===1?"Boiler gesperrt (Steuerung auswärts)":"Boiler frei (Steuerung auswärts)";text="«Auswärts» ist aktiv – die Sperre schaltet jetzt die Steuerung «Boiler auswärts»."}
+    else if(sp===1){z="hand";titel="Boiler gesperrt manuell";text="gilt, bis «Auswärts» beginnt"}
+    else{z="frei";titel="Boiler nicht gesperrt";
+      if(st&&st.o1HandEnde&&Date.now()-st.o1HandEnde<36e5*48) text="Sperre von Hand aufgehoben "+fDay(st.o1HandEnde)+" "+fTime(st.o1HandEnde)+" («Auswärts» begonnen)"}
+    box.dataset.z=z; $("bSperrTitel").textContent=titel; $("bSperrText").textContent=text;
+    if(bSperrLaeuft) return;
+    kn.disabled=sp===null; kn.setAttribute("aria-pressed",String(sp===1)); kn.textContent="Boiler SPERREN";
+    kn.title=sp===1?"Klicken: Sperre aufheben":sp===0?"Klicken: Boiler sperren (bis «Auswärts» beginnt)":"Zustand unbekannt";
+  }
+  async function bSperrSenden(pin,merken){
+    const kn=$("bSperrKnopf"), sp=o1Jetzt(); if(sp===null) return;
+    const ein=sp!==1;
+    if(!pin){$("bSperrPinBox").hidden=false;$("bSperrMeldung").textContent="Bitte Schalt-PIN eingeben.";$("bSperrPin").focus();return}
+    bSperrLaeuft=true; kn.disabled=true; kn.textContent="schaltet …"; $("bSperrMeldung").textContent="";
+    let j=null;
+    try{const r=await fetch(cfg.histurl.trim(),{method:"POST",body:JSON.stringify({art:"schalten",token:cfg.histtok,pin,ausgang:0,ein})});j=JSON.parse(await r.text())}
+    catch(e){j={ok:false,error:"Keine Antwort von der Web-App."}}
+    bSperrLaeuft=false;
+    if(j&&j.ok){
+      if(merken!==undefined){try{if(merken)localStorage.setItem(PINK,JSON.stringify({pin,bis:Date.now()+30*864e5}));else localStorage.removeItem(PINK)}catch(e){}}
+      $("bSperrPinBox").hidden=true;
+      $("bSperrMeldung").textContent=ein?"Boiler gesperrt (von Hand, bis «Auswärts» beginnt).":"Sperre aufgehoben.";
+      if(j.k14) renderK14(j.k14); else { if(k14Jetzt&&k14Jetzt.a){k14Jetzt.a[0]=ein?1:0;k14Jetzt.zeit=Date.now()} zeichneBoilerSperre(); }
+      try{zeichneK14()}catch(e){}
+      ladeSteuerung(true,true);
+    }else{
+      if(j&&j.pinFalsch){try{localStorage.removeItem(PINK)}catch(e){} $("bSperrPin").value=""; $("bSperrPinBox").hidden=false;}
+      $("bSperrMeldung").textContent=(j&&j.error)||"Fehler";
+      zeichneBoilerSperre();
+    }
+  }
+  $("bSperrKnopf").addEventListener("click",()=>{ if(bSperrLaeuft) return; const g=pinGemerkt(); bSperrSenden(g||"") });
+  $("bSperrPinBox").addEventListener("submit",ev=>{ev.preventDefault(); const pin=$("bSperrPin").value.trim(); if(!pin) return; bSperrSenden(pin,$("bSperrMerk").checked)});
+  $("bSperrAbbr").addEventListener("click",()=>{$("bSperrPinBox").hidden=true;$("bSperrMeldung").textContent=""});
   function zeichneBoilerEinst(erzwingen){
     const box=$("bParam"), c=STEU&&STEU.cfg; if(!box||!c){zeichneBoilerStatus();return}
     if(!erzwingen&&(bEdit||box.contains(document.activeElement))){zeichneBoilerStatus();return}
