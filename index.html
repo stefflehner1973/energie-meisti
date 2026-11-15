@@ -1188,7 +1188,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 14.11.26 11:48</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 07:58</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2107,7 +2107,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const g=c.geo, zuT=e=>{const r=svg.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*g.W;return g.t0+(Math.min(g.W-R,Math.max(L,x))-L)/(g.W-L-R)*(g.t1-g.t0)};
     let start=null, sel=null;
     hit.addEventListener("pointerdown",e=>{
-      start=zuT(e); hit.setPointerCapture&&hit.setPointerCapture(e.pointerId);
+      start=zuT(e); zieht=true; hit.setPointerCapture&&hit.setPointerCapture(e.pointerId);
       sel=document.createElementNS("http://www.w3.org/2000/svg","rect");
       sel.setAttribute("y",T); sel.setAttribute("height",g.H-T-B); sel.setAttribute("fill","var(--accent)"); sel.setAttribute("opacity",".15");
       sel.setAttribute("pointer-events","none"); svg.insertBefore(sel,hit);
@@ -2116,16 +2116,17 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(start==null) return; const t=zuT(e), x1=g.X(Math.min(start,t)), x2=g.X(Math.max(start,t));
       sel.setAttribute("x",x1.toFixed(1)); sel.setAttribute("width",Math.max(0,x2-x1).toFixed(1));
     });
+    const fertigZiehen=()=>{zieht=false; if(nachZiehen){nachZiehen=false; drawAll()}};
     const ende=e=>{
       if(start==null) return; const t=zuT(e), a=start; start=null; if(sel){sel.remove();sel=null}
-      if(Math.abs(g.X(t)-g.X(a))<=8) return;
+      if(Math.abs(g.X(t)-g.X(a))<=8||c.eigenerZoom){fertigZiehen(); if(Math.abs(g.X(t)-g.X(a))<=8) return}
       if(c.eigenerZoom){                       // Diagramm mit eigenem Zoom (Prognose), auch in die Zukunft
         const von=Math.min(a,t), bis=Math.max(a,t); if(bis-von<30*6e4) return;
         c.zoom={von,bis}; c.neuZeichnen();
-      } else setzeZoom(a,t);
+      } else {zieht=false; nachZiehen=false; setzeZoom(a,t)}   // setzeZoom zeichnet ohnehin neu
     };
     hit.addEventListener("pointerup",ende);
-    hit.addEventListener("pointercancel",()=>{start=null;if(sel){sel.remove();sel=null}});
+    hit.addEventListener("pointercancel",()=>{start=null;if(sel){sel.remove();sel=null}fertigZiehen()});
     hit.addEventListener("dblclick",zoomAlleWeg);
   }
 
@@ -2235,8 +2236,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!teile.length){restLaden();return}
     geladenSpanne=bisMs-vonMs; ROH=ROH||{};
     // gespeicherte Werte sofort zeigen, wenn noch nichts für diesen Zeitraum da ist
-    if(!zoom){const c=cacheLesen(); if(c.schl===schl&&c.teile) teile.forEach(t=>{if(geladen[t]!==schl&&c.teile[t]) Object.assign(ROH,c.teile[t])})}
-    teile.forEach(t=>{laedtTeil.add(t); if(opt.still) laedtSicht.delete(t); else laedtSicht.add(t)}); if(!opt.still) laden(true); zuschneiden(); drawAll();
+    let ausCache=false;
+    if(!zoom){const c=cacheLesen(); if(c.schl===schl&&c.teile) teile.forEach(t=>{if(geladen[t]!==schl&&c.teile[t]){Object.assign(ROH,c.teile[t]);ausCache=true}})}
+    teile.forEach(t=>{laedtTeil.add(t); if(opt.still) laedtSicht.delete(t); else laedtSicht.add(t)});
+    // 15.11.2026 (Stephan): im Hintergrund nichts neu zeichnen, solange nichts Neues da ist (Seite bleibt, wie sie ist)
+    if(!opt.still) laden(true); if(!opt.still||ausCache){zuschneiden(); drawAll()}
     let fehler=null;
     await Promise.all(teile.map(async t=>{
       const nr=teilNr[t]=(teilNr[t]||0)+1, uhr=performance.now(); laedtMit[t]=schl;
@@ -2309,7 +2313,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // Seit 13.11.2026 (Stephan «8 umsetzen»): Diagramme in einem nicht offenen Reiter werden nicht gezeichnet (vorher bei jedem
   // Auffrischen alle, beim Öffnen sechsmal). Beim Wechsel des Reiters zeichnet zeigeReiter() sie mit den aktuellen Daten.
   const versteckt=el=>{const p=el&&el.closest(".tabpanel");return !!(p&&p.hidden)};
+  let zieht=false, nachZiehen=false;   // 15.11.2026: während man einen Ausschnitt aufzieht, nicht neu zeichnen (sonst verschwindet die Auswahl)
   function drawAll(){
+    if(zieht){nachZiehen=true;return}
     try{if(steuerReiter()&&STEU){zeichneUeb();zeichneFahrplan()}}catch(e){}   // STEU wird weiter unten angelegt (beim ersten Aufruf evtl. noch nicht); Fahrplan mit gemessenem Raum
     const lab="Energie "+(zoom?(zoom.nav?zoomText():"Auswahl"):({0:"heute",0.0417:"1 h",1:"24 h",7:"7 Tage",30:"dieser Monat",365:"dieses Jahr"}[tage]||tage+" Tage"));
     document.querySelectorAll(".elab").forEach(e=>e.textContent=lab);
@@ -2318,6 +2324,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!$("tabEnergie").hidden){FL.baender=lmBaender();drawMulti(FL);zeichneStraenge();drawChart(FS);energieBilanz();renderFlow();if(GELD)zeichneEB()}
     if(!$("tabUeb").hidden){FS2.series=FS.series;drawChart(FS2)}
     zeichneAuto();   // Kennzahlen Wattpilot (Übersicht und Reiter), Diagramme nur im Reiter
+    if(mausBei){const m=mausBei; einzelGruppe(m.c).forEach(k=>zeigeBei(k,m.t))}   // Mausstrich wieder an dieselbe Stelle
   }
 
   /* Mehrere Linien in einem Diagramm (Mobile-Alerts-Temperaturen) */
@@ -2532,8 +2539,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const t=g.t0+(x-L)/(g.W-L-R)*(g.t1-g.t0);
     einzelGruppe(c).forEach(k=>zeigeBei(k,t));
   }
-  function hoverWeg(c){einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.svg==="chartP")lmBoilerLinie(null);if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C){zpErklaeren(null);k14Erklaeren(null)}});wsTempZeigen()}
+  let mausBei=null;   // 15.11.2026: wo die Maus im Diagramm steht, damit Strich und Werte nach dem Neuzeichnen (Nachladen im Hintergrund) bleiben
+  function hoverWeg(c){mausBei=null;einzelGruppe(c).forEach(k=>{const sv=$(k.svg),h=sv&&sv.querySelector(".hov");if(h)h.setAttribute("visibility","hidden");if(k.svg==="chartP")lmBoilerLinie(null);if(k.geo&&k.ro)$(k.ro).textContent=HINT;if(k===LMC)lmReadout(null);if(k===K14C){zpErklaeren(null);k14Erklaeren(null)}});wsTempZeigen()}
   function zeigeBei(c,t){
+    mausBei={c,t};
     wsTempBei(t);   // Wetterstation bei der Wärmepumpe: Wert zu dieser Zeit
     if(c.lines) return zeigeMultiBei(c,t);
     if(c===K14C) return k14Linie(t);
@@ -3629,6 +3638,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(perioden.length){zeig(perioden[perioden.length-1],false); svg.onmouseleave=()=>zeig(perioden[perioden.length-1],false)}
   }
   // Energiebilanz pro Tag (Reiter Energiefluss) aus den Tageswerten
+  let ebFestT=null, ebMausT=null;   // 15.11.2026: angeklickter Tag und Tag unter der Maus bleiben beim Neuzeichnen (Nachladen im Hintergrund)
   function zeichneEB(){
     const svg=$("chartEB"); if(!svg||!GELD) return;
     const hz=heuteZeile(), alle=GELD.tage.filter(r=>!(r[7]<1)).concat(hz?[hz]:[]);   // Tage ohne Messung weglassen
@@ -3729,10 +3739,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const zeig=(d,m=true)=>{ebI=tage.indexOf(d);markiere(m?ebI:-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":"");$("readoutEB").innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a","P direkt")}${f(T.batt,"Batterie "+k(d.lad),"b","P batt vlb")}${f(T.ein,"Einspeisung "+k(d.ein),"a3","P ein")}`+
       vlZeile(d)+
       `<b class="lb lb2">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a","V direkt")}${f(T.batt,"Batterie "+k(d.entH),"b","V batt")}${f(T.netz,"Netzbezug "+k(d.bez),"a3","V netz")}</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
-    let fest=null, zur=null;   // fest = angeklickter Tag
-    const zurueck=()=>{zur=null; fest&&tage.includes(fest)?zeig(fest):zeig(tage[tage.length-1],false)};
-    svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>{clearTimeout(zur);zeig(d)});h.addEventListener("click",()=>{fest=d;zeig(d)})});
-    zeig(tage[tage.length-1],false);
+    let fest=tage.find(d=>d.t===ebFestT)||null, zur=null;   // fest = angeklickter Tag
+    const zurueck=()=>{zur=null; ebMausT=null; fest&&tage.includes(fest)?zeig(fest):zeig(tage[tage.length-1],false)};
+    svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>{clearTimeout(zur);ebMausT=d.t;zeig(d)});h.addEventListener("click",()=>{fest=d;ebFestT=d.t;zeig(d)})});
+    {const m=tage.find(d=>d.t===ebMausT)||fest; m?zeig(m):zeig(tage[tage.length-1],false)}
     svg.onmouseleave=()=>{clearTimeout(zur);zur=setTimeout(zurueck,400)};   // Maus weg: wieder heute (bzw. angeklickter Tag); kurz warten, damit man zur Zeile «Verluste» fahren kann
     const ro=$("readoutEB"); ro.onmouseenter=()=>clearTimeout(zur);
     // Werte in der Zeile unten: Maus darauf hebt den passenden Teil der P- bzw. V-Säule des gezeigten Tages hervor (Stephan 14.11.2026; Verluste: wie bisher der Kasten)
@@ -4646,8 +4656,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const verlaufTakt=()=>(!zoom&&tage<=1)?6e4:5*6e4;
   async function auffrischen(verlaufAuch,manuell){
     if(laeuft) return;   // vorige Runde noch nicht fertig (Google langsam): nicht stauen
-    // 08.11.2026: automatisch still im Hintergrund; Ladeanzeige nur von Hand, beim ersten Laden oder wenn die Daten alt sind (über 5 min)
-    const leise=!manuell&&letzteAbfrage>0&&Date.now()-letzteAbfrage<5*6e4;
+    // 08.11.2026: automatisch still im Hintergrund; Ladeanzeige nur von Hand oder beim ersten Laden
+    // 15.11.2026 (Stephan): auch nach längerer Pause (über 5 min) still – Nachladen im Hintergrund wird nie angezeigt
+    const leise=!manuell&&letzteAbfrage>0;
     laeuft=true; letzteAbfrage=Date.now();
     try{
       const vorne=[update(leise)];
