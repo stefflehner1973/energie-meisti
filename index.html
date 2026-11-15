@@ -1210,7 +1210,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 10:51</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 10:55</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -4493,7 +4493,6 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     else if(sp===1){z="hand";titel="Boiler gesperrt manuell";text="gilt, bis «Auswärts» beginnt"}
     else{z="frei";titel="Boiler nicht gesperrt";
       if(st&&st.o1HandEnde&&Date.now()-st.o1HandEnde<36e5*48) text="Sperre von Hand aufgehoben "+fDay(st.o1HandEnde)+" "+fTime(st.o1HandEnde)+" («Auswärts» begonnen)"}
-    const gp=k14Jetzt&&(k14Jetzt.geprueft||k14Jetzt.zeit); if(sp!==null&&gp) text+=(text?" · ":"")+"Stand "+fTime(gp);
     box.dataset.z=z; $("bSperrTitel").textContent=titel; $("bSperrText").textContent=text;
     if(bSperrLaeuft) return;
     kn.disabled=sp===null; kn.setAttribute("aria-pressed",String(sp===1)); kn.textContent="Boiler SPERREN";
