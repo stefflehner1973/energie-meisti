@@ -1188,7 +1188,7 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 08:40</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 09:15</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1969,8 +1969,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(!cfg.histurl||!cfg.histtok){msg("Web-App-URL und Zugriffsschlüssel unter „Verbindung“ eintragen, dann erscheinen die Werte.");return}
     // 06.11.2026: zuletzt geladene Werte sofort zeigen (Alter steht bei jeder Kachel), dann frisch holen
     if(!aktGezeigt){aktGezeigt=true;try{const c=JSON.parse(localStorage.getItem("tb.akt")||"null");if(c&&c.a&&Date.now()-c.zeit<36e5*12){renderAktuell(c.a);aktBlass(true)}}catch(e){}}
-    // 08.11.2026: automatisch im Hintergrund still; blass nur, wenn die Werte schon alt sind (über 5 min)
-    if(!leise&&aktZeit&&Date.now()-aktZeit>5*6e4) aktBlass(true);
+    // 08.11.2026: automatisch im Hintergrund still; blass nur, wenn die Werte schon alt sind (seit 15.11.2026 über 2 statt 5 min)
+    if(!leise&&aktZeit&&Date.now()-aktZeit>2*6e4) aktBlass(true);
     const bs=document.querySelectorAll(".refresh"); if(!leise) bs.forEach(b=>{b.disabled=true; b.classList.add("laeuft")});
     try{const j=await api({art:"aktuell"}); renderAktuell(j.aktuell); aktBlass(false); aktZeit=Date.now();
       try{localStorage.setItem("tb.akt",JSON.stringify({zeit:Date.now(),a:j.aktuell}))}catch(e){}}
@@ -2228,6 +2228,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const abfrageTage=fenster.von?Math.max(0.06,(Date.now()-fenster.von)/864e5+0.01):tage;
     const bisMs=Math.round(fenster.bis||Date.now()), vonMs=Math.round(fenster.von||bisMs-tage*864e5);
     const teile=(opt.teile||TEILE[reiter]||[]).filter(t=>!zoomGedeckt(t)&&!(nurFehlende&&(teilFrisch(t,schl)||(laedtTeil.has(t)&&laedtMit[t]===schl))));
+    // 15.11.2026 (Stephan): Reiter gewechselt, Daten nicht aktuell und schon still im Hintergrund unterwegs: jetzt die Ladeanzeige zeigen
+    if(!opt.still&&nurFehlende){const schon=(opt.teile||TEILE[reiter]||[]).filter(t=>!teile.includes(t)&&laedtTeil.has(t)&&laedtMit[t]===schl&&!teilFrisch(t,schl));
+      if(schon.length){schon.forEach(t=>laedtSicht.add(t)); laden(vorneLaedt())}}
     const restLaden=()=>{
       if(opt.still||opt.rest===false||!aktiv()) return;
       const rest=ALLE_TEILE.filter(t=>!(TEILE[reiter]||[]).includes(t));
@@ -2965,7 +2968,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // Daten, die im Hintergrund schon aktuell geladen wurden, nur zeichnen; sonst zuerst Gespeichertes zeigen und neu laden
     const frisch=z=>Date.now()-z<FRISCH;
     if(r==="geld"){ if(GELD) zeichneGeld(); if(!ohneLaden&&!(GELD&&frisch(geldZeit))) ladeGeld(); }
-    else if(r==="steuerung"||r==="boiler"||r==="temperatur"){ drawAll(); if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); }   // drawAll: Diagramme dieses Reiters (seit 13.11.2026 werden sie nur gezeichnet, wenn der Reiter offen ist)
+    else if(r==="steuerung"||r==="boiler"||r==="temperatur"){ drawAll(); if(STEU) zeichneSteuerung(); if(!ohneLaden&&!(STEU&&frisch(steuZeit))) ladeSteuerung(); if(!ohneLaden&&typeof loadHist==="function") loadHist(true,{rest:false}); }   // 15.11.2026: auch die Verläufe (Temperaturen, Boiler), wenn nicht mehr aktuell – vorher erst nach bis zu 1 min   // drawAll: Diagramme dieses Reiters (seit 13.11.2026 werden sie nur gezeichnet, wenn der Reiter offen ist)
     else if(r==="sonne") zeichneSonne();
     else if(r==="prognose"){ if(prog) zeichnePrognose(); if(!ohneLaden&&!(prog&&frisch(progZeit))) ladePrognose(true); }
     else {drawAll(); if(!ohneLaden&&typeof loadHist==="function") loadHist(true); if(r==="energie"||r==="auto"){ if(GELD) (r==="auto"?zeichneAutoTage:zeichneEB)(); if(!(GELD&&frisch(geldZeit))) ladeGeld(false,true); }}
@@ -4666,13 +4669,16 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   /* Aktualisieren nur, solange die Seite vorne ist (sichtbar und angeklickt).
      Zuerst der offene Reiter, danach die übrigen im Hintergrund. */
   let letzteAbfrage=0, letzterVerlauf=0, laeuft=false;
+  const ALT_ANZEIGE=2*6e4, datenAlt=()=>Date.now()-letzteAbfrage>ALT_ANZEIGE;
   // Kurze Zeiträume (1 h, Tag, 24 h): alles jede Minute; lange (7 Tage … 1 Jahr, Zoom): Verläufe alle 5 Minuten
   const verlaufTakt=()=>(!zoom&&tage<=1)?6e4:5*6e4;
   async function auffrischen(verlaufAuch,manuell){
     if(laeuft) return;   // vorige Runde noch nicht fertig (Google langsam): nicht stauen
     // 08.11.2026: automatisch still im Hintergrund; Ladeanzeige nur von Hand oder beim ersten Laden
-    // 15.11.2026 (Stephan): auch nach längerer Pause (über 5 min) still – Nachladen im Hintergrund wird nie angezeigt
-    const leise=!manuell&&letzteAbfrage>0;
+    // 15.11.2026 (Stephan): das Nachladen beim Anschauen (jede Minute) bleibt still.
+    // 15.11.2026 später (Stephan): kommt man auf die Seite zurück und die Daten sind nicht mehr aktuell (über 2 min ohne Abfrage),
+    // gleich die Ladeanzeige zeigen (blass, «lädt»), bis die neuen Werte da sind.
+    const leise=!manuell&&letzteAbfrage>0&&!datenAlt();
     laeuft=true; letzteAbfrage=Date.now();
     try{
       const vorne=[update(leise)];
