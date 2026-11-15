@@ -462,8 +462,8 @@ h3{font-size:.92rem;margin:0;font-weight:600}
 @media (prefers-reduced-motion:no-preference){#fill{transition:height .6s ease,y .6s ease}}
 .veraltet{opacity:.45;filter:grayscale(.7);transition:opacity .4s,filter .4s}
 /* Boiler sperren von Hand (Reiter Boiler, Stephan 15.11.2026) */
-button.bsperrknopf{padding:8px 16px;font-weight:700;border-radius:9px;border:2px solid var(--c-bezug);background:transparent;color:var(--c-bezug)}
-button.bsperrknopf[aria-pressed=true]{background:var(--c-bezug);color:#fff}
+button.bsperrknopf{padding:8px 16px;font-weight:700}
+button.bsperrknopf[aria-pressed=true]{background:var(--c-bezug);border-color:var(--c-bezug);color:#fff}
 button.bsperrknopf:disabled{opacity:.5}
 .bsperrzust{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:.92rem}
 .bsperrzust i{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
@@ -1209,7 +1209,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 10:01</span></summary>
+      <summary>Verbindung <span class="sub">· Version 15.11.26 10:26</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
