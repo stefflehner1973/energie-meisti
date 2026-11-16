@@ -1211,7 +1211,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 15.11.26 12:05</span></summary>
+      <summary>Verbindung <span class="sub">· Version 16.11.26 10:05</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3831,6 +3831,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     finally{lmLaedt=false}
     battVollZeigen(); if(reiter==="prognose") zeichneBattProg();
   }
+  // WP-Modell mit Mittel aus Tag und Vortag (Google wp.tm2, seit 16.11.2026): heute mit gemessenem gestern (wp.tGestern), morgen mit heute (Prognose)
+  function tmMitVortag(d,td,tm){if(tm==null||!(LM&&LM.wp&&LM.wp.tm2)) return tm;
+    let v=null; if(d===0){const g=LM.wp.tGestern, z=new Date(td-432e5), key=z.getFullYear()+"-"+String(z.getMonth()+1).padStart(2,"0")+"-"+String(z.getDate()).padStart(2,"0"); if(g&&g.tag===key&&typeof g.t==="number") v=g.t} else v=tagesMittelAussen(td-864e5);
+    return v==null?tm:(tm+v)/2}
   function tagesMittelAussen(t0){const h=prog&&prog.stunden?prog.stunden.filter(x=>x.t>=t0&&x.t<t0+864e5&&typeof x.ta==="number"):[];return h.length>=12?h.reduce((a,x)=>a+x.ta,0)/h.length:null}
   function szenarioBei(t){
     const P=STEU&&STEU.plan; if(!P) return {art:"alltag"};
@@ -3851,7 +3855,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const pv=t=>pvAngepasst(t,kor,schnee);
     // WP pro Tag
     const k=(LM&&LM.wp&&LM.wp.k)||WP_K_STD, hgWp=(LM&&LM.wp&&LM.wp.heizgrenze)||16, standby=(LM&&LM.wp&&LM.wp.standby!=null)?LM.wp.standby:1;
-    const tage=[0,1].map(d=>{const td=m0+d*864e5, tm=tagesMittelAussen(td), heiz=tm==null?0:k*Math.max(0,hgWp-tm);
+    const tage=[0,1].map(d=>{const td=m0+d*864e5, tm=tagesMittelAussen(td), tmM=tmMitVortag(d,td,tm), heiz=tmM==null?0:k*Math.max(0,hgWp-tmM);
       let frei=0; if(auto) for(let t=td;t<td+864e5;t+=schritt){const s=szenarioBei(t); if(s.abs===0) frei++}
       const sumP=prof&&prof.wp?prof.wp.reduce((a,v)=>a+(v||0),0):0;
       return {td,tm,kwh:standby+heiz,heiz,frei,sumP,teile:{grund:0,wp:0,boiler:0}}});
