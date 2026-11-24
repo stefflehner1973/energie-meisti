@@ -886,7 +886,7 @@ button.bsperrknopf:disabled{opacity:.5}
     </section>
 
     <section class="panel">
-      <h2 style="margin:0 0 6px" id="anPTitel">Produktion pro Tag</h2>
+      <h2 style="margin:0 0 6px"><span class="gilt" data-gilt="anP" hidden></span><span id="anPTitel">Produktion pro Tag</span></h2>
       <p class="sub" style="font-size:.74rem;line-height:1.4;margin:0 0 10px">Wohin der PV-Strom ging</p>
       <div class="legend" id="anPLegend"></div>
       <div class="chartbox"><svg id="anP" viewBox="0 0 720 280" role="img" aria-label="Produktion: wohin der PV-Strom ging (Haus, Batterie, Einspeisung)"></svg></div>
@@ -894,7 +894,7 @@ button.bsperrknopf:disabled{opacity:.5}
     </section>
 
     <section class="panel">
-      <div class="histhead" style="margin-bottom:6px"><h2 style="margin:0" id="anVTitel">Verbrauch pro Tag</h2>
+      <div class="histhead" style="margin-bottom:6px"><h2 style="margin:0"><span class="gilt" data-gilt="anV" hidden></span><span id="anVTitel">Verbrauch pro Tag</span></h2>
         <div class="seg" role="group" aria-label="Skala"><button type="button" id="anSkala" aria-pressed="false" title="Verbrauch mit der gleichen Skala wie die Produktion zeichnen (beide vergleichbar)">gleiche Skala</button></div></div>
       <p class="sub" style="font-size:.74rem;line-height:1.4;margin:0 0 10px">Woher der Strom fürs Haus kam</p>
       <div class="legend" id="anVLegend"></div>
@@ -1242,7 +1242,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 24.11.26 20:32</span></summary>
+      <summary>Verbindung <span class="sub">· Version 24.11.26 20:45</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3903,8 +3903,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const max=anGleich?Math.max(1,...roh.map(r=>Math.max(r[1]||0,r[2]||0))):null;
     $("anSkala").setAttribute("aria-pressed",String(anGleich));
     const leerText=monat?" in diesem Monat":jahr?" in diesem Jahr":"";
-    ebZeichnen({svg:$("anP"),leg:$("anPLegend"),ro:$("readoutAP"),roh,art,nur:"P",zu:EB_ZUST.anP,lab,sicht,max,leerText});
-    ebZeichnen({svg:$("anV"),leg:$("anVLegend"),ro:$("readoutAV"),roh,art,nur:"V",auto:true,zu:EB_ZUST.anV,lab,sicht,max,leerText});
+    // oben rechts im Titel: welcher Zeitraum gilt (wie bei den anderen Diagrammen)
+    const gilt=t=>monat||jahr?$("anLabel").textContent:(()=>{const a=new Date(t[0].t).getFullYear(), b=new Date(t[t.length-1].t).getFullYear();return a===b?String(a):a+"–"+b})();
+    ebZeichnen({svg:$("anP"),leg:$("anPLegend"),ro:$("readoutAP"),roh,art,nur:"P",zu:EB_ZUST.anP,lab,sicht,max,leerText,gilt});
+    ebZeichnen({svg:$("anV"),leg:$("anVLegend"),ro:$("readoutAV"),roh,art,nur:"V",auto:true,zu:EB_ZUST.anV,lab,sicht,max,leerText,gilt});
   }
   $("anSeg").addEventListener("click",e=>{const b=e.target.closest("button[data-an]"); if(!b) return; anModus=b.dataset.an; anRef=null; store.set("tb.anModus",anModus); zeichneAnalyse()});
   $("anSkala").addEventListener("click",()=>{anGleich=!anGleich; store.set("tb.anSkala",anGleich); zeichneAnalyse()});
