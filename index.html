@@ -1242,7 +1242,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 24.11.26 20:54</span></summary>
+      <summary>Verbindung <span class="sub">· Version 24.11.26 21:13</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3773,9 +3773,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     for(let v=0;v<=top+1e-9;v+=step){const y=Y(v).toFixed(1);g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${Lb-8}" y="${(+y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${v}</text>`}
     g+=`<text x="4" y="12" font-size="11" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">kWh</text>`;
     const saeule=(x,teile,sd,ix)=>{let y0=Y(0);const da=` data-s="${sd}" data-i="${ix}"`;teile.forEach(([v,c,hk],i)=>{const h=Y(0)-Y(v);if(h<=0.3)return;const y=y0-h, oben=teile.slice(i+1).every(([w])=>w<=0.001);
-      const rand=RAND[c];   // schraffierte Fläche: mit der Farbe der Schraffur umrandet (Stephan 24.11.2026)
-      if(rand) g+=`<rect data-hl="${hk}"${da} x="${(x+.6).toFixed(1)}" y="${(y+.6).toFixed(1)}" width="${(bw-1.2).toFixed(1)}" height="${Math.max(0,h-(oben?1.2:2.7)).toFixed(1)}" rx="${oben?1.5:0}" fill="url(#${rand[1]})" stroke="${rand[0]}" stroke-width="1.2"/>`;
-      else g+=oben?`<path data-hl="${hk}"${da} d="M${x.toFixed(1)},${y0.toFixed(1)} V${(y+2).toFixed(1)} q0,-2 2,-2 H${(x+bw-2).toFixed(1)} q2,0 2,2 V${y0.toFixed(1)} Z" fill="${c}"/>`:`<rect data-hl="${hk}"${da} x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h-1.5).toFixed(1)}" fill="${c}"/>`;y0=y})};
+      g+=oben?`<path data-hl="${hk}"${da} d="M${x.toFixed(1)},${y0.toFixed(1)} V${(y+2).toFixed(1)} q0,-2 2,-2 H${(x+bw-2).toFixed(1)} q2,0 2,2 V${y0.toFixed(1)} Z" fill="${c}"/>`:`<rect data-hl="${hk}"${da} x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h-1.5).toFixed(1)}" fill="${c}"/>`;
+      // schraffierte Fläche: Rand in der Farbe der Schraffur (Stephan 24.11.2026), aber nicht dort, wo ein anderer Teil der Säule angrenzt
+      const rand=RAND[c];
+      if(rand){const unten=Math.abs(y0-Y(0))<0.01, x1=(x+.6).toFixed(1), x2=(x+bw-.6).toFixed(1), yt=(y+(oben?.6:0)).toFixed(1), yb=(oben?y0:y+Math.max(0,h-1.5)-(unten?.6:0)).toFixed(1);
+        g+=`<path class="ebrand" data-hl="${hk}"${da} d="M${x1},${yb} V${yt} M${x2},${yb} V${yt}${oben?` M${x1},${yt} H${x2}`:""}${unten&&!oben?` M${x1},${yb} H${x2}`:""}" fill="none" stroke="${rand[0]}" stroke-width="1.2" pointer-events="none"/>`}
+      y0=y})};
     const RAND={}; [["Verl","var(--muted)"],["VerlB","var(--c-batt)"],["WbP",C.direkt],["WbB",C.batt],["WbN",C.netz]].forEach(([m,f])=>RAND[`url(#${id+m})`]=[f,id+m]);
     const jede=Math.max(1,Math.ceil(n/(W<520?5:10))), heute=mitternacht(Date.now());
     tage.forEach((d,i)=>{const cx=Lb+sp*i+sp/2;
