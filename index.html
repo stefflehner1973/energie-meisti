@@ -1242,7 +1242,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 24.11.26 21:35</span></summary>
+      <summary>Verbindung <span class="sub">· Version 24.11.26 21:43</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3780,7 +3780,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(rand){const unten=Math.abs(y0-Y(0))<0.01, x1=(x+.6).toFixed(1), x2=(x+bw-.6).toFixed(1), yt=(y+(oben?.6:0)).toFixed(1), yb=(oben?y0:y+h-(unten?.6:0)).toFixed(1);
         g+=`<path class="ebrand" data-hl="${hk}"${da} d="M${x1},${yb} V${yt} M${x2},${yb} V${yt}${oben?` M${x1},${yt} H${x2}`:""}${unten&&!oben?` M${x1},${yb} H${x2}`:""}" fill="none" stroke="${rand[0]}" stroke-width="1.2" pointer-events="none"/>`}
       y0=y})};
-    const RAND={}; [["Verl","var(--muted)"],["VerlB","var(--c-batt)"],["WbP",C.direkt],["WbB",C.batt],["WbN",C.netz]].forEach(([m,f])=>RAND[`url(#${id+m})`]=[f,id+m]);
+    const RAND={}; [["Verl","var(--muted)"],["VerlB","var(--c-batt)"],["WbP","var(--c-wb)"],["WbB","var(--c-wb)"],["WbN","var(--c-wb)"]].forEach(([m,f])=>RAND[`url(#${id+m})`]=[f,id+m]);   // Wallbox-Teile violett umrandet (Stephan 24.11.2026)
     const jede=Math.max(1,Math.ceil(n/(W<520?5:10))), heute=mitternacht(Date.now());
     tage.forEach((d,i)=>{const cx=Lb+sp*i+sp/2;
       g+=`<rect class="ebsel" data-i="${i}" x="${(Lb+sp*i+1).toFixed(1)}" y="${Tb}" width="${(sp-2).toFixed(1)}" height="${(H-Tb-Bb+30).toFixed(1)}" rx="5" fill="var(--muted)" opacity="0"/>`;   // Hintergrund des gewählten Tages
