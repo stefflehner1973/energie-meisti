@@ -1242,7 +1242,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 24.11.26 20:04</span></summary>
+      <summary>Verbindung <span class="sub">· Version 24.11.26 20:32</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2809,6 +2809,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(b.von==null||b.von>m+15*6e4||Date.now()-b.bis>15*6e4) return GELD&&GELD.heute;
     const g=GELD&&GELD.heute, lokQ=g&&mitternacht(g[0])===m&&typeof g[12]==="number"&&g[4]>0?Math.min(1,g[12]/g[4]):null;
     const z=[m,b.pv,b.last,b.bez,b.ein,b.lad,b.ent,(b.bis-m)/36e5]; if(lokQ!=null){z[12]=b.ein*lokQ}
+    if(g&&mitternacht(g[0])===m&&typeof g[8]==="number") for(let i=8;i<=11;i++) z[i]=g[i];   // Wallbox mit Herkunft PV/Batterie/Netz von Google (Reiter Analyse)
     if(g&&mitternacht(g[0])===m&&typeof g[13]==="number") for(let i=13;i<=21;i++) z[i]=g[i];   // Verlust-Aufteilung von Google (bis 5 min alt)
     return z;
   }
@@ -3704,6 +3705,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // Tage zu Monaten bzw. Jahren zusammenzählen (nur Tage ab j0 und vor j1); z.n = Anzahl Tage mit Daten
   function ebSummen(alle,jahre,j0,j1){const M={};
     alle.filter(r=>r[0]>=j0&&r[0]<j1).forEach(r=>{const d=new Date(r[0]), k=jahre?d.getFullYear():d.getFullYear()*12+d.getMonth(); const z=M[k]||(M[k]=[jahre?new Date(k,0,1).getTime():new Date(d.getFullYear(),d.getMonth(),1).getTime(),0,0,0,0,0,0,0]); for(let i=1;i<=6;i++) z[i]+=r[i]||0; z[7]+=r[7]||0; z.n=(z.n||0)+1;
+      for(let i=8;i<=11;i++) if(typeof r[i]==="number") z[i]=(z[i]||0)+r[i];   // Wallbox und Herkunft
       if(typeof r[13]==="number"){z.nv=(z.nv||0)+1; for(let i=13;i<=21;i++) z[i]=(z[i]||0)+(typeof r[i]==="number"?r[i]:0)}});
     return Object.keys(M).sort((a,b)=>a-b).map(k=>M[k])}
   function zeichneEB(){
@@ -3739,7 +3741,12 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       // Batterie intern negativ = unmöglich (Ladestand der BYD ungenau, vor allem um 20 %) → Durchschnitt der letzten Tage anteilig einsetzen (Stephan 12.11.2026)
       if(mv&&mv.bi!=null&&mv.bi<0&&biMittel){mv.biGem=mv.bi; mv.biH=sum?Math.max(0,r[7]||0):Math.min(24,Math.max(0,r[7]||0)); mv.bi=Math.round(biMittel.kwh*mv.biH*1000)/1000}
       const biS=mv&&mv.bi>0?Math.min(lad,mv.bi):0;   // Batterie-Verlust auf der Säule
-      return {t:r[0],pv,haus,bez,ein,lad,ent,entH,direkt,vl,vlP,vlE,mv,biS,dauer:r[7],n:r.n,lauf,leer:!!r.leer,teil:!r.leer&&(sum?(r.n<tm&&!lauf):(mitternacht(r[0])!==mitternacht(Date.now())&&typeof r[7]==="number"&&r[7]<20))}});
+      // Anteil Wallbox (Auto) je Herkunft, höchstens so viel wie der Teil der Säule; ohne Aufteilung anteilig verteilt (Stephan 24.11.2026, Variante 1)
+      const au=(()=>{const w=typeof r[8]==="number"?r[8]:0; if(!o.auto||!(w>0.005)) return null;
+        let t=wbTeile([0,w,r[9],r[10],r[11]]); const h=direkt+entH+bez, ohne=t[3]>0.05;
+        if(t[3]>0&&h>0) t=[t[0]+t[3]*direkt/h,t[1]+t[3]*entH/h,t[2]+t[3]*bez/h];
+        return {pv:Math.min(direkt,t[0]),b:Math.min(entH,t[1]),n:Math.min(bez,t[2]),tot:w,ohne}})();
+      return {t:r[0],pv,haus,bez,ein,lad,ent,entH,direkt,vl,vlP,vlE,mv,biS,au,dauer:r[7],n:r.n,lauf,leer:!!r.leer,teil:!r.leer&&(sum?(r.n<tm&&!lauf):(mitternacht(r[0])!==mitternacht(Date.now())&&typeof r[7]==="number"&&r[7]<20))}});
     // Wechselrichter: Verlust = a (fest, solange er arbeitet) + k × Leistung, gerechnet aus den letzten 30 Tagen → wird mit jedem Tag genauer
     const fit=(()=>{const S=[0,0,0,0,0], L=GELD.tage.filter(r=>typeof r[17]==="number"&&r[17]>0).slice(-30);L.forEach(r=>{for(let i=0;i<5;i++) S[i]+=r[17+i]||0});
       const det=S[0]*S[2]-S[1]*S[1]; if(S[0]<24||!(det>0)) return null;
@@ -3756,13 +3763,13 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     const muster=(id,f,w=45)=>`<pattern id="${id}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(${w})"><rect width="4" height="4" fill="${f}" fill-opacity=".22"/><line x1="0" y1="0" x2="0" y2="4" stroke="${f}" stroke-width="1.4" stroke-opacity=".75"/></pattern>`;
     const vlLeg=(hk,c,id,n,tt,w)=>`<span data-hl="${hk}" style="color:${c};font-weight:600" title="${tt}"><svg width="11" height="11" style="vertical-align:-1px;margin-right:4px"><defs>${muster(id,c,w)}</defs><rect width="11" height="11" rx="2" fill="url(#${id})"/></svg>${n}</span>`;
     const id=svg.id==="chartEB"?"eb":svg.id;   // Muster-Namen je Diagramm eigen (sonst gelten im Reiter Analyse die Muster eines versteckten Diagramms)
-    o.leg.innerHTML=(nur?"":`<span><b style="color:var(--fg);font-family:inherit;font-weight:700">P</b>&nbsp;Produktion (PV)</span><span><b style="color:var(--fg);font-family:inherit;font-weight:700">V</b>&nbsp;Verbrauch (Haus)</span>`)+[["PV direkt im Haus",T.direkt,"direkt"],["Batterie ("+(nur==="P"?"laden":nur==="V"?"entladen":"laden / entladen")+")",T.batt,"batt"],["Einspeisung",T.ein,"ein","P"],["Netzbezug",T.netz,"netz","V"]].filter(x=>!nur||!x[3]||x[3]===nur).map(([n,c,k])=>`<span data-hl="${k}" style="color:${c};font-weight:600">${n}</span>`).join("")+`${vlLeg("vl",T.vl,id+"VerlL",nur==="V"?"Verluste beim Entladen":"Verluste Wechselrichter",nur==="V"?"Grau schraffiert, oben auf der Säule: was beim Entladen der Batterie auf dem Weg ins Haus verloren ging (Wechselrichter).":"Grau schraffiert, oben auf "+(nur?"der Säule":"beiden Säulen")+": alles, was hineinkommt (PV, Batterie entladen, Netzbezug), minus alles, was herausgeht (Haus, Batterie laden, Einspeisung) = Umwandlung im Wechselrichter.")}${nur==="V"?"":vlLeg("vlb",T.batt,id+"VerlBL","Verluste Batterie","Grün schraffiert, oben auf der "+(nur?"":"P-")+"Säule (unter den Wechselrichter-Verlusten): was in der Batterie selbst verloren ging (geladen − entladen − Änderung Ladestand). Höchstens so viel, wie am Tag geladen wurde; Maus auf «Verluste» unten zeigt alle Werte.",-45)}`;
+    o.leg.innerHTML=(nur?"":`<span><b style="color:var(--fg);font-family:inherit;font-weight:700">P</b>&nbsp;Produktion (PV)</span><span><b style="color:var(--fg);font-family:inherit;font-weight:700">V</b>&nbsp;Verbrauch (Haus)</span>`)+[["PV direkt im Haus",T.direkt,"direkt"],["Batterie ("+(nur==="P"?"laden":nur==="V"?"entladen":"laden / entladen")+")",T.batt,"batt"],["Einspeisung",T.ein,"ein","P"],["Netzbezug",T.netz,"netz","V"]].filter(x=>!nur||!x[3]||x[3]===nur).map(([n,c,k])=>`<span data-hl="${k}" style="color:${c};font-weight:600">${n}</span>`).join("")+`${vlLeg("vl",T.vl,id+"VerlL",nur==="V"?"Verluste beim Entladen":"Verluste Wechselrichter",nur==="V"?"Grau schraffiert, oben auf der Säule: was beim Entladen der Batterie auf dem Weg ins Haus verloren ging (Wechselrichter).":"Grau schraffiert, oben auf "+(nur?"der Säule":"beiden Säulen")+": alles, was hineinkommt (PV, Batterie entladen, Netzbezug), minus alles, was herausgeht (Haus, Batterie laden, Einspeisung) = Umwandlung im Wechselrichter.")}${o.auto?vlLeg("auto","var(--c-wb)",id+"WbL","schraffiert = ins Auto (Wallbox)","Schraffierter Teil von PV, Batterie und Netzbezug: Strom, der an diesem Tag ins Auto (Wattpilot) ging."):""}${nur==="V"?"":vlLeg("vlb",T.batt,id+"VerlBL","Verluste Batterie","Grün schraffiert, oben auf der "+(nur?"":"P-")+"Säule (unter den Wechselrichter-Verlusten): was in der Batterie selbst verloren ging (geladen − entladen − Änderung Ladestand). Höchstens so viel, wie am Tag geladen wurde; Maus auf «Verluste» unten zeigt alle Werte.",-45)}`;
     if(!tage.some(d=>!d.leer)){svg.innerHTML="";o.ro.textContent="Noch keine Tageswerte"+(o.leerText||"")+".";if(o.gilt)giltSetzen(id,"");return}
     if(o.gilt) giltSetzen(id,o.gilt(tage));
     const max=o.max||Math.max(1,...tage.map(d=>nur==="P"?d.pv:nur==="V"?d.haus:Math.max(d.pv,d.haus))), step=niceStep(max,4), top=Math.ceil(max/step)*step;
     const Y=v=>Tb+(top-v)/top*(H-Tb-Bb), n=tage.length, sp=(W-Lb-Rb)/n, bw=nur?Math.max(3,Math.min(30,sp*0.62)):Math.max(3,Math.min(18,sp*0.34)), gap=nur?0:Math.max(1,Math.min(3,sp*0.04));
     const xP=nur?-bw/2:-gap/2-bw, xV=nur?-bw/2:gap/2;   // linke Kante der P- bzw. V-Säule ab Mitte
-    let g=`<defs>${muster(id+"Verl","var(--muted)")}${muster(id+"VerlB","var(--c-batt)",-45)}</defs>`;
+    let g=`<defs>${muster(id+"Verl","var(--muted)")}${muster(id+"VerlB","var(--c-batt)",-45)}${o.auto?muster(id+"WbP",C.direkt)+muster(id+"WbB",C.batt)+muster(id+"WbN",C.netz):""}</defs>`;
     for(let v=0;v<=top+1e-9;v+=step){const y=Y(v).toFixed(1);g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${Lb-8}" y="${(+y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${v}</text>`}
     g+=`<text x="4" y="12" font-size="11" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">kWh</text>`;
     const saeule=(x,teile,sd,ix)=>{let y0=Y(0);const da=` data-s="${sd}" data-i="${ix}"`;teile.forEach(([v,c,hk],i)=>{const h=Y(0)-Y(v);if(h<=0.3)return;const y=y0-h, oben=teile.slice(i+1).every(([w])=>w<=0.001);
@@ -3772,7 +3779,9 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       g+=`<rect class="ebsel" data-i="${i}" x="${(Lb+sp*i+1).toFixed(1)}" y="${Tb}" width="${(sp-2).toFixed(1)}" height="${(H-Tb-Bb+30).toFixed(1)}" rx="5" fill="var(--muted)" opacity="0"/>`;   // Hintergrund des gewählten Tages
       // P: Batterie-Verlust (intern) aus dem grünen Teil herausgenommen, höchstens so viel wie geladen → Säule bleibt = PV (Stephan 10.11.2026); alle Verluste ganz oben (Stephan 13.11.2026)
       if(nur!=="V") saeule(cx+xP,[[d.direkt,C.direkt,"direkt"],[d.lad-d.biS,C.batt,"batt"],[d.ein,C.ein,"ein"],[d.biS,`url(#${id}VerlB)`,"vlb"],[d.vlP,`url(#${id}Verl)`,"vl"]],"P",i);
-      if(nur!=="P") saeule(cx+xV,[[d.direkt,C.direkt,"direkt"],[d.entH,C.batt,"batt"],[d.bez,C.netz,"netz"],[d.vlE,`url(#${id}Verl)`,"vl"]],"V",i);   // V: Batterie = was im Haus ankam, schraffiert = Entladeverluste
+      // Auto (Wallbox): Teil jeder Farbe schraffiert, oben in der jeweiligen Farbe
+      const A=d.au||{pv:0,b:0,n:0};
+      if(nur!=="P") saeule(cx+xV,[[d.direkt-A.pv,C.direkt,"direkt"],[A.pv,`url(#${id}WbP)`,"auto"],[d.entH-A.b,C.batt,"batt"],[A.b,`url(#${id}WbB)`,"auto"],[d.bez-A.n,C.netz,"netz"],[A.n,`url(#${id}WbN)`,"auto"],[d.vlE,`url(#${id}Verl)`,"vl"]],"V",i);   // V: Batterie = was im Haus ankam, schraffiert = Entladeverluste
       // Kennbuchstaben unter jeder Säule: P = Produktion, V = Verbrauch
       const fs=bw>=11?10:8.5;
       if(!nur) g+=`<text x="${(cx-gap/2-bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">P</text><text x="${(cx+gap/2+bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">V</text>`;
@@ -3810,7 +3819,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     let ebI=tage.indexOf(letzter);   // Tag, der unten in der Zeile steht
     const zeig=(d,m=true)=>{ebI=tage.indexOf(d);markiere(m?ebI:-1);const tg=sum?(jahre?"":MON[new Date(d.t).getMonth()]+" ")+new Date(d.t).getFullYear()+(d.teil?"*":""):mitternacht(d.t)===heute?"Heute":fDay(d.t)+(d.teil?"*":"");if(d.leer){o.ro.innerHTML=`<div class="ebtab"><b class="c1">${tg}</b><span class="lb" style="color:var(--muted)">keine Werte</span></div>`;return}
       o.ro.innerHTML=`<div class="ebtab"><b class="c1">${tg}</b>`+(nur==="V"?"":`<b class="lb">Produktion ${k(d.pv)} kWh</b><span class="pf">→</span>${f(T.direkt,"Haus "+k(d.direkt),"a","P direkt")}${f(T.batt,"Batterie "+k(d.lad),"b","P batt vlb")}${f(T.ein,"Einspeisung "+k(d.ein),"a3","P ein")}`+vlZeile(d))+
-      (nur==="P"?"":`<b class="lb${nur?"":" lb2"}">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a","V direkt")}${f(T.batt,"Batterie "+k(d.entH),"b","V batt")}${f(T.netz,"Netzbezug "+k(d.bez),"a3","V netz")}`+(nur&&d.vlE>=0.05?`<span class="vl" style="color:${T.vl};font-weight:600">Verluste beim Entladen ${k(d.vlE)}&nbsp;kWh</span>`:""))+`</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
+      (nur==="P"?"":`<b class="lb${nur?"":" lb2"}">Verbrauch ${k(d.haus)} kWh</b><span class="pf">←</span>${f(T.direkt,"PV "+k(d.direkt),"a","V direkt")}${f(T.batt,"Batterie "+k(d.entH),"b","V batt")}${f(T.netz,"Netzbezug "+k(d.bez),"a3","V netz")}`+(d.au?`<span class="vl" data-ebh="V auto" style="color:var(--c-wb);font-weight:600">davon Auto ${k(d.au.tot)}&nbsp;kWh <span style="font-weight:400">(PV ${k(d.au.pv)} · Batterie ${k(d.au.b)} · Netz ${k(d.au.n)}${d.au.ohne?", teils geschätzt":""})</span></span>`:"")+(nur&&d.vlE>=0.05?`<span class="vl" style="color:${T.vl};font-weight:600">Verluste beim Entladen ${k(d.vlE)}&nbsp;kWh</span>`:""))+`</div>`+(d.teil?`<div style="font-size:.72rem;margin-top:3px">${sum?`* unvollständig${jahre?"es Jahr":"er Monat"} (nur ${d.n} Tage mit Daten)`:`* unvollständiger Messtag (nur ${de(d.dauer,1)} h gemessen)`}</div>`:"")+``};
     let fest=tage.find(d=>d.t===ZU.fest)||null, zur=null;   // fest = angeklickter Tag
     const zurueck=()=>{zur=null; ZU.maus=null; fest&&tage.includes(fest)?zeig(fest):zeig(letzter,false)};
     svg.querySelectorAll(".ebhit").forEach(h=>{const d=tage[+h.dataset.i];h.addEventListener("mouseenter",()=>{clearTimeout(zur);ZU.maus=d.t;zeig(d)});h.addEventListener("click",()=>{fest=d;ZU.fest=d.t;zeig(d)})});
@@ -3895,7 +3904,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     $("anSkala").setAttribute("aria-pressed",String(anGleich));
     const leerText=monat?" in diesem Monat":jahr?" in diesem Jahr":"";
     ebZeichnen({svg:$("anP"),leg:$("anPLegend"),ro:$("readoutAP"),roh,art,nur:"P",zu:EB_ZUST.anP,lab,sicht,max,leerText});
-    ebZeichnen({svg:$("anV"),leg:$("anVLegend"),ro:$("readoutAV"),roh,art,nur:"V",zu:EB_ZUST.anV,lab,sicht,max,leerText});
+    ebZeichnen({svg:$("anV"),leg:$("anVLegend"),ro:$("readoutAV"),roh,art,nur:"V",auto:true,zu:EB_ZUST.anV,lab,sicht,max,leerText});
   }
   $("anSeg").addEventListener("click",e=>{const b=e.target.closest("button[data-an]"); if(!b) return; anModus=b.dataset.an; anRef=null; store.set("tb.anModus",anModus); zeichneAnalyse()});
   $("anSkala").addEventListener("click",()=>{anGleich=!anGleich; store.set("tb.anSkala",anGleich); zeichneAnalyse()});
