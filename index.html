@@ -894,7 +894,8 @@ button.bsperrknopf:disabled{opacity:.5}
     </section>
 
     <section class="panel">
-      <h2 style="margin:0 0 6px" id="anVTitel">Verbrauch pro Tag</h2>
+      <div class="histhead" style="margin-bottom:6px"><h2 style="margin:0" id="anVTitel">Verbrauch pro Tag</h2>
+        <div class="seg" role="group" aria-label="Skala"><button type="button" id="anSkala" aria-pressed="false" title="Verbrauch mit der gleichen Skala wie die Produktion zeichnen (beide vergleichbar)">gleiche Skala</button></div></div>
       <p class="sub" style="font-size:.74rem;line-height:1.4;margin:0 0 10px">Woher der Strom fürs Haus kam</p>
       <div class="legend" id="anVLegend"></div>
       <div class="chartbox"><svg id="anV" viewBox="0 0 720 280" role="img" aria-label="Verbrauch: woher der Strom fürs Haus kam (PV, Batterie, Netzbezug)"></svg></div>
@@ -1241,7 +1242,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 24.11.26 19:41</span></summary>
+      <summary>Verbindung <span class="sub">· Version 24.11.26 20:04</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -3857,6 +3858,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   // Zeitraum: ein Monat (Säule pro Tag, Standard) | ein Jahr (Säule pro Monat) | alle Jahre; Monat und Jahr mit ‹ › blättern.
   const MONATE_LANG=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
   let anModus=store.get("tb.anModus","monat"); if(!["monat","jahr","alle"].includes(anModus)) anModus="monat";
+  let anGleich=store.get("tb.anSkala",false)===true;   // gleiche Skala für Produktion und Verbrauch
   let anRef=null;   // Beginn des gezeigten Monats bzw. Jahres; null = der laufende
   const anBeginn=(t,modus)=>{const d=new Date(t);return modus==="jahr"?new Date(d.getFullYear(),0,1).getTime():new Date(d.getFullYear(),d.getMonth(),1).getTime()};
   const anStart=()=>anRef!=null?anRef:anBeginn(Date.now(),anModus);
@@ -3888,12 +3890,15 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       roh=MONATE.map((_,m)=>{const t=new Date(y,m,1).getTime();return M.get(t)||Object.assign([t],{leer:true})});
       art="monate"; $("anLabel").textContent=String(y);
     }else{ roh=ebSummen(alle,true,0,Infinity); art="jahre"; $("anLabel").textContent="alle Jahre"; }
-    const max=Math.max(1,...roh.map(r=>Math.max(r[1]||0,r[2]||0)));   // beide Diagramme mit gleicher Skala (vergleichbar)
+    // Skala: jedes Diagramm eigene (Standard); Knopf «gleiche Skala» beim Verbrauch → beide gleich hoch, vergleichbar (Stephan 24.11.2026)
+    const max=anGleich?Math.max(1,...roh.map(r=>Math.max(r[1]||0,r[2]||0))):null;
+    $("anSkala").setAttribute("aria-pressed",String(anGleich));
     const leerText=monat?" in diesem Monat":jahr?" in diesem Jahr":"";
     ebZeichnen({svg:$("anP"),leg:$("anPLegend"),ro:$("readoutAP"),roh,art,nur:"P",zu:EB_ZUST.anP,lab,sicht,max,leerText});
     ebZeichnen({svg:$("anV"),leg:$("anVLegend"),ro:$("readoutAV"),roh,art,nur:"V",zu:EB_ZUST.anV,lab,sicht,max,leerText});
   }
   $("anSeg").addEventListener("click",e=>{const b=e.target.closest("button[data-an]"); if(!b) return; anModus=b.dataset.an; anRef=null; store.set("tb.anModus",anModus); zeichneAnalyse()});
+  $("anSkala").addEventListener("click",()=>{anGleich=!anGleich; store.set("tb.anSkala",anGleich); zeichneAnalyse()});
   $("anZurueck").addEventListener("click",()=>anBlaettern(-1));
   $("anVor").addEventListener("click",()=>anBlaettern(1));
   window.addEventListener("resize",()=>{if(reiter==="analyse"&&GELD) zeichneAnalyse()});
