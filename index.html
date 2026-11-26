@@ -1242,7 +1242,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.11.26 08:39</span></summary>
+      <summary>Verbindung <span class="sub">· Version 26.11.26 08:46</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -1364,6 +1364,10 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     if(svg.dataset.hlk!=null) setze(svg.dataset.hlk);   // nach dem Neuzeichnen beibehalten
   }
   // Säulendiagramme: gewählte Säule markieren – Beschriftung darunter fett/dunkel (auch wenn sonst ausgeblendet), leichter Hintergrund
+  // Achsenbeschriftung: jede «jede»-te Säule und die letzte; eine Beschriftung zu nahe vor der letzten fällt weg (keine Überschneidung, Stephan 26.11.2026)
+  const achsSicht=(i,n,jede)=>i===n-1||(i%jede===0&&n-1-i>=jede);
+  // Kalenderwochen: «KW» nur bei der ersten sichtbaren Beschriftung, danach nur die Zahl (Platz, Stephan 26.11.2026)
+  const achsKw=(text,i,n,jede)=>{const m=/^KW (\d+)$/.exec(text);if(!m) return text;const erste=[...Array(n).keys()].find(j=>achsSicht(j,n,jede));return i===erste?text:m[1]};
   function saeuleMarkieren(svg,i){
     svg.querySelectorAll(".ebl").forEach(e=>{const an=+e.dataset.i===i;e.setAttribute("visibility",an||e.dataset.sicht==="1"?"visible":"hidden");e.setAttribute("fill",an?"var(--fg)":e.dataset.f);e.setAttribute("font-weight",an?"700":"400")});
     svg.querySelectorAll(".ebsel").forEach(e=>e.setAttribute("opacity",+e.dataset.i===i?".10":"0"));
@@ -2929,7 +2933,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     tl.forEach((r,i)=>{const [t,v]=r, cx=Lb+sp*i+sp/2, y=Y(v), ist=kurz?imFenster(mitternacht(t)):mitternacht(t)===heute, hz=mitternacht(t)===heute;
       g+=wbStapel(cx,bw,wbTeile(r),Y,ist,`${hz?"heute":fDay(t)}: ${de(v,1)} kWh`);
       if(v>=0.05&&(sp>=26||ist)) g+=`<text x="${cx.toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--fg)" font-family="IBM Plex Sans, sans-serif">${v<10?de(v,1):Math.round(v)}</text>`;
-      if(i%jede===0||i===n-1) g+=`<text x="${cx.toFixed(1)}" y="${H-Bb+17}" text-anchor="middle" font-size="11" fill="${ist?"var(--fg)":"var(--muted)"}" font-weight="${ist?700:400}" font-family="IBM Plex Mono, monospace">${hz?"heute":fDay(t)}</text>`});
+      if(achsSicht(i,n,jede)) g+=`<text x="${cx.toFixed(1)}" y="${H-Bb+17}" text-anchor="middle" font-size="11" fill="${ist?"var(--fg)":"var(--muted)"}" font-weight="${ist?700:400}" font-family="IBM Plex Mono, monospace">${hz?"heute":fDay(t)}</text>`});
     g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
     svg.innerHTML=g;
     const sum=tl.reduce((a,d)=>a+d[1],0);
@@ -2974,7 +2978,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     per.forEach(([t,s],i)=>{const cx=Lb+sp*i+sp/2, y=Y(s.e), ist=live?t===aktuell:imFenster(t);
       g+=wbStapel(cx,bw,s.k,Y,ist,`${lab(t)}: ${eK(s.e,v=>de(v,1)+" kWh")} (${s.n} ${s.n===1?"Tag":"Tage"} mit Daten)`);
       if(s.e>=0.05&&(sp>=26||ist||s.e===pmax)) g+=`<text x="${cx.toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--fg)" font-family="IBM Plex Sans, sans-serif">${s.e<10?de(s.e,1):Math.round(s.e)}</text>`;
-      if(i%jede===0||i===n-1) g+=`<text x="${cx.toFixed(1)}" y="${H-Bb+17}" text-anchor="middle" font-size="11" fill="${ist?"var(--fg)":"var(--muted)"}" font-weight="${ist?700:400}" font-family="IBM Plex Mono, monospace">${lab(t)}</text>`});
+      if(achsSicht(i,n,jede)) g+=`<text x="${cx.toFixed(1)}" y="${H-Bb+17}" text-anchor="middle" font-size="11" fill="${ist?"var(--fg)":"var(--muted)"}" font-weight="${ist?700:400}" font-family="IBM Plex Mono, monospace">${achsKw(lab(t),i,n,jede)}</text>`});
     g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
     svg.innerHTML=g;
     wbLegende("uLegP",rows);
@@ -3642,7 +3646,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       serien.forEach(([k,,c],si)=>{const h=Y(0)-Y(p[k]); if(h<=0.3) return; const y=y0-h; const oben=serien.slice(si+1).every(([k2])=>p[k2]<=0);
         g+=oben?`<path data-hl="${k}" d="M${x},${y0} V${(y+3).toFixed(1)} q0,-3 3,-3 H${(x+bw-3).toFixed(1)} q3,0 3,3 V${y0} Z" fill="${c}"/>`:`<rect data-hl="${k}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${c}"/>`;
         y0=y;});
-      g+=`<text class="ebl" data-i="${i}" data-sicht="${i%jede===0||i===n-1?1:0}" data-f="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" x="${cx.toFixed(1)}" y="${H-Bg+17}" text-anchor="middle" font-size="11" fill="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" visibility="${i%jede===0||i===n-1?"visible":"hidden"}" font-family="IBM Plex Mono, monospace">${lab(p)}</text>`;
+      g+=`<text class="ebl" data-i="${i}" data-sicht="${achsSicht(i,n,jede)?1:0}" data-f="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" x="${cx.toFixed(1)}" y="${H-Bg+17}" text-anchor="middle" font-size="11" fill="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" visibility="${achsSicht(i,n,jede)?"visible":"hidden"}" font-family="IBM Plex Mono, monospace">${achsKw(lab(p),i,n,jede)}</text>`;
       g+=`<rect class="ghit" data-i="${i}" x="${(Lg+sp*i).toFixed(1)}" y="${Tg}" width="${sp.toFixed(1)}" height="${H-Tg-Bg}" fill="transparent"><title>${lab(p)}: ${chf(p.tot)}</title></rect>`;
     });
     g+=`<line x1="${Lg}" x2="${W-Rg}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
@@ -3688,7 +3692,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       if(yu-y0>0.3) g+=`<path d="M${x.toFixed(1)},${(y0+1).toFixed(1)} V${(yu-3).toFixed(1)} q0,3 3,3 H${(x+bw-3).toFixed(1)} q3,0 3,-3 V${(y0+1).toFixed(1)} Z" fill="var(--hot)" data-hl="kosten"/>`;
       const yn=Y(p.netto).toFixed(1);
       g+=`<g data-hl="saldo"><line x1="${(x-2).toFixed(1)}" x2="${(x+bw+2).toFixed(1)}" y1="${yn}" y2="${yn}" stroke="var(--panel)" stroke-width="5" stroke-linecap="round"/><line x1="${(x-2).toFixed(1)}" x2="${(x+bw+2).toFixed(1)}" y1="${yn}" y2="${yn}" stroke="var(--fg)" stroke-width="3" stroke-linecap="round"/></g>`;
-      g+=`<text class="ebl" data-i="${i}" data-sicht="${i%jede===0||i===n-1?1:0}" data-f="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" x="${cx.toFixed(1)}" y="${H-Bg+17}" text-anchor="middle" font-size="11" fill="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" visibility="${i%jede===0||i===n-1?"visible":"hidden"}" font-family="IBM Plex Mono, monospace">${lab(p)}</text>`;
+      g+=`<text class="ebl" data-i="${i}" data-sicht="${achsSicht(i,n,jede)?1:0}" data-f="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" x="${cx.toFixed(1)}" y="${H-Bg+17}" text-anchor="middle" font-size="11" fill="${lab(p)==="heute"?"var(--fg)":"var(--muted)"}" visibility="${achsSicht(i,n,jede)?"visible":"hidden"}" font-family="IBM Plex Mono, monospace">${achsKw(lab(p),i,n,jede)}</text>`;
       g+=`<rect class="ghit2" data-i="${i}" x="${(Lg+sp*i).toFixed(1)}" y="${Tg}" width="${sp.toFixed(1)}" height="${H-Tg-Bg}" fill="transparent"><title>${lab(p)}: Saldo ${chf(p.netto)}</title></rect>`;
     });
     g+=`<line x1="${Lg}" x2="${W-Rg}" y1="${y0}" y2="${y0}" stroke="var(--muted)"/>`;
@@ -3792,7 +3796,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       // Kennbuchstaben unter jeder Säule: P = Produktion, V = Verbrauch
       const fs=bw>=11?10:8.5;
       if(!nur) g+=`<text x="${(cx-gap/2-bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">P</text><text x="${(cx+gap/2+bw/2).toFixed(1)}" y="${(Y(0)+11).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">V</text>`;
-      {const sicht=o.sicht?o.sicht(d,i,W<520):sum||i%jede===0||i===n-1, akt=sum?d.lauf:mitternacht(d.t)===heute, f=akt?"var(--fg)":"var(--muted)";
+      {const sicht=o.sicht?o.sicht(d,i,W<520):sum||achsSicht(i,n,jede), akt=sum?d.lauf:mitternacht(d.t)===heute, f=akt?"var(--fg)":"var(--muted)";
        g+=`<text class="ebl" data-i="${i}" data-sicht="${sicht?1:0}" data-f="${f}" x="${cx.toFixed(1)}" y="${H-Bb+27}" text-anchor="middle" font-size="11" fill="${f}" visibility="${sicht?"visible":"hidden"}" font-family="IBM Plex Mono, monospace">${lab(d)}</text>`}
       g+=`<rect class="ebhit" data-i="${i}" x="${(Lb+sp*i).toFixed(1)}" y="${Tb}" width="${sp.toFixed(1)}" height="${H-Tb-Bb}" fill="transparent"/>`});
     g+=`<line x1="${Lb}" x2="${W-Rb}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)"/>`;
