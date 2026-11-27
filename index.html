@@ -1242,7 +1242,7 @@ button.bsperrknopf:disabled{opacity:.5}
 
   <section class="panel klein">
     <details id="setup">
-      <summary>Verbindung <span class="sub">· Version 26.11.26 08:51</span></summary>
+      <summary>Verbindung <span class="sub">· Version 27.11.26 08:54</span></summary>
       <p class="hint" id="embedinfo">Die Seite liest alle Werte aus der Google-Tabelle über die Web-App. Sie braucht dafür nur zwei Angaben. Beide erlauben nur das Lesen von Messwerten, nicht das Schalten von Geräten.</p>
       <form id="cfg" style="margin-top:14px">
         <div class="field">
@@ -2033,8 +2033,19 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     // 08.11.2026: automatisch im Hintergrund still; blass nur, wenn die Werte schon alt sind (seit 15.11.2026 über 2 statt 5 min)
     if(!leise&&aktZeit&&Date.now()-aktZeit>2*6e4) aktBlass(true);
     const bs=document.querySelectorAll(".refresh"); if(!leise) bs.forEach(b=>{b.disabled=true; b.classList.add("laeuft")});
-    try{const j=await api(Object.assign({art:"aktuell"},frisch?{frisch:1}:{})); renderAktuell(j.aktuell); aktBlass(false); aktZeit=Date.now();
-      try{localStorage.setItem("tb.akt",JSON.stringify({zeit:Date.now(),a:j.aktuell}))}catch(e){}}
+    const zeigen=j=>{renderAktuell(j.aktuell); aktBlass(false); aktZeit=Date.now();
+      try{localStorage.setItem("tb.akt",JSON.stringify({zeit:Date.now(),a:j.aktuell}))}catch(e){}};
+    try{
+      if(frisch){
+        // 27.11.2026 (Stephan «1 bis 4 umsetzen»): Zurück auf der Seite / «Aktualisieren»: gleichzeitig eine schnelle Abfrage (Werte aus dem
+        // Kurzzeitspeicher bei Google, ohne beim Shelly nachzufragen) und die frische mit Schaltzustand vom Shelly. Die Werte erscheinen
+        // so sofort, der Schaltzustand ein bis zwei Sekunden später. Die schnelle Antwort zählt nur, solange die frische noch nicht da ist.
+        let fertig=false;
+        const schnell=api({art:"aktuell",schnell:1}).then(j=>{if(!fertig) zeigen(j)}).catch(()=>{});
+        try{const j=await api({art:"aktuell",frisch:1}); fertig=true; zeigen(j)}
+        catch(e){fertig=true; await schnell; throw e}
+      }else zeigen(await api({art:"aktuell"}));
+    }
     catch(e){msg(e.message,true)}
     finally{bs.forEach(b=>{b.disabled=false; b.classList.remove("laeuft")})}
   }
@@ -2221,12 +2232,16 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
 
   /* Nur das Neue nachladen (seit 13.11.2026, Stephan): Bei Minutenwerten (1 h, Tag, 24 h) holt die Seite nach dem ersten ganzen Laden
      jede Minute nur noch die Werte seit dem letzten Mal (mit etwas Überlappung, Google-Skript ab Stand (48): «ab») und hängt sie an,
-     statt die ganzen 24 Stunden neu zu holen. Ganz neu geladen wird weiterhin: beim Öffnen, bei anderem Zeitraum oder Zoom, nach
-     einer Pause über 10 Minuten, alle 15 Minuten zur Sicherheit, und wenn Google die Werte zusammenfasst (mehr als 1500 Punkte).
-     Ein älteres Google-Skript kennt «ab» nicht und schickt einfach alles – dann läuft es wie bisher. */
+     statt die ganzen 24 Stunden neu zu holen. Ganz neu geladen wird weiterhin: bei anderem Zeitraum oder Zoom, nach
+     einer Pause über 6 Stunden, nach 15 Mal «nur das Neue» oder 12 Stunden zur Sicherheit, und wenn Google die Werte zusammenfasst (mehr als 1500 Punkte).
+     Ein älteres Google-Skript kennt «ab» nicht und schickt einfach alles – dann läuft es wie bisher.
+     27.11.2026 (Stephan «1 bis 4 umsetzen»): Der Stand wird mit den Werten im Browser gespeichert – auch nach dem Wiederöffnen der Seite
+     (z. B. iPhone hat sie im Hintergrund geschlossen) kommt nur das Neue. Pause bis 6 h statt 10 min; zur Sicherheit ganz nach
+     15 Mal «nur das Neue» (beim Anschauen weiterhin etwa alle 15 min) statt nach 15 min Uhrzeit, damit eine Rückkehr nach einer Pause
+     nicht wegen der Uhr alles neu holt. */
   const NEU_RAND={mess:3*6e4,fronius:3*6e4,ma:30*6e4};   // Überlappung: Mobile Alerts werden bis ~20 min nach der Messung gespeichert
-  const NEU_GANZ=15*6e4, NEU_LUECKE=10*6e4, NEU_PUNKTE=1500;
-  const neuStand={};   // je Teil: {schl, bis, ganz} = bis wohin geladen, wann zuletzt ganz
+  const NEU_GANZ_N=15, NEU_GANZ_MAX=12*36e5, NEU_LUECKE=6*36e5, NEU_PUNKTE=1500;
+  const neuStand={};   // je Teil: {schl, bis, ganz, n} = bis wohin geladen, wann zuletzt ganz, wie oft seither nur das Neue
   const neuReihen=(t,v)=>t==="mess"?[v.temp,v.boiler,v.wp]:t==="fronius"?[v.fronius]:(v.ma||[]);
   /* 13.11.2026 (Stephan): Hineinzoomen lädt nicht nach, wenn schon alle Minutenwerte des Ausschnitts da sind (1 h, Tag, 24 h:
      Google schickt dort jeden Wert, nichts zusammengefasst). Nur bei längeren Zeiträumen (5-Minuten- oder Stundenwerte)
@@ -2272,9 +2287,11 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
   const teilFrisch=(t,schl)=>geladen[t]===schl&&(zoom||Date.now()-(teilZeit[t]||0)<FRISCH);
   const VC="tb.vcache";
   function cacheLesen(){try{return JSON.parse(localStorage.getItem(VC)||"{}")||{}}catch(e){return {}}}
-  function cacheSchreiben(schl,teil,daten){
-    try{const c=cacheLesen(); if(c.schl!==schl){c.schl=schl;c.teile={}} c.teile=c.teile||{}; c.teile[teil]=daten; localStorage.setItem(VC,JSON.stringify(c))}catch(e){}
+  function cacheSchreiben(schl,teil,daten,stand){   // stand: neuStand des Teils (seit 27.11.2026, damit nach dem Wiederöffnen nur das Neue kommt)
+    try{const c=cacheLesen(); if(c.schl!==schl){c.schl=schl;c.teile={};c.stand={}} c.teile=c.teile||{}; c.stand=c.stand||{}; c.teile[teil]=daten;
+      if(stand) c.stand[teil]=stand; else delete c.stand[teil]; localStorage.setItem(VC,JSON.stringify(c))}catch(e){}
   }
+  const ausSpeicher={};   // je Teil: Zeitraum-Schlüssel, für den die Werte in ROH aus dem Browser-Speicher stammen (mit gespeichertem Stand)
   function ladeSchluessel(){return zoom?"z"+zoom.von+"-"+zoom.bis:"t"+tage}
 
   /* opt.teile: nur diese Teile · opt.still: im Hintergrund, ohne Ladeanzeige und Fehlermeldung
@@ -2301,7 +2318,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
     geladenSpanne=bisMs-vonMs; ROH=ROH||{};
     // gespeicherte Werte sofort zeigen, wenn noch nichts für diesen Zeitraum da ist
     let ausCache=false;
-    if(!zoom){const c=cacheLesen(); if(c.schl===schl&&c.teile) teile.forEach(t=>{if(geladen[t]!==schl&&c.teile[t]){Object.assign(ROH,c.teile[t]);ausCache=true}})}
+    if(!zoom){const c=cacheLesen(); if(c.schl===schl&&c.teile) teile.forEach(t=>{if(geladen[t]!==schl&&c.teile[t]){Object.assign(ROH,c.teile[t]);ausCache=true;
+      const st=c.stand&&c.stand[t]; if(st&&st.schl===schl&&!laedtTeil.has(t)){neuStand[t]=Object.assign({n:0},st);ausSpeicher[t]=schl}}})}
     teile.forEach(t=>{laedtTeil.add(t); if(opt.still) laedtSicht.delete(t); else laedtSicht.add(t)});
     // 15.11.2026 (Stephan): im Hintergrund nichts neu zeichnen, solange nichts Neues da ist (Seite bleibt, wie sie ist)
     if(!opt.still) laden(true); if(!opt.still||ausCache){zuschneiden(); drawAll()}
@@ -2310,7 +2328,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       const nr=teilNr[t]=(teilNr[t]||0)+1, uhr=performance.now(); laedtMit[t]=schl;
       // nur das Neue? (gleicher Zeitraum schon ganz da, kurz her, noch nicht 15 min seit dem letzten ganzen Laden)
       const st=neuStand[t], jetztL=Date.now();
-      const ab=(!opt.ganz&&!zoom&&st&&st.schl===schl&&geladen[t]===schl&&bisMs>st.bis&&bisMs-st.bis<NEU_LUECKE&&jetztL-st.ganz<NEU_GANZ
+      const ab=(!opt.ganz&&!zoom&&st&&st.schl===schl&&(geladen[t]===schl||ausSpeicher[t]===schl)&&bisMs>st.bis&&bisMs-st.bis<NEU_LUECKE&&(st.n||0)<NEU_GANZ_N&&jetztL-st.ganz<NEU_GANZ_MAX
         &&FELDER[t].every(k=>ROH[k]!==undefined)&&st.bis-NEU_RAND[t]>vonMs)?st.bis-NEU_RAND[t]:0;
       try{
         let j=await api(Object.assign({art:"verlauf",teil:t,von:String(vonMs),bis:String(bisMs),tage:String(abfrageTage),punkte:"1500"},ab?{ab:String(ab)}:{}));
@@ -2325,8 +2343,8 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
         if(!d){d={}; FELDER[t].forEach(k=>{if(v[k]!==undefined)d[k]=v[k]})}
         Object.assign(ROH,d); geladen[t]=schl; teilZeit[t]=Date.now();
         deckt[t]=vollMinuten(t,j,d)?{von:vonMs,bis:bisMs}:null;
-        neuStand[t]=neuMoeglich(t,j,d)?{schl,bis:bisMs,ganz:nurNeu?st.ganz:jetztL}:null;
-        if(!zoom) cacheSchreiben(schl,t,d);
+        neuStand[t]=neuMoeglich(t,j,d)?{schl,bis:bisMs,ganz:nurNeu?st.ganz:jetztL,n:nurNeu?(st.n||0)+1:0}:null; delete ausSpeicher[t];
+        if(!zoom) cacheSchreiben(schl,t,d,neuStand[t]);
         logD(`Verlauf ${t}${nurNeu?" (nur das Neue)":""}: ${Math.round(performance.now()-uhr)} ms`+(j.dauer&&j.dauer[t]!=null?` (Google ${j.dauer[t]} ms`+({1:", Minutenwerte",5:", 5-Minuten-Werte",60:", Stundenwerte"}[j.aufloesung]||"")+")":""));
       }catch(e){ if(nr===teilNr[t]) fehler=e; }
       finally{
@@ -3247,11 +3265,25 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
 
   const istPunkt=r=>({t:r[0],v:r[1],mn:r[1],mx:r[1],o:typeof r[6]==="number"?r[6]:null,w:typeof r[7]==="number"?r[7]:null});
   // nur den gemessenen PV-Verlauf und Ladestand von heute (für Prognose-Diagramme und PV-Korrektur), ohne Wetter
+  // 27.11.2026 (Stephan «1 bis 4 umsetzen»): Sind die Fronius-Minutenwerte seit Mitternacht schon da (Verlauf «24 h» oder «Tag», eben geladen),
+  // diese nehmen statt sie für die Prognose ein zweites Mal bei Google zu holen. Sonst wie bisher abfragen.
+  // Wird der Verlauf gerade geladen (beim Öffnen), kurz darauf warten (höchstens 20 s).
+  async function froniusHeute(){
+    const heute=mitternacht(Date.now());
+    const da=()=>{const d=deckt.fronius, rows=ROH&&ROH.fronius&&ROH.fronius.rows;
+      return !zoom&&d&&rows&&d.von<=heute&&Date.now()-d.bis<2*6e4&&Date.now()-(teilZeit.fronius||0)<2*6e4&&!laedtTeil.has("fronius")?rows:null};
+    const unterwegs=()=>{if(zoom||!laedtTeil.has("fronius")||laedtMit.fronius!==ladeSchluessel()) return false; const f=bereich(); return (f.von||Date.now()-tage*864e5)<=heute};
+    await new Promise(r=>setTimeout(r,0));   // beim Öffnen startet die Batterie-Anzeige die Prognose, bevor das Laden des Verlaufs begonnen hat
+    for(let i=0;i<100&&!da()&&unterwegs();i++) await new Promise(r=>setTimeout(r,200));
+    const rows=da();
+    if(rows) return {ok:true,verlauf:{fronius:{rows:rows.filter(r=>r[0]>=heute)}}};
+    return api({art:"verlauf",teil:"fronius",von:String(heute),bis:String(Date.now()),punkte:"1500"});
+  }
   let progIstLaedt=false, progIstZeit=0;   // progIstZeit: wann der gemessene Verlauf von heute zuletzt geholt (oder angefordert) wurde
   async function ladeProgIst(trotzdem){
     if(!cfg.histurl||!cfg.histtok||progIstLaedt||(!trotzdem&&progLaeuft())) return;   // die ganze Prognose holt den gemessenen Verlauf selbst
     progIstLaedt=true;
-    try{const ist=await api({art:"verlauf",teil:"fronius",von:String(mitternacht(Date.now())),bis:String(Date.now()),punkte:"1500"});
+    try{const ist=await froniusHeute();
       const rows=ist&&ist.verlauf&&ist.verlauf.fronius?ist.verlauf.fronius.rows:null;
       if(rows){progIstZeit=Date.now();progIst=rows.filter(r=>typeof r[1]==="number").map(istPunkt);progSoc=rows.filter(r=>typeof r[5]==="number").map(r=>[r[0],r[5]]);
         battVollZeigen(); if(reiter==="prognose"&&prog) zeichnePrognose()}}
@@ -3280,7 +3312,7 @@ const EINGEBAUT = /*ZUGANG*/{"url":"","token":""}/*ENDE*/;
       ladeLastmodell();
       const [o,w,oc,wc,ist]=await Promise.all([wetterHolen(pvCfg.azO,true),wetterHolen(pvCfg.azW,false),
         wetterHolen(pvCfg.azO,false,"ch").catch(()=>null),wetterHolen(pvCfg.azW,false,"ch").catch(()=>null),
-        cfg.histurl&&cfg.histtok?api({art:"verlauf",teil:"fronius",von:String(heute),bis:String(Date.now()),punkte:"1500"}).catch(()=>null):Promise.resolve(null),
+        cfg.histurl&&cfg.histtok?froniusHeute().catch(()=>null):Promise.resolve(null),
         ladeGuete()]);
       if(nr!==progNr) return;
       const roh={std:stundenAus(o,w),ch:oc&&wc?stundenAus(oc,wc):null};
